@@ -3,11 +3,11 @@
   <title>杨宝强的技术博客</title>
   
   
-  <link href="http://example.com/atom.xml" rel="self"/>
+  <link href="http://8.142.1.206/atom.xml" rel="self"/>
   
-  <link href="http://example.com/"/>
+  <link href="http://8.142.1.206/"/>
   <updated>2021-11-11T14:13:11.431Z</updated>
-  <id>http://example.com/</id>
+  <id>http://8.142.1.206/</id>
   
   <author>
     <name>杨宝强</name>
@@ -18,8 +18,8 @@
   
   <entry>
     <title>Hello World</title>
-    <link href="http://example.com/2021/11/11/hello-world/"/>
-    <id>http://example.com/2021/11/11/hello-world/</id>
+    <link href="http://8.142.1.206/2021/11/11/hello-world/"/>
+    <id>http://8.142.1.206/2021/11/11/hello-world/</id>
     <published>2021-11-11T14:13:11.431Z</published>
     <updated>2021-11-11T14:13:11.431Z</updated>
     
@@ -38,8 +38,8 @@
   
   <entry>
     <title>timer 源码分析</title>
-    <link href="http://example.com/2021/11/11/%E6%B5%85%E6%9E%90%20timer/"/>
-    <id>http://example.com/2021/11/11/%E6%B5%85%E6%9E%90%20timer/</id>
+    <link href="http://8.142.1.206/2021/11/11/%E6%B5%85%E6%9E%90%20timer/"/>
+    <id>http://8.142.1.206/2021/11/11/%E6%B5%85%E6%9E%90%20timer/</id>
     <published>2021-11-11T02:53:39.848Z</published>
     <updated>2021-11-11T14:43:34.379Z</updated>
     
@@ -55,8 +55,8 @@
   
   <entry>
     <title>welcome~</title>
-    <link href="http://example.com/2021/11/09/nihao/"/>
-    <id>http://example.com/2021/11/09/nihao/</id>
+    <link href="http://8.142.1.206/2021/11/09/nihao/"/>
+    <id>http://8.142.1.206/2021/11/09/nihao/</id>
     <published>2021-11-09T14:32:03.698Z</published>
     <updated>2021-11-11T14:46:48.794Z</updated>
     
