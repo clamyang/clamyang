@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
-  <title>bqyang的技术笔记</title>
+  <title>bqyang的日常</title>
   
   <subtitle>欢迎~</subtitle>
   <link href="http://bqyang.top/atom.xml" rel="self"/>
@@ -10,7 +10,7 @@
   <id>http://bqyang.top/</id>
   
   <author>
-    <name>bqyang</name>
+    <name>杨宝强</name>
     
   </author>
   
