@@ -2,35 +2,21 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
-    <loc>http://bqyang.top/2021/11/12/%E5%AD%A6%E4%B9%A0%E4%BA%94%E7%AC%94%E8%BE%93%E5%85%A5%E6%B3%95/</loc>
+    <loc>http://8.142.1.206/2021/11/09/hello-world/</loc>
     
     <lastmod>2021-11-12</lastmod>
     
   </url>
   
   <url>
-    <loc>http://bqyang.top/2021/11/09/hello-world/</loc>
+    <loc>http://8.142.1.206/categories/index.html</loc>
     
     <lastmod>2021-11-12</lastmod>
     
   </url>
   
   <url>
-    <loc>http://bqyang.top/categories/index.html</loc>
-    
-    <lastmod>2021-11-12</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>http://bqyang.top/2021/11/09/nihao/</loc>
-    
-    <lastmod>2021-11-11</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>http://bqyang.top/2021/11/11/%E6%B5%85%E6%9E%90%20timer/</loc>
+    <loc>http://8.142.1.206/2021/11/11/%E6%B5%85%E6%9E%90%20timer/</loc>
     
     <lastmod>2021-11-11</lastmod>
     
@@ -38,7 +24,7 @@
   
 
   <url>
-    <loc>http://bqyang.top/</loc>
+    <loc>http://8.142.1.206/</loc>
     <lastmod>2021-11-14</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>

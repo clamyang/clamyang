@@ -3,43 +3,23 @@
   <title>宝强的博客</title>
   
   <subtitle>欢迎~</subtitle>
-  <link href="http://bqyang.top/atom.xml" rel="self"/>
+  <link href="http://8.142.1.206/atom.xml" rel="self"/>
   
-  <link href="http://bqyang.top/"/>
-  <updated>2021-11-12T14:38:40.613Z</updated>
-  <id>http://bqyang.top/</id>
+  <link href="http://8.142.1.206/"/>
+  <updated>2021-11-11T14:43:34.379Z</updated>
+  <id>http://8.142.1.206/</id>
   
   <author>
-    <name>杨宝强</name>
+    <name>bqyang</name>
     
   </author>
   
   <generator uri="https://hexo.io/">Hexo</generator>
   
   <entry>
-    <title>学习五笔输入法</title>
-    <link href="http://bqyang.top/2021/11/12/%E5%AD%A6%E4%B9%A0%E4%BA%94%E7%AC%94%E8%BE%93%E5%85%A5%E6%B3%95/"/>
-    <id>http://bqyang.top/2021/11/12/%E5%AD%A6%E4%B9%A0%E4%BA%94%E7%AC%94%E8%BE%93%E5%85%A5%E6%B3%95/</id>
-    <published>2021-11-12T14:24:57.844Z</published>
-    <updated>2021-11-12T14:38:40.613Z</updated>
-    
-    <content type="html"><![CDATA[<h3 id="认识五笔输入法"><a href="#认识五笔输入法" class="headerlink" title="认识五笔输入法"></a>认识五笔输入法</h3>]]></content>
-    
-    
-      
-      
-    <summary type="html">&lt;h3 id=&quot;认识五笔输入法&quot;&gt;&lt;a href=&quot;#认识五笔输入法&quot; class=&quot;headerlink&quot; title=&quot;认识五笔输入法&quot;&gt;&lt;/a&gt;认识五笔输入法&lt;/h3&gt;</summary>
-      
-    
-    
-    
-    
-  </entry>
-  
-  <entry>
     <title>timer 源码分析</title>
-    <link href="http://bqyang.top/2021/11/11/%E6%B5%85%E6%9E%90%20timer/"/>
-    <id>http://bqyang.top/2021/11/11/%E6%B5%85%E6%9E%90%20timer/</id>
+    <link href="http://8.142.1.206/2021/11/11/%E6%B5%85%E6%9E%90%20timer/"/>
+    <id>http://8.142.1.206/2021/11/11/%E6%B5%85%E6%9E%90%20timer/</id>
     <published>2021-11-11T02:53:39.848Z</published>
     <updated>2021-11-11T14:43:34.379Z</updated>
     
@@ -54,30 +34,9 @@
   </entry>
   
   <entry>
-    <title>welcome~</title>
-    <link href="http://bqyang.top/2021/11/09/nihao/"/>
-    <id>http://bqyang.top/2021/11/09/nihao/</id>
-    <published>2021-11-09T14:32:03.698Z</published>
-    <updated>2021-11-11T14:46:48.794Z</updated>
-    
-    <content type="html"><![CDATA[<p>About Me</p>]]></content>
-    
-    
-      
-      
-    <summary type="html">&lt;p&gt;About Me&lt;/p&gt;
-</summary>
-      
-    
-    
-    
-    
-  </entry>
-  
-  <entry>
     <title>Hello World</title>
-    <link href="http://bqyang.top/2021/11/09/hello-world/"/>
-    <id>http://bqyang.top/2021/11/09/hello-world/</id>
+    <link href="http://8.142.1.206/2021/11/09/hello-world/"/>
+    <id>http://8.142.1.206/2021/11/09/hello-world/</id>
     <published>2021-11-09T14:21:15.054Z</published>
     <updated>2021-11-12T02:43:49.448Z</updated>
     
