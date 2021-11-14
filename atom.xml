@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
   <title>杨宝强的技术博客</title>
   
-  
+  <subtitle>欢迎~</subtitle>
   <link href="http://8.142.1.206/atom.xml" rel="self"/>
   
   <link href="http://8.142.1.206/"/>
