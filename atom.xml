@@ -6,7 +6,7 @@
   <link href="http://8.142.1.206/atom.xml" rel="self"/>
   
   <link href="http://8.142.1.206/"/>
-  <updated>2021-11-11T14:43:34.379Z</updated>
+  <updated>2021-11-12T14:38:40.613Z</updated>
   <id>http://8.142.1.206/</id>
   
   <author>
@@ -15,6 +15,26 @@
   </author>
   
   <generator uri="https://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>学习五笔输入法</title>
+    <link href="http://8.142.1.206/2021/11/12/%E5%AD%A6%E4%B9%A0%E4%BA%94%E7%AC%94%E8%BE%93%E5%85%A5%E6%B3%95/"/>
+    <id>http://8.142.1.206/2021/11/12/%E5%AD%A6%E4%B9%A0%E4%BA%94%E7%AC%94%E8%BE%93%E5%85%A5%E6%B3%95/</id>
+    <published>2021-11-12T14:24:57.844Z</published>
+    <updated>2021-11-12T14:38:40.613Z</updated>
+    
+    <content type="html"><![CDATA[<h3 id="认识五笔输入法"><a href="#认识五笔输入法" class="headerlink" title="认识五笔输入法"></a>认识五笔输入法</h3>]]></content>
+    
+    
+      
+      
+    <summary type="html">&lt;h3 id=&quot;认识五笔输入法&quot;&gt;&lt;a href=&quot;#认识五笔输入法&quot; class=&quot;headerlink&quot; title=&quot;认识五笔输入法&quot;&gt;&lt;/a&gt;认识五笔输入法&lt;/h3&gt;</summary>
+      
+    
+    
+    
+    
+  </entry>
   
   <entry>
     <title>timer 源码分析</title>
