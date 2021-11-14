@@ -20,30 +20,34 @@
     var CONFIG = {"hostname":"bqyang.top","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"remove","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
   </script>
 
-  <meta name="description" content="记录技术精进之路，记录生活的打情骂俏">
-<meta property="og:type" content="website">
+  <meta name="description" content="前言我们已经知道了，老版本 timer 的性能瓶颈主要是在那把全局锁以及频繁的上下文切换上，今天我们看看 go 大佬们通过哪种方式进行优化的。​ 在这里解释一下为什么选择这几个版本，据我所知啊，从 1.10 版本以前都是像上一篇文中所描述的那样，在 1.10 版本开始就做了这个优化，但从 1.14 开始又对 timer 进行了优化，所以我选择了 1.8， 1.13， 1.14 这几个邻近的作为参考">
+<meta property="og:type" content="article">
 <meta property="og:title" content="bqyang&#39;s blog">
-<meta property="og:url" content="http://bqyang.top/index.html">
+<meta property="og:url" content="http://bqyang.top/2021/11/14/timer%20%E4%BC%98%E5%8C%96/index.html">
 <meta property="og:site_name" content="bqyang&#39;s blog">
-<meta property="og:description" content="记录技术精进之路，记录生活的打情骂俏">
+<meta property="og:description" content="前言我们已经知道了，老版本 timer 的性能瓶颈主要是在那把全局锁以及频繁的上下文切换上，今天我们看看 go 大佬们通过哪种方式进行优化的。​ 在这里解释一下为什么选择这几个版本，据我所知啊，从 1.10 版本以前都是像上一篇文中所描述的那样，在 1.10 版本开始就做了这个优化，但从 1.14 开始又对 timer 进行了优化，所以我选择了 1.8， 1.13， 1.14 这几个邻近的作为参考">
 <meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2021/png/12497924/1636033788855-ece14ebf-e72d-4851-9a75-de7cd60d59ba.png#clientId=u8672bd0f-176e-4&from=paste&height=603&id=ufe7e5b32&margin=%5Bobject%20Object%5D&name=image.png&originHeight=804&originWidth=1437&originalType=binary&ratio=1&size=75334&status=done&style=none&taskId=u8fc8b19a-cb72-44a5-a46d-e863b29ee8c&width=1078">
+<meta property="article:published_time" content="2021-11-14T14:47:26.661Z">
+<meta property="article:modified_time" content="2021-11-14T14:47:26.694Z">
 <meta property="article:author" content="杨宝强">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.nlark.com/yuque/0/2021/png/12497924/1636033788855-ece14ebf-e72d-4851-9a75-de7cd60d59ba.png#clientId=u8672bd0f-176e-4&from=paste&height=603&id=ufe7e5b32&margin=%5Bobject%20Object%5D&name=image.png&originHeight=804&originWidth=1437&originalType=binary&ratio=1&size=75334&status=done&style=none&taskId=u8fc8b19a-cb72-44a5-a46d-e863b29ee8c&width=1078">
 
-<link rel="canonical" href="http://bqyang.top/">
+<link rel="canonical" href="http://bqyang.top/2021/11/14/timer%20%E4%BC%98%E5%8C%96/">
 
 
 <script id="page-configurations">
   // https://hexo.io/docs/variables.html
   CONFIG.page = {
     sidebar: "",
-    isHome : true,
-    isPost : false,
+    isHome : false,
+    isPost : true,
     lang   : 'zh-CN'
   };
 </script>
 
-  <title>bqyang's blog</title>
+  <title> | bqyang's blog</title>
   
 
 
@@ -148,9 +152,10 @@
         <div class="content-wrap">
           
 
-          <div class="content index posts-expand">
+          <div class="content post posts-expand">
             
-      
+
+    
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
@@ -166,10 +171,9 @@
       <meta itemprop="name" content="bqyang's blog">
     </span>
       <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
+        <h1 class="post-title" itemprop="name headline">
           
-            <a href="/2021/11/14/timer%20%E4%BC%98%E5%8C%96/" class="post-title-link" itemprop="url">未命名</a>
-        </h2>
+        </h1>
 
         <div class="post-meta">
             <span class="post-meta-item">
@@ -192,7 +196,7 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>我们已经知道了，老版本 timer 的性能瓶颈主要是在那把全局锁以及频繁的上下文切换上，今天我们看看 go 大佬们通过哪种方式进行优化的。<br>​</p>
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>我们已经知道了，老版本 timer 的性能瓶颈主要是在那把全局锁以及频繁的上下文切换上，今天我们看看 go 大佬们通过哪种方式进行优化的。<br>​</p>
 <p>在这里解释一下为什么选择这几个版本，据我所知啊，从 1.10 版本以前都是像上一篇文中所描述的那样，在 1.10 版本开始就做了这个优化，但从 1.14 开始又对 timer 进行了优化，所以我选择了 1.8， 1.13， 1.14 这几个邻近的作为参考。</p>
 <h2 id="1-13-中的优化"><a href="#1-13-中的优化" class="headerlink" title="1.13 中的优化"></a>1.13 中的优化</h2><h3 id="环境信息"><a href="#环境信息" class="headerlink" title="环境信息"></a>环境信息</h3><ul>
 <li>go version: go1.13</li>
@@ -783,164 +787,47 @@ loop<span class="token punctuation">:</span>
 
 <h2 id="后语"><a href="#后语" class="headerlink" title="后语"></a>后语</h2><p>给大家分享一下我在整理过程中的参考资料吧：<br><em>1.luozhiyun Go中定时器实现原理及源码解析</em><br>   <a target="_blank" rel="noopener" href="https://www.cnblogs.com/luozhiyun/p/14494540.html"><em>https://www.cnblogs.com/luozhiyun/p/14494540.html</em></a><br><em>2.猪吃鱼 Netpoll 解析</em><br>   <a target="_blank" rel="noopener" href="https://www.pefish.club/2020/05/04/Golang/1011Netpoll%E8%A7%A3%E6%9E%90/"><em>https://www.pefish.club/2020/05/04/Golang/1011Netpoll%E8%A7%A3%E6%9E%90/</em></a><br>_3.issues _<br>   <a target="_blank" rel="noopener" href="https://github.com/golang/go/issues/6239"><em>https://github.com/golang/go/issues/6239</em></a><br><em>4.峰云就她了  go1.14基于netpoll定时器实现原理</em><br>   <a target="_blank" rel="noopener" href="http://xiaorui.cc/archives/6483"><em>http://xiaorui.cc/archives/6483</em></a></p>
 
-      
     </div>
 
     
     
     
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://bqyang.top/2021/11/14/timer%20%E6%B5%85%E6%9E%90/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="杨宝强">
-      <meta itemprop="description" content="记录技术精进之路，记录生活的打情骂俏">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="bqyang's blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2021/11/14/timer%20%E6%B5%85%E6%9E%90/" class="post-title-link" itemprop="url">timer 源码分析</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2021-11-14 22:46:05 / 修改时间：22:13:45" itemprop="dateCreated datePublished" datetime="2021-11-14T22:46:05+08:00">2021-11-14</time>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>golang timer 的优化过程以及底层实现。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2021/11/14/timer%20%E6%B5%85%E6%9E%90/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
         
-      
-    </div>
 
-    
-    
-    
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>杨宝强
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://bqyang.top/2021/11/14/timer%20%E4%BC%98%E5%8C%96/" title="">http://bqyang.top/2021/11/14/timer 优化/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/zh-Hans" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
       <footer class="post-footer">
-        <div class="post-eof"></div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2021/11/14/timer%20%E6%B5%85%E6%9E%90/" rel="prev" title="timer 源码分析">
+      <i class="fa fa-chevron-left"></i> timer 源码分析
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
       </footer>
+    
   </article>
   
   
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://bqyang.top/2021/11/14/hello-world/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="杨宝强">
-      <meta itemprop="description" content="记录技术精进之路，记录生活的打情骂俏">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="bqyang's blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2021/11/14/hello-world/" class="post-title-link" itemprop="url">Hello World</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2021-11-14 22:46:05" itemprop="dateCreated datePublished" datetime="2021-11-14T22:46:05+08:00">2021-11-14</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2021-11-12 10:43:49" itemprop="dateModified" datetime="2021-11-12T10:43:49+08:00">2021-11-12</time>
-              </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>Welcome to <a target="_blank" rel="noopener" href="https://hexo.io/">Hexo</a>! This is your very first post. Check <a target="_blank" rel="noopener" href="https://hexo.io/docs/">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a target="_blank" rel="noopener" href="https://hexo.io/docs/troubleshooting.html">troubleshooting</a> or you can ask me on <a target="_blank" rel="noopener" href="https://github.com/hexojs/hexo/issues">GitHub</a>.</p>
-<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ hexo new <span class="token string">"My New Post"</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
-
-<p>More info: <a target="_blank" rel="noopener" href="https://hexo.io/docs/writing.html">Writing</a></p>
-<h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ hexo server<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
-
-<p>More info: <a target="_blank" rel="noopener" href="https://hexo.io/docs/server.html">Server</a></p>
-<h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ hexo generate<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
-
-<p>More info: <a target="_blank" rel="noopener" href="https://hexo.io/docs/generating.html">Generating</a></p>
-<h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ hexo deploy<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
-
-<p>More info: <a target="_blank" rel="noopener" href="https://hexo.io/docs/one-command-deployment.html">Deployment</a></p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-
   
 
 
