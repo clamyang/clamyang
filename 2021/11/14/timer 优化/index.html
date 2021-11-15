@@ -17,7 +17,7 @@
 
 <script id="hexo-configurations">
     var NexT = window.NexT || {};
-    var CONFIG = {"hostname":"bqyang.top","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"remove","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+    var CONFIG = {"hostname":"bqyang.top","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":true},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
   </script>
 
   <meta name="description" content="前言我们已经知道了，老版本 timer 的性能瓶颈主要是在那把全局锁以及频繁的上下文切换上，今天我们看看 go 大佬们通过哪种方式进行优化的。​ 在这里解释一下为什么选择这几个版本，据我所知啊，从 1.10 版本以前都是像上一篇文中所描述的那样，在 1.10 版本开始就做了这个优化，但从 1.14 开始又对 timer 进行了优化，所以我选择了 1.8， 1.13， 1.14 这几个邻近的作为参考">
@@ -124,11 +124,6 @@
         <li class="menu-item menu-item-archives">
 
     <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
-
-  </li>
-        <li class="menu-item menu-item-schedule">
-
-    <a href="/schedule/" rel="section"><i class="fa fa-calendar fa-fw"></i>日程表</a>
 
   </li>
   </ul>
@@ -860,6 +855,66 @@ loop<span class="token punctuation">:</span>
 </script>
 
         </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%89%8D%E8%A8%80"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#1-13-%E4%B8%AD%E7%9A%84%E4%BC%98%E5%8C%96"><span class="nav-number">2.</span> <span class="nav-text">1.13 中的优化</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%8E%AF%E5%A2%83%E4%BF%A1%E6%81%AF"><span class="nav-number">2.1.</span> <span class="nav-text">环境信息</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#timer-%E7%BB%93%E6%9E%84%E7%9A%84%E5%8F%98%E5%8C%96"><span class="nav-number">2.2.</span> <span class="nav-text">timer 结构的变化</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#go1-8"><span class="nav-number">2.2.0.1.</span> <span class="nav-text">go1.8</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#go1-13"><span class="nav-number">2.2.0.2.</span> <span class="nav-text">go1.13</span></a></li></ol></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#timer-%E7%9A%84%E2%80%9C%E7%94%9F%E4%BA%A7%E8%80%85%E2%80%9D"><span class="nav-number">2.3.</span> <span class="nav-text">timer 的“生产者”</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#timer-%E7%9A%84%E2%80%9C%E6%B6%88%E8%B4%B9%E8%80%85%E2%80%9D"><span class="nav-number">2.4.</span> <span class="nav-text">timer 的“消费者”</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#1-14-%E4%B8%AD%E7%9A%84%E4%BC%98%E5%8C%96"><span class="nav-number">3.</span> <span class="nav-text">1.14 中的优化</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%8E%AF%E5%A2%83%E4%BF%A1%E6%81%AF-1"><span class="nav-number">3.1.</span> <span class="nav-text">环境信息</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#timer-%E7%BB%93%E6%9E%84%E7%9A%84%E5%8F%98%E5%8C%96-1"><span class="nav-number">3.2.</span> <span class="nav-text">timer 结构的变化</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#timer-%E7%9A%84%E2%80%9C%E7%94%9F%E4%BA%A7%E8%80%85%E2%80%9D-1"><span class="nav-number">3.3.</span> <span class="nav-text">timer 的“生产者”</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#timer-%E7%9A%84%E2%80%9C%E6%B6%88%E8%B4%B9%E8%80%85%E2%80%9D-1"><span class="nav-number">3.4.</span> <span class="nav-text">timer 的“消费者”</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#checkTimers"><span class="nav-number">3.4.1.</span> <span class="nav-text">checkTimers()</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%81%B7-timer"><span class="nav-number">3.5.</span> <span class="nav-text">偷 timer</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%90%8E%E8%AF%AD"><span class="nav-number">4.</span> <span class="nav-text">后语</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">杨宝强</p>
+  <div class="site-description" itemprop="description">记录技术精进之路，记录生活的打情骂俏</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">3</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/clamyang" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;clamyang" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/zh-Hans" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
       </div>
     </main>
 
