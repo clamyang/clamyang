@@ -24,7 +24,7 @@
 <meta property="og:type" content="article">
 <meta property="og:title" content="timer 优化">
 <meta property="og:url" content="http://bqyang.top/2021/11/14/timer%20%E4%BC%98%E5%8C%96/index.html">
-<meta property="og:site_name" content="bqyang&#39;s blog">
+<meta property="og:site_name" content="宝强的技术博客">
 <meta property="og:description" content="前言我们已经知道了，老版本 timer 的性能瓶颈主要是在那把全局锁以及频繁的上下文切换上，今天我们看看 go 大佬们通过哪种方式进行优化的。​ 在这里解释一下为什么选择这几个版本，据我所知啊，从 1.10 版本以前都是像上一篇文中所描述的那样，在 1.10 版本开始就做了这个优化，但从 1.14 开始又对 timer 进行了优化，所以我选择了 1.8， 1.13， 1.14 这几个邻近的作为参考">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/1636033788855-ece14ebf-e72d-4851-9a75-de7cd60d59ba.png">
@@ -47,7 +47,7 @@
   };
 </script>
 
-  <title>timer 优化 | bqyang's blog</title>
+  <title>timer 优化 | 宝强的技术博客</title>
   
 
 
@@ -78,7 +78,7 @@
   </style>
 </noscript>
 
-<link rel="alternate" href="/atom.xml" title="bqyang's blog" type="application/atom+xml">
+<link rel="alternate" href="/atom.xml" title="宝强的技术博客" type="application/atom+xml">
 </head>
 
 <body itemscope itemtype="http://schema.org/WebPage">
@@ -99,7 +99,7 @@
 
     <a href="/" class="brand" rel="start">
       <span class="logo-line-before"><i></i></span>
-      <h1 class="site-title">bqyang's blog</h1>
+      <h1 class="site-title">宝强的技术博客</h1>
       <span class="logo-line-after"><i></i></span>
     </a>
       <p class="site-subtitle" itemprop="description">欢迎~</p>
@@ -168,7 +168,7 @@
     </span>
 
     <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="bqyang's blog">
+      <meta itemprop="name" content="宝强的技术博客">
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
