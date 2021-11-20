@@ -2,6 +2,13 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>http://bqyang.top/2021/11/20/%E4%B8%80%E6%AC%A1%E4%B8%8A%E7%BA%BF%E6%95%85%E4%BA%8B/</loc>
+    
+    <lastmod>2021-11-20</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>http://bqyang.top/2021/11/14/timer%20%E4%BC%98%E5%8C%96/</loc>
     
     <lastmod>2021-11-18</lastmod>
@@ -46,7 +53,7 @@
 
   <url>
     <loc>http://bqyang.top/</loc>
-    <lastmod>2021-11-18</lastmod>
+    <lastmod>2021-11-20</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
