@@ -2,6 +2,13 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://bqyang.top/2021/hello-world/</loc>
+    
+    <lastmod>2021-11-22</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>https://bqyang.top/2021/planB/</loc>
     
     <lastmod>2021-11-22</lastmod>
@@ -38,13 +45,6 @@
   
   <url>
     <loc>https://bqyang.top/about/index.html</loc>
-    
-    <lastmod>2021-11-15</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://bqyang.top/2021/hello-world/</loc>
     
     <lastmod>2021-11-15</lastmod>
     
