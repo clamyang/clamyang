@@ -20,22 +20,19 @@
     var CONFIG = {"hostname":"bqyang.top","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"hide","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"gitalk","storage":true,"lazyload":false,"nav":{"gitalk":{"order":-2}},"activeClass":"gitalk"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
   </script>
 
-  <meta name="description" content="所有工作时间加起来也有一年多快两年的时间了，实习了 8 个月，正式工作也有 10 个月了，加起来有一年半的工作经验了。">
+  <meta name="description" content="[toc] Go ModulesIntroductionModules, packages, and versionsModule pathsmodule path 是一个 module 的规范名称，在 go.mod 文件中直接声明。module path 是在本 module 中所有 package 路径的前缀。 module path 应该描述这个 module 是做什么的和在哪可以找到它。通">
 <meta property="og:type" content="article">
-<meta property="og:title" content="第一次 pr">
-<meta property="og:url" content="https://bqyang.top/2021/contributeToYunion/index.html">
+<meta property="og:title" content="杨宝强的技术笔记">
+<meta property="og:url" content="https://bqyang.top/2021/go-modules/index.html">
 <meta property="og:site_name" content="杨宝强的技术笔记">
-<meta property="og:description" content="所有工作时间加起来也有一年多快两年的时间了，实习了 8 个月，正式工作也有 10 个月了，加起来有一年半的工作经验了。">
+<meta property="og:description" content="[toc] Go ModulesIntroductionModules, packages, and versionsModule pathsmodule path 是一个 module 的规范名称，在 go.mod 文件中直接声明。module path 是在本 module 中所有 package 路径的前缀。 module path 应该描述这个 module 是做什么的和在哪可以找到它。通">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/pr1.png">
-<meta property="og:image" content="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/pr2.png">
-<meta property="article:published_time" content="2021-11-22T12:57:58.886Z">
-<meta property="article:modified_time" content="2021-11-23T01:41:45.975Z">
+<meta property="article:published_time" content="2021-11-24T07:52:46.702Z">
+<meta property="article:modified_time" content="2021-11-24T13:32:59.075Z">
 <meta property="article:author" content="杨宝强">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/pr1.png">
 
-<link rel="canonical" href="https://bqyang.top/2021/contributeToYunion/">
+<link rel="canonical" href="https://bqyang.top/2021/go-modules/">
 
 
 <script id="page-configurations">
@@ -48,7 +45,7 @@
   };
 </script>
 
-  <title>第一次 pr | 杨宝强的技术笔记</title>
+  <title> | 杨宝强的技术笔记</title>
   
 
 
@@ -159,7 +156,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://bqyang.top/2021/contributeToYunion/">
+    <link itemprop="mainEntityOfPage" href="https://bqyang.top/2021/go-modules/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.gif">
@@ -172,7 +169,7 @@
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          第一次 pr
+          
         </h1>
 
         <div class="post-meta">
@@ -181,16 +178,10 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">发表于</span>
+              
 
-              <time title="创建时间：2021-11-22 20:57:58" itemprop="dateCreated datePublished" datetime="2021-11-22T20:57:58+08:00">2021-11-22</time>
+              <time title="创建时间：2021-11-24 15:52:46 / 修改时间：21:32:59" itemprop="dateCreated datePublished" datetime="2021-11-24T15:52:46+08:00">2021-11-24</time>
             </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2021-11-23 09:41:45" itemprop="dateModified" datetime="2021-11-23T09:41:45+08:00">2021-11-23</time>
-              </span>
 
           
 
@@ -203,20 +194,14 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <p>所有工作时间加起来也有一年多快两年的时间了，实习了 8 个月，正式工作也有 10 个月了，加起来有一年半的工作经验了。</p>
-<span id="more"></span> 
-
-<p>事实一次又一次的证明了去大公司的必要性，就算没有办法去大公司，也要多接触在大厂上班的人，这就有点近朱者赤近墨者黑的意思。</p>
-<p>大厂程序员能接触的面实在是太多了，他们带给我的感受就好像，井底之蛙。每天我所接触到的东西只有那么一点，或者说工作所能涉及到内容，再多也不会多到哪去。久而久之，与人家的差距自然就被拉开了。</p>
-<p>说了点废话，只想和大家共勉，一定要好好学习，曹大说了，混几个你所在工作的领域相关的 commit 哈哈，对自己来说简历上还是能挂得住的，我们公司用的代码是一套开源的云管理平台，据说是买的人家商业版，在人家代码基础上做的二次开发。</p>
-<p>二次开发做的真的是惨不忍睹，没有把人家的代码研究明白就开始在上边迭代，导致现在的代码维护成本非常高，再加上这套代码本身就非常复杂，各种高度抽象，各种回调、异步任务。我入职有快四个月了，还是有很多不明白的地方。</p>
-<p>上个周五，2021-11-19，那天调试一个bug，当时就是跟自己较真，过不去这个坎，觉得今天要是解决不了这个问题，真的是太没用了。。所以周五到家后，又一直研究，trace代码，最后还是找到了问题出现的地方，跟这些异步任务属实是费劲。可能自己对这个bug的偏执，也说明了自己能力不足。</p>
-<p>以前看到过一句话，不要对年轻人讲经验，他该走的弯路一个不会少。我其实是认同的，虽然在某些时候，前辈们的经验可以帮助我们减轻一些心理负担，但是真正需要自己站出来的时候，一个弯路都不会少的。</p>
-<p>这次排查 bug 给我带来的收获，不仅仅是一个提 pr 的机会，更是一次开拓眼界的机会，或许也是迈向开源的一个机会。</p>
-<p>贴上两张提 pr 的图片吧哈哈，相关的 reviewer 还没有 review 代码，希望可以顺利的被 merge！</p>
-<p><img src="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/pr1.png" alt="image"></p>
-<p><img src="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/pr2.png" alt="image"></p>
-
+        <p>[toc]</p>
+<h2 id="Go-Modules"><a href="#Go-Modules" class="headerlink" title="Go Modules"></a>Go Modules</h2><h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><h3 id="Modules-packages-and-versions"><a href="#Modules-packages-and-versions" class="headerlink" title="Modules, packages, and versions"></a>Modules, packages, and versions</h3><h4 id="Module-paths"><a href="#Module-paths" class="headerlink" title="Module paths"></a>Module paths</h4><p>module path 是一个 module 的规范名称，在 go.mod 文件中直接声明。module path 是在本 module 中所有 package 路径的前缀。</p>
+<p>module path 应该描述这个 module 是做什么的和在哪可以找到它。通常，一个 module path 由仓库的根路径，仓库中的子目录和主要的版本后缀。</p>
+<ul>
+<li>仓库根路径（repository root path）是 module path 的一部分，它与在开发中使用的 module 版本控制仓库的根目录相关联。大多数 modules 被定义在它们的仓库根目录下，所以它通常是一个完整路径。举个例子，golang.org/x/net 是所有有着相同名字 module 的仓库根路径。</li>
+<li>如果 module 没有被定义在仓库根目录中，则该 module subdirectory 是 module path 的一部分</li>
+</ul>
+<h3 id="go-mod-files"><a href="#go-mod-files" class="headerlink" title="go.mod files"></a>go.mod files</h3><h3 id="Minimal-version-selection-MVS"><a href="#Minimal-version-selection-MVS" class="headerlink" title="Minimal version selection (MVS)"></a>Minimal version selection (MVS)</h3><h3 id="Module-graph-pruning"><a href="#Module-graph-pruning" class="headerlink" title="Module graph pruning"></a>Module graph pruning</h3><h3 id="Compatibility-with-non-module-repositories"><a href="#Compatibility-with-non-module-repositories" class="headerlink" title="Compatibility with non-module repositories"></a>Compatibility with non-module repositories</h3><h3 id="Module-aware-commands"><a href="#Module-aware-commands" class="headerlink" title="Module-aware commands"></a>Module-aware commands</h3><h3 id="Module-proxies"><a href="#Module-proxies" class="headerlink" title="Module proxies"></a>Module proxies</h3><h3 id="Version-control-systems"><a href="#Version-control-systems" class="headerlink" title="Version control systems"></a>Version control systems</h3><h3 id="Module-zip-files"><a href="#Module-zip-files" class="headerlink" title="Module zip files"></a>Module zip files</h3><h3 id="Private-modules"><a href="#Private-modules" class="headerlink" title="Private modules"></a>Private modules</h3><h3 id="Module-cache"><a href="#Module-cache" class="headerlink" title="Module cache"></a>Module cache</h3><h3 id="Authenticating-modules"><a href="#Authenticating-modules" class="headerlink" title="Authenticating modules"></a>Authenticating modules</h3><h3 id="Environment-variables"><a href="#Environment-variables" class="headerlink" title="Environment variables"></a>Environment variables</h3><h3 id="Glossary"><a href="#Glossary" class="headerlink" title="Glossary"></a>Glossary</h3>
     </div>
 
     
@@ -251,7 +236,7 @@
   </li>
   <li class="post-copyright-link">
     <strong>本文链接：</strong>
-    <a href="https://bqyang.top/2021/contributeToYunion/" title="第一次 pr">https://bqyang.top/2021/contributeToYunion/</a>
+    <a href="https://bqyang.top/2021/go-modules/" title="">https://bqyang.top/2021/go-modules/</a>
   </li>
   <li class="post-copyright-license">
     <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/zh-Hans" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
@@ -268,11 +253,11 @@
         
     <div class="post-nav">
       <div class="post-nav-item">
-    <a href="/2021/planB/" rel="prev" title="知识点准备">
-      <i class="fa fa-chevron-left"></i> 知识点准备
+    <a href="/2021/contributeToYunion/" rel="prev" title="第一次 pr">
+      <i class="fa fa-chevron-left"></i> 第一次 pr
     </a></div>
       <div class="post-nav-item">
-    <a href="/2021/go-modules/" rel="next" title="">
+    <a href="/2021/GCComments/" rel="next" title="">
        <i class="fa fa-chevron-right"></i>
     </a></div>
     </div>
@@ -334,6 +319,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Go-Modules"><span class="nav-number">1.</span> <span class="nav-text">Go Modules</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Introduction"><span class="nav-number">1.1.</span> <span class="nav-text">Introduction</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Modules-packages-and-versions"><span class="nav-number">1.2.</span> <span class="nav-text">Modules, packages, and versions</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Module-paths"><span class="nav-number">1.2.1.</span> <span class="nav-text">Module paths</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#go-mod-files"><span class="nav-number">1.3.</span> <span class="nav-text">go.mod files</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Minimal-version-selection-MVS"><span class="nav-number">1.4.</span> <span class="nav-text">Minimal version selection (MVS)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Module-graph-pruning"><span class="nav-number">1.5.</span> <span class="nav-text">Module graph pruning</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Compatibility-with-non-module-repositories"><span class="nav-number">1.6.</span> <span class="nav-text">Compatibility with non-module repositories</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Module-aware-commands"><span class="nav-number">1.7.</span> <span class="nav-text">Module-aware commands</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Module-proxies"><span class="nav-number">1.8.</span> <span class="nav-text">Module proxies</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Version-control-systems"><span class="nav-number">1.9.</span> <span class="nav-text">Version control systems</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Module-zip-files"><span class="nav-number">1.10.</span> <span class="nav-text">Module zip files</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Private-modules"><span class="nav-number">1.11.</span> <span class="nav-text">Private modules</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Module-cache"><span class="nav-number">1.12.</span> <span class="nav-text">Module cache</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Authenticating-modules"><span class="nav-number">1.13.</span> <span class="nav-text">Authenticating modules</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Environment-variables"><span class="nav-number">1.14.</span> <span class="nav-text">Environment variables</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Glossary"><span class="nav-number">1.15.</span> <span class="nav-text">Glossary</span></a></li></ol></li></ol></div>
       </div>
       <!--/noindex-->
 
@@ -465,7 +451,7 @@ NexT.utils.loadComments(document.querySelector('#gitalk-container'), () => {
       repo        : 'blog_comments',
       owner       : 'clamyang',
       admin       : ['clamyang'],
-      id          : 'c3d08c619b6f0cc9518cd4a61df0d77c',
+      id          : '45ce8b7ee05a843fb02a162c18ec0037',
         language: 'en',
       distractionFreeMode: true
     });

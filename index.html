@@ -153,6 +153,255 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://bqyang.top/2021/GCComments/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="杨宝强">
+      <meta itemprop="description" content="记录技术精进之路，记录生活的打情骂俏">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="杨宝强的技术笔记">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2021/GCComments/" class="post-title-link" itemprop="url">未命名</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2021-11-25 19:02:41" itemprop="dateCreated datePublished" datetime="2021-11-25T19:02:41+08:00">2021-11-25</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <pre class="line-numbers language-none"><code class="language-none">title: GC from go comments
+comments: true<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+
+
+
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// Garbage collector (GC).</span>
+<span class="token comment">//</span>
+<span class="token comment">// The GC runs concurrently with mutator threads, is type accurate (aka precise), allows multiple</span>
+<span class="token comment">// GC thread to run in parallel. It is a concurrent mark and sweep that uses a write barrier. It is</span>
+<span class="token comment">// non-generational and non-compacting. Allocation is done using size segregated per P allocation</span>
+<span class="token comment">// areas to minimize fragmentation while eliminating locks in the common case.</span>
+<span class="token comment">//</span>
+<span class="token comment">// The algorithm decomposes into several steps.</span>
+<span class="token comment">// This is a high level description of the algorithm being used. For an overview of GC a good</span>
+<span class="token comment">// place to start is Richard Jones' gchandbook.org.</span>
+<span class="token comment">//</span>
+<span class="token comment">// The algorithm's intellectual heritage includes Dijkstra's on-the-fly algorithm, see</span>
+<span class="token comment">// Edsger W. Dijkstra, Leslie Lamport, A. J. Martin, C. S. Scholten, and E. F. M. Steffens. 1978.</span>
+<span class="token comment">// On-the-fly garbage collection: an exercise in cooperation. Commun. ACM 21, 11 (November 1978),</span>
+<span class="token comment">// 966-975.</span>
+<span class="token comment">// For journal quality proofs that these steps are complete, correct, and terminate see</span>
+<span class="token comment">// Hudson, R., and Moss, J.E.B. Copying Garbage Collection without stopping the world.</span>
+<span class="token comment">// Concurrency and Computation: Practice and Experience 15(3-5), 2003.</span>
+<span class="token comment">//</span>
+<span class="token comment">// 1. GC performs sweep termination.</span>
+<span class="token comment">//</span>
+<span class="token comment">//    a. Stop the world. This causes all Ps to reach a GC safe-point.</span>
+<span class="token comment">//</span>
+<span class="token comment">//    b. Sweep any unswept spans. There will only be unswept spans if</span>
+<span class="token comment">//    this GC cycle was forced before the expected time.</span>
+<span class="token comment">//</span>
+<span class="token comment">// 2. GC performs the mark phase.</span>
+<span class="token comment">//</span>
+<span class="token comment">//    a. Prepare for the mark phase by setting gcphase to _GCmark</span>
+<span class="token comment">//    (from _GCoff), enabling the write barrier, enabling mutator</span>
+<span class="token comment">//    assists, and enqueueing root mark jobs. No objects may be</span>
+<span class="token comment">//    scanned until all Ps have enabled the write barrier, which is</span>
+<span class="token comment">//    accomplished using STW.</span>
+<span class="token comment">//</span>
+<span class="token comment">//    b. Start the world. From this point, GC work is done by mark</span>
+<span class="token comment">//    workers started by the scheduler and by assists performed as</span>
+<span class="token comment">//    part of allocation. The write barrier shades both the</span>
+<span class="token comment">//    overwritten pointer and the new pointer value for any pointer</span>
+<span class="token comment">//    writes (see mbarrier.go for details). Newly allocated objects</span>
+<span class="token comment">//    are immediately marked black.</span>
+<span class="token comment">//</span>
+<span class="token comment">//    c. GC performs root marking jobs. This includes scanning all</span>
+<span class="token comment">//    stacks, shading all globals, and shading any heap pointers in</span>
+<span class="token comment">//    off-heap runtime data structures. Scanning a stack stops a</span>
+<span class="token comment">//    goroutine, shades any pointers found on its stack, and then</span>
+<span class="token comment">//    resumes the goroutine.</span>
+<span class="token comment">//</span>
+<span class="token comment">//    d. GC drains the work queue of grey objects, scanning each grey</span>
+<span class="token comment">//    object to black and shading all pointers found in the object</span>
+<span class="token comment">//    (which in turn may add those pointers to the work queue).</span>
+<span class="token comment">//</span>
+<span class="token comment">//    e. Because GC work is spread across local caches, GC uses a</span>
+<span class="token comment">//    distributed termination algorithm to detect when there are no</span>
+<span class="token comment">//    more root marking jobs or grey objects (see gcMarkDone). At this</span>
+<span class="token comment">//    point, GC transitions to mark termination.</span>
+<span class="token comment">//</span>
+<span class="token comment">// 3. GC performs mark termination.</span>
+<span class="token comment">//</span>
+<span class="token comment">//    a. Stop the world.</span>
+<span class="token comment">//</span>
+<span class="token comment">//    b. Set gcphase to _GCmarktermination, and disable workers and</span>
+<span class="token comment">//    assists.</span>
+<span class="token comment">//</span>
+<span class="token comment">//    c. Perform housekeeping like flushing mcaches.</span>
+<span class="token comment">//</span>
+<span class="token comment">// 4. GC performs the sweep phase.</span>
+<span class="token comment">//</span>
+<span class="token comment">//    a. Prepare for the sweep phase by setting gcphase to _GCoff,</span>
+<span class="token comment">//    setting up sweep state and disabling the write barrier.</span>
+<span class="token comment">//</span>
+<span class="token comment">//    b. Start the world. From this point on, newly allocated objects</span>
+<span class="token comment">//    are white, and allocating sweeps spans before use if necessary.</span>
+<span class="token comment">//</span>
+<span class="token comment">//    c. GC does concurrent sweeping in the background and in response</span>
+<span class="token comment">//    to allocation. See description below.</span>
+<span class="token comment">//</span>
+<span class="token comment">// 5. When sufficient allocation has taken place, replay the sequence</span>
+<span class="token comment">// starting with 1 above. See discussion of GC rate below.</span>
+
+<span class="token comment">// Concurrent sweep.</span>
+<span class="token comment">//</span>
+<span class="token comment">// The sweep phase proceeds concurrently with normal program execution.</span>
+<span class="token comment">// The heap is swept span-by-span both lazily (when a goroutine needs another span)</span>
+<span class="token comment">// and concurrently in a background goroutine (this helps programs that are not CPU bound).</span>
+<span class="token comment">// At the end of STW mark termination all spans are marked as "needs sweeping".</span>
+<span class="token comment">//</span>
+<span class="token comment">// The background sweeper goroutine simply sweeps spans one-by-one.</span>
+<span class="token comment">//</span>
+<span class="token comment">// To avoid requesting more OS memory while there are unswept spans, when a</span>
+<span class="token comment">// goroutine needs another span, it first attempts to reclaim that much memory</span>
+<span class="token comment">// by sweeping. When a goroutine needs to allocate a new small-object span, it</span>
+<span class="token comment">// sweeps small-object spans for the same object size until it frees at least</span>
+<span class="token comment">// one object. When a goroutine needs to allocate large-object span from heap,</span>
+<span class="token comment">// it sweeps spans until it frees at least that many pages into heap. There is</span>
+<span class="token comment">// one case where this may not suffice: if a goroutine sweeps and frees two</span>
+<span class="token comment">// nonadjacent one-page spans to the heap, it will allocate a new two-page</span>
+<span class="token comment">// span, but there can still be other one-page unswept spans which could be</span>
+<span class="token comment">// combined into a two-page span.</span>
+<span class="token comment">//</span>
+<span class="token comment">// It's critical to ensure that no operations proceed on unswept spans (that would corrupt</span>
+<span class="token comment">// mark bits in GC bitmap). During GC all mcaches are flushed into the central cache,</span>
+<span class="token comment">// so they are empty. When a goroutine grabs a new span into mcache, it sweeps it.</span>
+<span class="token comment">// When a goroutine explicitly frees an object or sets a finalizer, it ensures that</span>
+<span class="token comment">// the span is swept (either by sweeping it, or by waiting for the concurrent sweep to finish).</span>
+<span class="token comment">// The finalizer goroutine is kicked off only when all spans are swept.</span>
+<span class="token comment">// When the next GC starts, it sweeps all not-yet-swept spans (if any).</span>
+
+<span class="token comment">// GC rate.</span>
+<span class="token comment">// Next GC is after we've allocated an extra amount of memory proportional to</span>
+<span class="token comment">// the amount already in use. The proportion is controlled by GOGC environment variable</span>
+<span class="token comment">// (100 by default). If GOGC=100 and we're using 4M, we'll GC again when we get to 8M</span>
+<span class="token comment">// (this mark is tracked in next_gc variable). This keeps the GC cost in linear</span>
+<span class="token comment">// proportion to the allocation cost. Adjusting GOGC just changes the linear constant</span>
+<span class="token comment">// (and also the amount of extra memory used).</span>
+
+<span class="token comment">// Oblets</span>
+<span class="token comment">//</span>
+<span class="token comment">// In order to prevent long pauses while scanning large objects and to</span>
+<span class="token comment">// improve parallelism, the garbage collector breaks up scan jobs for</span>
+<span class="token comment">// objects larger than maxObletBytes into "oblets" of at most</span>
+<span class="token comment">// maxObletBytes. When scanning encounters the beginning of a large</span>
+<span class="token comment">// object, it scans only the first oblet and enqueues the remaining</span>
+<span class="token comment">// oblets as new scan jobs.</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://bqyang.top/2021/go-modules/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="杨宝强">
+      <meta itemprop="description" content="记录技术精进之路，记录生活的打情骂俏">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="杨宝强的技术笔记">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2021/go-modules/" class="post-title-link" itemprop="url">未命名</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2021-11-24 15:52:46 / 修改时间：21:32:59" itemprop="dateCreated datePublished" datetime="2021-11-24T15:52:46+08:00">2021-11-24</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>[toc]</p>
+<h2 id="Go-Modules"><a href="#Go-Modules" class="headerlink" title="Go Modules"></a>Go Modules</h2><h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><h3 id="Modules-packages-and-versions"><a href="#Modules-packages-and-versions" class="headerlink" title="Modules, packages, and versions"></a>Modules, packages, and versions</h3><h4 id="Module-paths"><a href="#Module-paths" class="headerlink" title="Module paths"></a>Module paths</h4><p>module path 是一个 module 的规范名称，在 go.mod 文件中直接声明。module path 是在本 module 中所有 package 路径的前缀。</p>
+<p>module path 应该描述这个 module 是做什么的和在哪可以找到它。通常，一个 module path 由仓库的根路径，仓库中的子目录和主要的版本后缀。</p>
+<ul>
+<li>仓库根路径（repository root path）是 module path 的一部分，它与在开发中使用的 module 版本控制仓库的根目录相关联。大多数 modules 被定义在它们的仓库根目录下，所以它通常是一个完整路径。举个例子，golang.org/x/net 是所有有着相同名字 module 的仓库根路径。</li>
+<li>如果 module 没有被定义在仓库根目录中，则该 module subdirectory 是 module path 的一部分</li>
+</ul>
+<h3 id="go-mod-files"><a href="#go-mod-files" class="headerlink" title="go.mod files"></a>go.mod files</h3><h3 id="Minimal-version-selection-MVS"><a href="#Minimal-version-selection-MVS" class="headerlink" title="Minimal version selection (MVS)"></a>Minimal version selection (MVS)</h3><h3 id="Module-graph-pruning"><a href="#Module-graph-pruning" class="headerlink" title="Module graph pruning"></a>Module graph pruning</h3><h3 id="Compatibility-with-non-module-repositories"><a href="#Compatibility-with-non-module-repositories" class="headerlink" title="Compatibility with non-module repositories"></a>Compatibility with non-module repositories</h3><h3 id="Module-aware-commands"><a href="#Module-aware-commands" class="headerlink" title="Module-aware commands"></a>Module-aware commands</h3><h3 id="Module-proxies"><a href="#Module-proxies" class="headerlink" title="Module proxies"></a>Module proxies</h3><h3 id="Version-control-systems"><a href="#Version-control-systems" class="headerlink" title="Version control systems"></a>Version control systems</h3><h3 id="Module-zip-files"><a href="#Module-zip-files" class="headerlink" title="Module zip files"></a>Module zip files</h3><h3 id="Private-modules"><a href="#Private-modules" class="headerlink" title="Private modules"></a>Private modules</h3><h3 id="Module-cache"><a href="#Module-cache" class="headerlink" title="Module cache"></a>Module cache</h3><h3 id="Authenticating-modules"><a href="#Authenticating-modules" class="headerlink" title="Authenticating modules"></a>Authenticating modules</h3><h3 id="Environment-variables"><a href="#Environment-variables" class="headerlink" title="Environment variables"></a>Environment variables</h3><h3 id="Glossary"><a href="#Glossary" class="headerlink" title="Glossary"></a>Glossary</h3>
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="https://bqyang.top/2021/contributeToYunion/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -708,7 +957,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">7</span>
+          <span class="site-state-item-count">9</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
