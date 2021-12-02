@@ -2,23 +2,37 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
-    <loc>https://bqyang.top/2021/timer%20%E6%B5%85%E6%9E%90/</loc>
+    <loc>https://bqyang.top/2021/GC/</loc>
     
-    <lastmod>2021-11-29</lastmod>
+    <lastmod>2021-12-02</lastmod>
     
   </url>
   
   <url>
     <loc>https://bqyang.top/pendingPost/GC.html</loc>
     
-    <lastmod>2021-11-29</lastmod>
+    <lastmod>2021-12-02</lastmod>
     
   </url>
   
   <url>
-    <loc>https://bqyang.top/pendingPost/GC%20%E8%A7%A6%E5%8F%91%E6%97%B6%E6%9C%BA.html</loc>
+    <loc>https://bqyang.top/pendingPost/mysql%20%E5%AD%97%E7%AC%A6%E4%B8%B2%E4%B8%8D%E5%8C%B9%E9%85%8D%E5%A4%A7%E5%B0%8F%E5%86%99.html</loc>
     
-    <lastmod>2021-11-28</lastmod>
+    <lastmod>2021-12-01</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://bqyang.top/pendingPost/%E4%BC%98%E5%8C%96%E6%9F%A5%E8%AF%A2%E8%BF%87%E7%A8%8B.html</loc>
+    
+    <lastmod>2021-12-01</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://bqyang.top/2021/timer%20%E6%B5%85%E6%9E%90/</loc>
+    
+    <lastmod>2021-11-30</lastmod>
     
   </url>
   
@@ -88,7 +102,7 @@
 
   <url>
     <loc>https://bqyang.top/</loc>
-    <lastmod>2021-11-29</lastmod>
+    <lastmod>2021-12-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
