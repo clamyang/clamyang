@@ -29,7 +29,7 @@
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://blogstatic.haohtml.com/uploads/2021/04/d2b5ca33bd970f64a6301fa75ae2eb22-6.png?x-oss-process=image/format,webp">
 <meta property="article:published_time" content="2021-12-02T08:11:37.293Z">
-<meta property="article:modified_time" content="2021-12-02T08:21:16.617Z">
+<meta property="article:modified_time" content="2021-12-02T08:26:00.407Z">
 <meta property="article:author" content="杨宝强">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="https://blogstatic.haohtml.com/uploads/2021/04/d2b5ca33bd970f64a6301fa75ae2eb22-6.png?x-oss-process=image/format,webp">
@@ -182,7 +182,7 @@
               <span class="post-meta-item-text">发表于</span>
               
 
-              <time title="创建时间：2021-12-02 16:11:37 / 修改时间：16:21:16" itemprop="dateCreated datePublished" datetime="2021-12-02T16:11:37+08:00">2021-12-02</time>
+              <time title="创建时间：2021-12-02 16:11:37 / 修改时间：16:26:00" itemprop="dateCreated datePublished" datetime="2021-12-02T16:11:37+08:00">2021-12-02</time>
             </span>
 
           
@@ -663,243 +663,242 @@
 <ul>
 <li>由上可知，所有 gcMarkWorker 都是通过该函数创建的，我们需要关注的是 <code>notesleepg()</code> 和 <code>go gcBgMarkWorker</code> 这两行代码</li>
 </ul>
-<h3 id="notesleepg"><a href="#notesleepg" class="headerlink" title="notesleepg"></a><code>notesleepg</code></h3><ul>
-<li><p>~~~go<br>  // same as runtime·notetsleep, but called on user g (not g0)<br>  // calls only nosplit functions between entersyscallblock/exitsyscall<br>  func notetsleepg(n *note, ns int64) bool {</p>
-<pre><code>  gp := getg()
-  if gp == gp.m.g0 &#123;
-      throw(&quot;notetsleepg on g0&quot;)
-  &#125;
-  // 这个我们在学习 timer 的时候已经看过了
-  // 主要就是执行 handoff
-  entersyscallblock()
-  // 这里才是真正进行系统调用的地方，ns = -1，会无休止的休眠
-  // 直到通过 wakeup 唤醒
-  ok := notetsleep_internal(n, ns)
-  // 上述，通过 wakeup 唤醒后会继续执行这块代码
-  // 该函数主要是给刚刚剥离的 GM 找一个 P
-  // 找到了，执行
-  // 没找到，把 g 放到全局队列
-  exitsyscall()
-  return ok
-</code></pre>
-<p>  }</p>
-  <pre class="line-numbers language-none"><code class="language-none">
-### &#96;go gcBgMarkWorker&#96;
+<h3 id="notesleepg"><a href="#notesleepg" class="headerlink" title="notesleepg"></a><code>notesleepg</code></h3><pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// same as runtime·notetsleep, but called on user g (not g0)</span>
+<span class="token comment">// calls only nosplit functions between entersyscallblock/exitsyscall</span>
+<span class="token keyword">func</span> <span class="token function">notetsleepg</span><span class="token punctuation">(</span>n <span class="token operator">*</span>note<span class="token punctuation">,</span> ns <span class="token builtin">int64</span><span class="token punctuation">)</span> <span class="token builtin">bool</span> <span class="token punctuation">&#123;</span>
+	gp <span class="token operator">:=</span> <span class="token function">getg</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+	<span class="token keyword">if</span> gp <span class="token operator">==</span> gp<span class="token punctuation">.</span>m<span class="token punctuation">.</span>g0 <span class="token punctuation">&#123;</span>
+		<span class="token function">throw</span><span class="token punctuation">(</span><span class="token string">"notetsleepg on g0"</span><span class="token punctuation">)</span>
+	<span class="token punctuation">&#125;</span>
+    <span class="token comment">// 这个我们在学习 timer 的时候已经看过了</span>
+    <span class="token comment">// 主要就是执行 handoff</span>
+	<span class="token function">entersyscallblock</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token comment">// 这里才是真正进行系统调用的地方，ns = -1，会无休止的休眠</span>
+    <span class="token comment">// 直到通过 wakeup 唤醒</span>
+	ok <span class="token operator">:=</span> <span class="token function">notetsleep_internal</span><span class="token punctuation">(</span>n<span class="token punctuation">,</span> ns<span class="token punctuation">)</span>
+    <span class="token comment">// 上述，通过 wakeup 唤醒后会继续执行这块代码</span>
+    <span class="token comment">// 该函数主要是给刚刚剥离的 GM 找一个 P</span>
+    <span class="token comment">// 找到了，执行</span>
+    <span class="token comment">// 没找到，把 g 放到全局队列</span>
+	<span class="token function">exitsyscall</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+	<span class="token keyword">return</span> ok
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
-- 这里应用到 MPG 调度的知识点，我们通过 go 关键字新建一个 goroutine，放入 runnext 等待被调度。
+<h3 id="go-gcBgMarkWorker"><a href="#go-gcBgMarkWorker" class="headerlink" title="go gcBgMarkWorker"></a><code>go gcBgMarkWorker</code></h3><ul>
+<li>这里应用到 MPG 调度的知识点，我们通过 go 关键字新建一个 goroutine，放入 runnext 等待被调度。</li>
+</ul>
+<h3 id="结合着看"><a href="#结合着看" class="headerlink" title="结合着看"></a>结合着看</h3><p>我们假设现在只有一个 P，即 <code>runtime.GOMAXPROCS(1)</code> 。这时我们来看上述代码，其执行过程为：</p>
+<ul>
+<li>1.通过 <code>gcBgMarkStartWorkers</code> 创建 worker</li>
+<li>2.worker 被放入 runnext 等待被调度</li>
+<li>3.执行 <code>notesleepg</code><ul>
+<li>handoffp</li>
+<li>futex &amp;&amp; timeout = -1</li>
+<li>第 3 步执行完成后，GM 已经从 P 上剥离</li>
+</ul>
+</li>
+<li>4.handoffp 中会启动一个 M 继续执行调度循环</li>
+<li>5.newM 从 P 上找 G 执行</li>
+<li>6.拿到我们刚刚创建的 newg</li>
+<li>7.进入到 <code>gcBgMarkWorker()</code> 中执行<ul>
+<li>新建 node &amp;&amp; <strong>wakeup</strong> 休眠的 GM</li>
+<li>然后 <code>gopark</code> 挂起 worker 等待唤醒</li>
+</ul>
+</li>
+<li>8.休眠的 GM 醒来后<ul>
+<li>尝试获取 oldp</li>
+<li>如果获取不到则，尝试获取 idlep</li>
+<li>如果获取不到则，将 g 放入全局队列</li>
+</ul>
+</li>
+<li>9.第 8 步中的 g 被调度后，会继续执行 create worker 的工作，回到第 1 步 继续执行</li>
+</ul>
+<h2 id="gcMarkWorker-执行过程"><a href="#gcMarkWorker-执行过程" class="headerlink" title="gcMarkWorker 执行过程"></a>gcMarkWorker 执行过程</h2><h3 id="gcBgMarkWorker-源码剖析"><a href="#gcBgMarkWorker-源码剖析" class="headerlink" title="gcBgMarkWorker 源码剖析"></a>gcBgMarkWorker 源码剖析</h3><pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token function">gcBgMarkWorker</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+	gp <span class="token operator">:=</span> <span class="token function">getg</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
 
-### 结合着看
+	<span class="token comment">// We pass node to a gopark unlock function, so it can't be on</span>
+	<span class="token comment">// the stack (see gopark). Prevent deadlock from recursively</span>
+	<span class="token comment">// starting GC by disabling preemption.</span>
+	gp<span class="token punctuation">.</span>m<span class="token punctuation">.</span>preemptoff <span class="token operator">=</span> <span class="token string">"GC worker init"</span>
+	node <span class="token operator">:=</span> <span class="token function">new</span><span class="token punctuation">(</span>gcBgMarkWorkerNode<span class="token punctuation">)</span>
+	gp<span class="token punctuation">.</span>m<span class="token punctuation">.</span>preemptoff <span class="token operator">=</span> <span class="token string">""</span>
 
-我们假设现在只有一个 P，即 &#96;runtime.GOMAXPROCS(1)&#96; 。这时我们来看上述代码，其执行过程为：
+	node<span class="token punctuation">.</span>gp<span class="token punctuation">.</span><span class="token function">set</span><span class="token punctuation">(</span>gp<span class="token punctuation">)</span>
 
-- 1.通过 &#96;gcBgMarkStartWorkers&#96; 创建 worker
-- 2.worker 被放入 runnext 等待被调度
-- 3.执行 &#96;notesleepg&#96;
-	- handoffp
-	- futex &amp;&amp; timeout &#x3D; -1
-	- 第 3 步执行完成后，GM 已经从 P 上剥离
-- 4.handoffp 中会启动一个 M 继续执行调度循环
-- 5.newM 从 P 上找 G 执行
-- 6.拿到我们刚刚创建的 newg
-- 7.进入到 &#96;gcBgMarkWorker()&#96; 中执行
-	- 新建 node &amp;&amp; **wakeup** 休眠的 GM
-	- 然后 &#96;gopark&#96; 挂起 worker 等待唤醒
-- 8.休眠的 GM 醒来后
-	- 尝试获取 oldp
-	- 如果获取不到则，尝试获取 idlep
-	- 如果获取不到则，将 g 放入全局队列
-- 9.第 8 步中的 g 被调度后，会继续执行 create worker 的工作，回到第 1 步 继续执行
+	node<span class="token punctuation">.</span>m<span class="token punctuation">.</span><span class="token function">set</span><span class="token punctuation">(</span><span class="token function">acquirem</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+	<span class="token function">notewakeup</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>work<span class="token punctuation">.</span>bgMarkReady<span class="token punctuation">)</span>
+	<span class="token comment">// After this point, the background mark worker is generally scheduled</span>
+	<span class="token comment">// cooperatively by gcController.findRunnableGCWorker. While performing</span>
+	<span class="token comment">// work on the P, preemption is disabled because we are working on</span>
+	<span class="token comment">// P-local work buffers. When the preempt flag is set, this puts itself</span>
+	<span class="token comment">// into _Gwaiting to be woken up by gcController.findRunnableGCWorker</span>
+	<span class="token comment">// at the appropriate time.</span>
+	<span class="token comment">//</span>
+	<span class="token comment">// When preemption is enabled (e.g., while in gcMarkDone), this worker</span>
+	<span class="token comment">// may be preempted and schedule as a _Grunnable G from a runq. That is</span>
+	<span class="token comment">// fine; it will eventually gopark again for further scheduling via</span>
+	<span class="token comment">// findRunnableGCWorker.</span>
+	<span class="token comment">//</span>
+	<span class="token comment">// Since we disable preemption before notifying bgMarkReady, we</span>
+	<span class="token comment">// guarantee that this G will be in the worker pool for the next</span>
+	<span class="token comment">// findRunnableGCWorker. This isn't strictly necessary, but it reduces</span>
+	<span class="token comment">// latency between _GCmark starting and the workers starting.</span>
 
-## gcMarkWorker 执行过程
+	<span class="token keyword">for</span> <span class="token punctuation">&#123;</span>
+		<span class="token comment">// Go to sleep until woken by</span>
+		<span class="token comment">// gcController.findRunnableGCWorker.</span>
+		<span class="token function">gopark</span><span class="token punctuation">(</span><span class="token keyword">func</span><span class="token punctuation">(</span>g <span class="token operator">*</span>g<span class="token punctuation">,</span> nodep unsafe<span class="token punctuation">.</span>Pointer<span class="token punctuation">)</span> <span class="token builtin">bool</span> <span class="token punctuation">&#123;</span>
+			node <span class="token operator">:=</span> <span class="token punctuation">(</span><span class="token operator">*</span>gcBgMarkWorkerNode<span class="token punctuation">)</span><span class="token punctuation">(</span>nodep<span class="token punctuation">)</span>
 
-### gcBgMarkWorker 源码剖析
+			<span class="token keyword">if</span> mp <span class="token operator">:=</span> node<span class="token punctuation">.</span>m<span class="token punctuation">.</span><span class="token function">ptr</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> mp <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
+				<span class="token comment">// The worker G is no longer running; release</span>
+				<span class="token comment">// the M.</span>
+				<span class="token comment">//</span>
+				<span class="token comment">// N.B. it is _safe_ to release the M as soon</span>
+				<span class="token comment">// as we are no longer performing P-local mark</span>
+				<span class="token comment">// work.</span>
+				<span class="token comment">//</span>
+				<span class="token comment">// However, since we cooperatively stop work</span>
+				<span class="token comment">// when gp.preempt is set, if we releasem in</span>
+				<span class="token comment">// the loop then the following call to gopark</span>
+				<span class="token comment">// would immediately preempt the G. This is</span>
+				<span class="token comment">// also safe, but inefficient: the G must</span>
+				<span class="token comment">// schedule again only to enter gopark and park</span>
+				<span class="token comment">// again. Thus, we defer the release until</span>
+				<span class="token comment">// after parking the G.</span>
+				<span class="token function">releasem</span><span class="token punctuation">(</span>mp<span class="token punctuation">)</span>
+			<span class="token punctuation">&#125;</span>
 
-~~~go
-func gcBgMarkWorker() &#123;
-	gp :&#x3D; getg()
-
-	&#x2F;&#x2F; We pass node to a gopark unlock function, so it can&#39;t be on
-	&#x2F;&#x2F; the stack (see gopark). Prevent deadlock from recursively
-	&#x2F;&#x2F; starting GC by disabling preemption.
-	gp.m.preemptoff &#x3D; &quot;GC worker init&quot;
-	node :&#x3D; new(gcBgMarkWorkerNode)
-	gp.m.preemptoff &#x3D; &quot;&quot;
-
-	node.gp.set(gp)
-
-	node.m.set(acquirem())
-	notewakeup(&amp;work.bgMarkReady)
-	&#x2F;&#x2F; After this point, the background mark worker is generally scheduled
-	&#x2F;&#x2F; cooperatively by gcController.findRunnableGCWorker. While performing
-	&#x2F;&#x2F; work on the P, preemption is disabled because we are working on
-	&#x2F;&#x2F; P-local work buffers. When the preempt flag is set, this puts itself
-	&#x2F;&#x2F; into _Gwaiting to be woken up by gcController.findRunnableGCWorker
-	&#x2F;&#x2F; at the appropriate time.
-	&#x2F;&#x2F;
-	&#x2F;&#x2F; When preemption is enabled (e.g., while in gcMarkDone), this worker
-	&#x2F;&#x2F; may be preempted and schedule as a _Grunnable G from a runq. That is
-	&#x2F;&#x2F; fine; it will eventually gopark again for further scheduling via
-	&#x2F;&#x2F; findRunnableGCWorker.
-	&#x2F;&#x2F;
-	&#x2F;&#x2F; Since we disable preemption before notifying bgMarkReady, we
-	&#x2F;&#x2F; guarantee that this G will be in the worker pool for the next
-	&#x2F;&#x2F; findRunnableGCWorker. This isn&#39;t strictly necessary, but it reduces
-	&#x2F;&#x2F; latency between _GCmark starting and the workers starting.
-
-	for &#123;
-		&#x2F;&#x2F; Go to sleep until woken by
-		&#x2F;&#x2F; gcController.findRunnableGCWorker.
-		gopark(func(g *g, nodep unsafe.Pointer) bool &#123;
-			node :&#x3D; (*gcBgMarkWorkerNode)(nodep)
-
-			if mp :&#x3D; node.m.ptr(); mp !&#x3D; nil &#123;
-				&#x2F;&#x2F; The worker G is no longer running; release
-				&#x2F;&#x2F; the M.
-				&#x2F;&#x2F;
-				&#x2F;&#x2F; N.B. it is _safe_ to release the M as soon
-				&#x2F;&#x2F; as we are no longer performing P-local mark
-				&#x2F;&#x2F; work.
-				&#x2F;&#x2F;
-				&#x2F;&#x2F; However, since we cooperatively stop work
-				&#x2F;&#x2F; when gp.preempt is set, if we releasem in
-				&#x2F;&#x2F; the loop then the following call to gopark
-				&#x2F;&#x2F; would immediately preempt the G. This is
-				&#x2F;&#x2F; also safe, but inefficient: the G must
-				&#x2F;&#x2F; schedule again only to enter gopark and park
-				&#x2F;&#x2F; again. Thus, we defer the release until
-				&#x2F;&#x2F; after parking the G.
-				releasem(mp)
-			&#125;
-
-			&#x2F;&#x2F; Release this G to the pool.
-			gcBgMarkWorkerPool.push(&amp;node.node)
-			&#x2F;&#x2F; Note that at this point, the G may immediately be
-			&#x2F;&#x2F; rescheduled and may be running.
-			return true
-		&#125;, unsafe.Pointer(node), waitReasonGCWorkerIdle, traceEvGoBlock, 0)
+			<span class="token comment">// Release this G to the pool.</span>
+			gcBgMarkWorkerPool<span class="token punctuation">.</span><span class="token function">push</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>node<span class="token punctuation">.</span>node<span class="token punctuation">)</span>
+			<span class="token comment">// Note that at this point, the G may immediately be</span>
+			<span class="token comment">// rescheduled and may be running.</span>
+			<span class="token keyword">return</span> <span class="token boolean">true</span>
+		<span class="token punctuation">&#125;</span><span class="token punctuation">,</span> unsafe<span class="token punctuation">.</span><span class="token function">Pointer</span><span class="token punctuation">(</span>node<span class="token punctuation">)</span><span class="token punctuation">,</span> waitReasonGCWorkerIdle<span class="token punctuation">,</span> traceEvGoBlock<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span>
         
-        &#x2F;*
+        <span class="token comment">/*
         	以上代码都已经解释过了
-        *&#x2F;
+        */</span>
         
-        &#x2F;*
+        <span class="token comment">/*
         	TODO 关于在 GC 期间什么时候可以抢占，什么时候禁止抢占
         	还需要进一步研究，目前可以先把整个流程梳理下来
-        *&#x2F;
+        */</span>
 
-		&#x2F;&#x2F; Preemption must not occur here, or another G might see
-		&#x2F;&#x2F; p.gcMarkWorkerMode.
+		<span class="token comment">// Preemption must not occur here, or another G might see</span>
+		<span class="token comment">// p.gcMarkWorkerMode.</span>
 
-		&#x2F;&#x2F; Disable preemption so we can use the gcw. If the
-		&#x2F;&#x2F; scheduler wants to preempt us, we&#39;ll stop draining,
-		&#x2F;&#x2F; dispose the gcw, and then preempt.
-		node.m.set(acquirem())
-		pp :&#x3D; gp.m.p.ptr() &#x2F;&#x2F; P can&#39;t change with preemption disabled.
+		<span class="token comment">// Disable preemption so we can use the gcw. If the</span>
+		<span class="token comment">// scheduler wants to preempt us, we'll stop draining,</span>
+		<span class="token comment">// dispose the gcw, and then preempt.</span>
+		node<span class="token punctuation">.</span>m<span class="token punctuation">.</span><span class="token function">set</span><span class="token punctuation">(</span><span class="token function">acquirem</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+		pp <span class="token operator">:=</span> gp<span class="token punctuation">.</span>m<span class="token punctuation">.</span>p<span class="token punctuation">.</span><span class="token function">ptr</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token comment">// P can't change with preemption disabled.</span>
 		
-        &#x2F;&#x2F; 标记是否已开启
-		if gcBlackenEnabled &#x3D;&#x3D; 0 &#123;
-			println(&quot;worker mode&quot;, pp.gcMarkWorkerMode)
-			throw(&quot;gcBgMarkWorker: blackening not enabled&quot;)
-		&#125;
+        <span class="token comment">// 标记是否已开启</span>
+		<span class="token keyword">if</span> gcBlackenEnabled <span class="token operator">==</span> <span class="token number">0</span> <span class="token punctuation">&#123;</span>
+			<span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"worker mode"</span><span class="token punctuation">,</span> pp<span class="token punctuation">.</span>gcMarkWorkerMode<span class="token punctuation">)</span>
+			<span class="token function">throw</span><span class="token punctuation">(</span><span class="token string">"gcBgMarkWorker: blackening not enabled"</span><span class="token punctuation">)</span>
+		<span class="token punctuation">&#125;</span>
 		
-        &#x2F;&#x2F; 检查 markworker 的 Mode
-		if pp.gcMarkWorkerMode &#x3D;&#x3D; gcMarkWorkerNotWorker &#123;
-			throw(&quot;gcBgMarkWorker: mode not set&quot;)
-		&#125;
+        <span class="token comment">// 检查 markworker 的 Mode</span>
+		<span class="token keyword">if</span> pp<span class="token punctuation">.</span>gcMarkWorkerMode <span class="token operator">==</span> gcMarkWorkerNotWorker <span class="token punctuation">&#123;</span>
+			<span class="token function">throw</span><span class="token punctuation">(</span><span class="token string">"gcBgMarkWorker: mode not set"</span><span class="token punctuation">)</span>
+		<span class="token punctuation">&#125;</span>
 		
-        &#x2F;&#x2F; 记录 worker 标记的开始时间
-		startTime :&#x3D; nanotime()
-		pp.gcMarkWorkerStartTime &#x3D; startTime
+        <span class="token comment">// 记录 worker 标记的开始时间</span>
+		startTime <span class="token operator">:=</span> <span class="token function">nanotime</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+		pp<span class="token punctuation">.</span>gcMarkWorkerStartTime <span class="token operator">=</span> startTime
 		
-        &#x2F;&#x2F; 将等待执行的 worker 数量减一
-		decnwait :&#x3D; atomic.Xadd(&amp;work.nwait, -1)
-		if decnwait &#x3D;&#x3D; work.nproc &#123;
-			println(&quot;runtime: work.nwait&#x3D;&quot;, decnwait, &quot;work.nproc&#x3D;&quot;, work.nproc)
-			throw(&quot;work.nwait was &gt; work.nproc&quot;)
-		&#125;
+        <span class="token comment">// 将等待执行的 worker 数量减一</span>
+		decnwait <span class="token operator">:=</span> atomic<span class="token punctuation">.</span><span class="token function">Xadd</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>work<span class="token punctuation">.</span>nwait<span class="token punctuation">,</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">)</span>
+		<span class="token keyword">if</span> decnwait <span class="token operator">==</span> work<span class="token punctuation">.</span>nproc <span class="token punctuation">&#123;</span>
+			<span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"runtime: work.nwait="</span><span class="token punctuation">,</span> decnwait<span class="token punctuation">,</span> <span class="token string">"work.nproc="</span><span class="token punctuation">,</span> work<span class="token punctuation">.</span>nproc<span class="token punctuation">)</span>
+			<span class="token function">throw</span><span class="token punctuation">(</span><span class="token string">"work.nwait was > work.nproc"</span><span class="token punctuation">)</span>
+		<span class="token punctuation">&#125;</span>
 
-		systemstack(func() &#123;
-			&#x2F;&#x2F; Mark our goroutine preemptible so its stack
-			&#x2F;&#x2F; can be scanned. This lets two mark workers
-			&#x2F;&#x2F; scan each other (otherwise, they would
-			&#x2F;&#x2F; deadlock). We must not modify anything on
-			&#x2F;&#x2F; the G stack. However, stack shrinking is
-			&#x2F;&#x2F; disabled for mark workers, so it is safe to
-			&#x2F;&#x2F; read from the G stack.
-             &#x2F;&#x2F; 关于这里为什么把 G 的 running 状态修改为 waiting 状态
-             &#x2F;&#x2F; TODO 需要进一步的研究，曹大说要结合 suspendG 来看
-			casgstatus(gp, _Grunning, _Gwaiting)
-			switch pp.gcMarkWorkerMode &#123;
-			default:
-				throw(&quot;gcBgMarkWorker: unexpected gcMarkWorkerMode&quot;)
-			case gcMarkWorkerDedicatedMode:
-				gcDrain(&amp;pp.gcw, gcDrainUntilPreempt|gcDrainFlushBgCredit)
-				if gp.preempt &#123;
-					&#x2F;&#x2F; We were preempted. This is
-					&#x2F;&#x2F; a useful signal to kick
-					&#x2F;&#x2F; everything out of the run
-					&#x2F;&#x2F; queue so it can run
-					&#x2F;&#x2F; somewhere else.
-					if drainQ, n :&#x3D; runqdrain(pp); n &gt; 0 &#123;
-						lock(&amp;sched.lock)
-						globrunqputbatch(&amp;drainQ, int32(n))
-						unlock(&amp;sched.lock)
-					&#125;
-				&#125;
-				&#x2F;&#x2F; Go back to draining, this time
-				&#x2F;&#x2F; without preemption.
-				gcDrain(&amp;pp.gcw, gcDrainFlushBgCredit)
-			case gcMarkWorkerFractionalMode:
-				gcDrain(&amp;pp.gcw, gcDrainFractional|gcDrainUntilPreempt|gcDrainFlushBgCredit)
-			case gcMarkWorkerIdleMode:
-				gcDrain(&amp;pp.gcw, gcDrainIdle|gcDrainUntilPreempt|gcDrainFlushBgCredit)
-			&#125;
-			casgstatus(gp, _Gwaiting, _Grunning)
-		&#125;)
+		<span class="token function">systemstack</span><span class="token punctuation">(</span><span class="token keyword">func</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+			<span class="token comment">// Mark our goroutine preemptible so its stack</span>
+			<span class="token comment">// can be scanned. This lets two mark workers</span>
+			<span class="token comment">// scan each other (otherwise, they would</span>
+			<span class="token comment">// deadlock). We must not modify anything on</span>
+			<span class="token comment">// the G stack. However, stack shrinking is</span>
+			<span class="token comment">// disabled for mark workers, so it is safe to</span>
+			<span class="token comment">// read from the G stack.</span>
+             <span class="token comment">// 关于这里为什么把 G 的 running 状态修改为 waiting 状态</span>
+             <span class="token comment">// TODO 需要进一步的研究，曹大说要结合 suspendG 来看</span>
+			<span class="token function">casgstatus</span><span class="token punctuation">(</span>gp<span class="token punctuation">,</span> _Grunning<span class="token punctuation">,</span> _Gwaiting<span class="token punctuation">)</span>
+			<span class="token keyword">switch</span> pp<span class="token punctuation">.</span>gcMarkWorkerMode <span class="token punctuation">&#123;</span>
+			<span class="token keyword">default</span><span class="token punctuation">:</span>
+				<span class="token function">throw</span><span class="token punctuation">(</span><span class="token string">"gcBgMarkWorker: unexpected gcMarkWorkerMode"</span><span class="token punctuation">)</span>
+			<span class="token keyword">case</span> gcMarkWorkerDedicatedMode<span class="token punctuation">:</span>
+				<span class="token function">gcDrain</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>pp<span class="token punctuation">.</span>gcw<span class="token punctuation">,</span> gcDrainUntilPreempt<span class="token operator">|</span>gcDrainFlushBgCredit<span class="token punctuation">)</span>
+				<span class="token keyword">if</span> gp<span class="token punctuation">.</span>preempt <span class="token punctuation">&#123;</span>
+					<span class="token comment">// We were preempted. This is</span>
+					<span class="token comment">// a useful signal to kick</span>
+					<span class="token comment">// everything out of the run</span>
+					<span class="token comment">// queue so it can run</span>
+					<span class="token comment">// somewhere else.</span>
+					<span class="token keyword">if</span> drainQ<span class="token punctuation">,</span> n <span class="token operator">:=</span> <span class="token function">runqdrain</span><span class="token punctuation">(</span>pp<span class="token punctuation">)</span><span class="token punctuation">;</span> n <span class="token operator">></span> <span class="token number">0</span> <span class="token punctuation">&#123;</span>
+						<span class="token function">lock</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>sched<span class="token punctuation">.</span>lock<span class="token punctuation">)</span>
+						<span class="token function">globrunqputbatch</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>drainQ<span class="token punctuation">,</span> <span class="token function">int32</span><span class="token punctuation">(</span>n<span class="token punctuation">)</span><span class="token punctuation">)</span>
+						<span class="token function">unlock</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>sched<span class="token punctuation">.</span>lock<span class="token punctuation">)</span>
+					<span class="token punctuation">&#125;</span>
+				<span class="token punctuation">&#125;</span>
+				<span class="token comment">// Go back to draining, this time</span>
+				<span class="token comment">// without preemption.</span>
+				<span class="token function">gcDrain</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>pp<span class="token punctuation">.</span>gcw<span class="token punctuation">,</span> gcDrainFlushBgCredit<span class="token punctuation">)</span>
+			<span class="token keyword">case</span> gcMarkWorkerFractionalMode<span class="token punctuation">:</span>
+				<span class="token function">gcDrain</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>pp<span class="token punctuation">.</span>gcw<span class="token punctuation">,</span> gcDrainFractional<span class="token operator">|</span>gcDrainUntilPreempt<span class="token operator">|</span>gcDrainFlushBgCredit<span class="token punctuation">)</span>
+			<span class="token keyword">case</span> gcMarkWorkerIdleMode<span class="token punctuation">:</span>
+				<span class="token function">gcDrain</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>pp<span class="token punctuation">.</span>gcw<span class="token punctuation">,</span> gcDrainIdle<span class="token operator">|</span>gcDrainUntilPreempt<span class="token operator">|</span>gcDrainFlushBgCredit<span class="token punctuation">)</span>
+			<span class="token punctuation">&#125;</span>
+			<span class="token function">casgstatus</span><span class="token punctuation">(</span>gp<span class="token punctuation">,</span> _Gwaiting<span class="token punctuation">,</span> _Grunning<span class="token punctuation">)</span>
+		<span class="token punctuation">&#125;</span><span class="token punctuation">)</span>
 
-		&#x2F;&#x2F; Account for time.
-		duration :&#x3D; nanotime() - startTime
-		switch pp.gcMarkWorkerMode &#123;
-		case gcMarkWorkerDedicatedMode:
-			atomic.Xaddint64(&amp;gcController.dedicatedMarkTime, duration)
-			atomic.Xaddint64(&amp;gcController.dedicatedMarkWorkersNeeded, 1)
-		case gcMarkWorkerFractionalMode:
-			atomic.Xaddint64(&amp;gcController.fractionalMarkTime, duration)
-			atomic.Xaddint64(&amp;pp.gcFractionalMarkTime, duration)
-		case gcMarkWorkerIdleMode:
-			atomic.Xaddint64(&amp;gcController.idleMarkTime, duration)
-		&#125;
+		<span class="token comment">// Account for time.</span>
+		duration <span class="token operator">:=</span> <span class="token function">nanotime</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">-</span> startTime
+		<span class="token keyword">switch</span> pp<span class="token punctuation">.</span>gcMarkWorkerMode <span class="token punctuation">&#123;</span>
+		<span class="token keyword">case</span> gcMarkWorkerDedicatedMode<span class="token punctuation">:</span>
+			atomic<span class="token punctuation">.</span><span class="token function">Xaddint64</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>gcController<span class="token punctuation">.</span>dedicatedMarkTime<span class="token punctuation">,</span> duration<span class="token punctuation">)</span>
+			atomic<span class="token punctuation">.</span><span class="token function">Xaddint64</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>gcController<span class="token punctuation">.</span>dedicatedMarkWorkersNeeded<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span>
+		<span class="token keyword">case</span> gcMarkWorkerFractionalMode<span class="token punctuation">:</span>
+			atomic<span class="token punctuation">.</span><span class="token function">Xaddint64</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>gcController<span class="token punctuation">.</span>fractionalMarkTime<span class="token punctuation">,</span> duration<span class="token punctuation">)</span>
+			atomic<span class="token punctuation">.</span><span class="token function">Xaddint64</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>pp<span class="token punctuation">.</span>gcFractionalMarkTime<span class="token punctuation">,</span> duration<span class="token punctuation">)</span>
+		<span class="token keyword">case</span> gcMarkWorkerIdleMode<span class="token punctuation">:</span>
+			atomic<span class="token punctuation">.</span><span class="token function">Xaddint64</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>gcController<span class="token punctuation">.</span>idleMarkTime<span class="token punctuation">,</span> duration<span class="token punctuation">)</span>
+		<span class="token punctuation">&#125;</span>
 
-		&#x2F;&#x2F; Was this the last worker and did we run out
-		&#x2F;&#x2F; of work?
-		incnwait :&#x3D; atomic.Xadd(&amp;work.nwait, +1)
-		if incnwait &gt; work.nproc &#123;
-			println(&quot;runtime: p.gcMarkWorkerMode&#x3D;&quot;, pp.gcMarkWorkerMode,
-				&quot;work.nwait&#x3D;&quot;, incnwait, &quot;work.nproc&#x3D;&quot;, work.nproc)
-			throw(&quot;work.nwait &gt; work.nproc&quot;)
-		&#125;
+		<span class="token comment">// Was this the last worker and did we run out</span>
+		<span class="token comment">// of work?</span>
+		incnwait <span class="token operator">:=</span> atomic<span class="token punctuation">.</span><span class="token function">Xadd</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>work<span class="token punctuation">.</span>nwait<span class="token punctuation">,</span> <span class="token operator">+</span><span class="token number">1</span><span class="token punctuation">)</span>
+		<span class="token keyword">if</span> incnwait <span class="token operator">></span> work<span class="token punctuation">.</span>nproc <span class="token punctuation">&#123;</span>
+			<span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"runtime: p.gcMarkWorkerMode="</span><span class="token punctuation">,</span> pp<span class="token punctuation">.</span>gcMarkWorkerMode<span class="token punctuation">,</span>
+				<span class="token string">"work.nwait="</span><span class="token punctuation">,</span> incnwait<span class="token punctuation">,</span> <span class="token string">"work.nproc="</span><span class="token punctuation">,</span> work<span class="token punctuation">.</span>nproc<span class="token punctuation">)</span>
+			<span class="token function">throw</span><span class="token punctuation">(</span><span class="token string">"work.nwait > work.nproc"</span><span class="token punctuation">)</span>
+		<span class="token punctuation">&#125;</span>
 
-		&#x2F;&#x2F; We&#39;ll releasem after this point and thus this P may run
-		&#x2F;&#x2F; something else. We must clear the worker mode to avoid
-		&#x2F;&#x2F; attributing the mode to a different (non-worker) G in
-		&#x2F;&#x2F; traceGoStart.
-		pp.gcMarkWorkerMode &#x3D; gcMarkWorkerNotWorker
+		<span class="token comment">// We'll releasem after this point and thus this P may run</span>
+		<span class="token comment">// something else. We must clear the worker mode to avoid</span>
+		<span class="token comment">// attributing the mode to a different (non-worker) G in</span>
+		<span class="token comment">// traceGoStart.</span>
+		pp<span class="token punctuation">.</span>gcMarkWorkerMode <span class="token operator">=</span> gcMarkWorkerNotWorker
 
-		&#x2F;&#x2F; If this worker reached a background mark completion
-		&#x2F;&#x2F; point, signal the main GC goroutine.
-		if incnwait &#x3D;&#x3D; work.nproc &amp;&amp; !gcMarkWorkAvailable(nil) &#123;
-			&#x2F;&#x2F; We don&#39;t need the P-local buffers here, allow
-			&#x2F;&#x2F; preemption becuse we may schedule like a regular
-			&#x2F;&#x2F; goroutine in gcMarkDone (block on locks, etc).
-			releasem(node.m.ptr())
-			node.m.set(nil)
+		<span class="token comment">// If this worker reached a background mark completion</span>
+		<span class="token comment">// point, signal the main GC goroutine.</span>
+		<span class="token keyword">if</span> incnwait <span class="token operator">==</span> work<span class="token punctuation">.</span>nproc <span class="token operator">&amp;&amp;</span> <span class="token operator">!</span><span class="token function">gcMarkWorkAvailable</span><span class="token punctuation">(</span><span class="token boolean">nil</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+			<span class="token comment">// We don't need the P-local buffers here, allow</span>
+			<span class="token comment">// preemption becuse we may schedule like a regular</span>
+			<span class="token comment">// goroutine in gcMarkDone (block on locks, etc).</span>
+			<span class="token function">releasem</span><span class="token punctuation">(</span>node<span class="token punctuation">.</span>m<span class="token punctuation">.</span><span class="token function">ptr</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+			node<span class="token punctuation">.</span>m<span class="token punctuation">.</span><span class="token function">set</span><span class="token punctuation">(</span><span class="token boolean">nil</span><span class="token punctuation">)</span>
 
-			gcMarkDone()
-		&#125;
-	&#125;
-&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre></li>
-<li><p>gcMarkWorker 的状态（dedicated, fraction）这个状态是绑定在 P 上，并不是 G 的状态。</p>
-</li>
+			<span class="token function">gcMarkDone</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+		<span class="token punctuation">&#125;</span>
+	<span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<ul>
+<li>gcMarkWorker 的状态（dedicated, fraction）这个状态是绑定在 P 上，并不是 G 的状态。</li>
 </ul>
 <h3 id="GC-标记的几个工作模式"><a href="#GC-标记的几个工作模式" class="headerlink" title="GC 标记的几个工作模式"></a>GC 标记的几个工作模式</h3><ol>
 <li>gcDrainFlushBgCredit: 把 bgMarkWorker 积累的 credit 刷新到全局的 gcController 中。</li>
@@ -1285,7 +1284,7 @@ done<span class="token punctuation">:</span>
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#GC-n-%E8%BF%9E%E9%97%AE"><span class="nav-number">1.</span> <span class="nav-text">GC n 连问</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#GC-%E7%9A%84%E6%B5%81%E7%A8%8B%E9%98%B6%E6%AE%B5"><span class="nav-number">1.1.</span> <span class="nav-text">GC 的流程阶段</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#GC-%E7%9A%84%E8%A7%A6%E5%8F%91%E6%97%B6%E6%9C%BA"><span class="nav-number">1.2.</span> <span class="nav-text">GC 的触发时机</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#GC-%E7%9A%84%E8%B5%B7%E7%82%B9"><span class="nav-number">1.3.</span> <span class="nav-text">GC 的起点</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%80%81%E7%89%88%E6%9C%AC%E9%9C%80%E8%A6%81%E9%87%8D%E6%96%B0%E6%89%AB%E6%8F%8F%E6%A0%88%EF%BC%9F"><span class="nav-number">1.4.</span> <span class="nav-text">为什么老版本需要重新扫描栈？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#GC-%E6%A0%87%E8%AE%B0%E7%9A%84%E6%A0%B9%E9%83%BD%E6%9C%89%E4%BB%80%E4%B9%88%EF%BC%9F"><span class="nav-number">1.5.</span> <span class="nav-text">GC 标记的根都有什么？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8D%95%E7%8B%AC%E4%BD%BF%E7%94%A8-D-%E5%B1%8F%E9%9A%9C%E6%9C%89%E4%BD%95%E9%97%AE%E9%A2%98%EF%BC%9F"><span class="nav-number">1.6.</span> <span class="nav-text">单独使用 D 屏障有何问题？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8D%95%E7%8B%AC%E4%BD%BF%E7%94%A8-Y-%E5%B1%8F%E9%9A%9C%E6%9C%89%E4%BD%95%E9%97%AE%E9%A2%98%EF%BC%9F"><span class="nav-number">1.7.</span> <span class="nav-text">单独使用 Y 屏障有何问题？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B7%B7%E5%90%88%E5%86%99%E5%B1%8F%E9%9A%9C%E6%98%AF%E6%80%8E%E4%B9%88%E4%B8%80%E5%9B%9E%E4%BA%8B%EF%BC%9F"><span class="nav-number">1.8.</span> <span class="nav-text">混合写屏障是怎么一回事？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8D%8F%E5%8A%A9%E6%A0%87%E8%AE%B0%E6%B5%81%E7%A8%8B"><span class="nav-number">1.9.</span> <span class="nav-text">协助标记流程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AF%B9%E8%B1%A1%E7%9A%84%E4%BA%A4%E5%8F%89%E5%BC%95%E7%94%A8%E6%98%AF%E5%A6%82%E4%BD%95%E5%89%AA%E6%9E%9D%E7%9A%84%EF%BC%9F"><span class="nav-number">1.10.</span> <span class="nav-text">对象的交叉引用是如何剪枝的？</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%8E%E8%BF%90%E7%AE%97"><span class="nav-number">1.10.1.</span> <span class="nav-text">与运算</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%88%96%E8%BF%90%E7%AE%97"><span class="nav-number">1.10.2.</span> <span class="nav-text">或运算</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%BC%82%E6%88%96%E8%BF%90%E7%AE%97"><span class="nav-number">1.10.3.</span> <span class="nav-text">异或运算</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#GC-%E7%9A%84-CPU-%E4%BD%BF%E7%94%A8%E7%8E%87"><span class="nav-number">1.11.</span> <span class="nav-text">GC 的 CPU 使用率</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#gcTriggerKind"><span class="nav-number">1.12.</span> <span class="nav-text">gcTriggerKind</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#STW-%E6%97%B6%E9%97%B4%E6%80%8E%E4%B9%88%E7%AE%97%E5%87%BA%E6%9D%A5%E7%9A%84%EF%BC%9F"><span class="nav-number">1.13.</span> <span class="nav-text">STW 时间怎么算出来的？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#GC-%E8%BF%87%E7%A8%8B%E4%B8%AD%E6%98%AF%E4%BB%80%E4%B9%88%E6%97%B6%E5%80%99%E5%B0%86%E5%AF%B9%E8%B1%A1%E6%A0%87%E8%AE%B0%E4%B8%BA%E9%BB%91%E8%89%B2%E7%9A%84"><span class="nav-number">1.14.</span> <span class="nav-text">GC 过程中是什么时候将对象标记为黑色的</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#gcStart-%E6%BA%90%E7%A0%81%E5%89%96%E6%9E%90"><span class="nav-number">2.</span> <span class="nav-text">gcStart 源码剖析</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#findRunnableGCWorker-%E6%BA%90%E7%A0%81%E5%89%96%E6%9E%90"><span class="nav-number">3.</span> <span class="nav-text">findRunnableGCWorker 源码剖析</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%89%96%E6%9E%90-gcBgMarkWorker-%E5%88%9B%E5%BB%BA%E8%BF%87%E7%A8%8B"><span class="nav-number">4.</span> <span class="nav-text">剖析 gcBgMarkWorker 创建过程</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#notesleepg"><span class="nav-number">4.1.</span> <span class="nav-text">notesleepg</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#GC-%E6%A0%87%E8%AE%B0%E7%9A%84%E5%87%A0%E4%B8%AA%E5%B7%A5%E4%BD%9C%E6%A8%A1%E5%BC%8F"><span class="nav-number">4.2.</span> <span class="nav-text">GC 标记的几个工作模式</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#bitmap-%E4%B8%8E-ha-%E7%9A%84%E6%98%A0%E5%B0%84%E5%85%B3%E7%B3%BB%EF%BC%88%E6%A0%87%E8%AE%B0%E8%BF%87%E7%A8%8B%E7%94%A8%E5%88%B0%E7%9A%84%E4%BD%8D%E5%9B%BE%EF%BC%89"><span class="nav-number">4.3.</span> <span class="nav-text">bitmap 与 ha 的映射关系（标记过程用到的位图）</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#bitmap-%E7%9A%84%E4%BD%BF%E7%94%A8"><span class="nav-number">4.3.1.</span> <span class="nav-text">bitmap 的使用</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#heapBitsForAddr"><span class="nav-number">4.3.2.</span> <span class="nav-text">heapBitsForAddr</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#gcDrain-%E6%A0%87%E8%AE%B0%E8%BF%87%E7%A8%8B"><span class="nav-number">4.4.</span> <span class="nav-text">gcDrain 标记过程</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%A0%87%E8%AE%B0%E5%B7%A5%E4%BD%9C%E7%9A%84%E5%B9%B3%E8%A1%A1"><span class="nav-number">4.4.1.</span> <span class="nav-text">标记工作的平衡</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#balance"><span class="nav-number">4.4.1.1.</span> <span class="nav-text">balance</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#enlistWorker"><span class="nav-number">4.4.1.2.</span> <span class="nav-text">enlistWorker</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#handoff"><span class="nav-number">4.4.1.3.</span> <span class="nav-text">handoff</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#GC-%E8%BF%87%E7%A8%8B%E4%B8%AD-P-%E7%9A%84-gcw-%E9%98%9F%E5%88%97"><span class="nav-number">4.4.2.</span> <span class="nav-text">GC 过程中 P 的 gcw 队列</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#wbuf1-%E5%92%8C-wbuf2"><span class="nav-number">4.4.2.1.</span> <span class="nav-text">wbuf1 和 wbuf2</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#work-full-%E5%92%8C-work-empty"><span class="nav-number">4.4.2.2.</span> <span class="nav-text">work.full 和 work.empty</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#GC-%E8%BF%87%E7%A8%8B%E4%B8%AD%E8%B4%9F%E8%B4%A3%E6%A0%87%E8%AE%B0%E7%9A%84%E5%87%BD%E6%95%B0"><span class="nav-number">4.4.3.</span> <span class="nav-text">GC 过程中负责标记的函数</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#markroot"><span class="nav-number">4.4.3.1.</span> <span class="nav-text">markroot</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#markrootBlock"><span class="nav-number">4.4.3.2.</span> <span class="nav-text">markrootBlock</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#markrootFreeGStacks"><span class="nav-number">4.4.3.3.</span> <span class="nav-text">markrootFreeGStacks</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#markrootSpans"><span class="nav-number">4.4.3.4.</span> <span class="nav-text">markrootSpans</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#scanstack"><span class="nav-number">4.4.3.5.</span> <span class="nav-text">scanstack</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#scanobject"><span class="nav-number">4.4.3.6.</span> <span class="nav-text">scanobject</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#scanblock"><span class="nav-number">4.4.3.7.</span> <span class="nav-text">scanblock</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#gcmarknewobject"><span class="nav-number">4.4.3.8.</span> <span class="nav-text">gcmarknewobject</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#gcMarkTinyAllocs"><span class="nav-number">4.4.3.9.</span> <span class="nav-text">gcMarkTinyAllocs</span></a></li></ol></li></ol></li></ol></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#GC-n-%E8%BF%9E%E9%97%AE"><span class="nav-number">1.</span> <span class="nav-text">GC n 连问</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#GC-%E7%9A%84%E6%B5%81%E7%A8%8B%E9%98%B6%E6%AE%B5"><span class="nav-number">1.1.</span> <span class="nav-text">GC 的流程阶段</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#GC-%E7%9A%84%E8%A7%A6%E5%8F%91%E6%97%B6%E6%9C%BA"><span class="nav-number">1.2.</span> <span class="nav-text">GC 的触发时机</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#GC-%E7%9A%84%E8%B5%B7%E7%82%B9"><span class="nav-number">1.3.</span> <span class="nav-text">GC 的起点</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%80%81%E7%89%88%E6%9C%AC%E9%9C%80%E8%A6%81%E9%87%8D%E6%96%B0%E6%89%AB%E6%8F%8F%E6%A0%88%EF%BC%9F"><span class="nav-number">1.4.</span> <span class="nav-text">为什么老版本需要重新扫描栈？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#GC-%E6%A0%87%E8%AE%B0%E7%9A%84%E6%A0%B9%E9%83%BD%E6%9C%89%E4%BB%80%E4%B9%88%EF%BC%9F"><span class="nav-number">1.5.</span> <span class="nav-text">GC 标记的根都有什么？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8D%95%E7%8B%AC%E4%BD%BF%E7%94%A8-D-%E5%B1%8F%E9%9A%9C%E6%9C%89%E4%BD%95%E9%97%AE%E9%A2%98%EF%BC%9F"><span class="nav-number">1.6.</span> <span class="nav-text">单独使用 D 屏障有何问题？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8D%95%E7%8B%AC%E4%BD%BF%E7%94%A8-Y-%E5%B1%8F%E9%9A%9C%E6%9C%89%E4%BD%95%E9%97%AE%E9%A2%98%EF%BC%9F"><span class="nav-number">1.7.</span> <span class="nav-text">单独使用 Y 屏障有何问题？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B7%B7%E5%90%88%E5%86%99%E5%B1%8F%E9%9A%9C%E6%98%AF%E6%80%8E%E4%B9%88%E4%B8%80%E5%9B%9E%E4%BA%8B%EF%BC%9F"><span class="nav-number">1.8.</span> <span class="nav-text">混合写屏障是怎么一回事？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8D%8F%E5%8A%A9%E6%A0%87%E8%AE%B0%E6%B5%81%E7%A8%8B"><span class="nav-number">1.9.</span> <span class="nav-text">协助标记流程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AF%B9%E8%B1%A1%E7%9A%84%E4%BA%A4%E5%8F%89%E5%BC%95%E7%94%A8%E6%98%AF%E5%A6%82%E4%BD%95%E5%89%AA%E6%9E%9D%E7%9A%84%EF%BC%9F"><span class="nav-number">1.10.</span> <span class="nav-text">对象的交叉引用是如何剪枝的？</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%8E%E8%BF%90%E7%AE%97"><span class="nav-number">1.10.1.</span> <span class="nav-text">与运算</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%88%96%E8%BF%90%E7%AE%97"><span class="nav-number">1.10.2.</span> <span class="nav-text">或运算</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%BC%82%E6%88%96%E8%BF%90%E7%AE%97"><span class="nav-number">1.10.3.</span> <span class="nav-text">异或运算</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#GC-%E7%9A%84-CPU-%E4%BD%BF%E7%94%A8%E7%8E%87"><span class="nav-number">1.11.</span> <span class="nav-text">GC 的 CPU 使用率</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#gcTriggerKind"><span class="nav-number">1.12.</span> <span class="nav-text">gcTriggerKind</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#STW-%E6%97%B6%E9%97%B4%E6%80%8E%E4%B9%88%E7%AE%97%E5%87%BA%E6%9D%A5%E7%9A%84%EF%BC%9F"><span class="nav-number">1.13.</span> <span class="nav-text">STW 时间怎么算出来的？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#GC-%E8%BF%87%E7%A8%8B%E4%B8%AD%E6%98%AF%E4%BB%80%E4%B9%88%E6%97%B6%E5%80%99%E5%B0%86%E5%AF%B9%E8%B1%A1%E6%A0%87%E8%AE%B0%E4%B8%BA%E9%BB%91%E8%89%B2%E7%9A%84"><span class="nav-number">1.14.</span> <span class="nav-text">GC 过程中是什么时候将对象标记为黑色的</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#gcStart-%E6%BA%90%E7%A0%81%E5%89%96%E6%9E%90"><span class="nav-number">2.</span> <span class="nav-text">gcStart 源码剖析</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#findRunnableGCWorker-%E6%BA%90%E7%A0%81%E5%89%96%E6%9E%90"><span class="nav-number">3.</span> <span class="nav-text">findRunnableGCWorker 源码剖析</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%89%96%E6%9E%90-gcBgMarkWorker-%E5%88%9B%E5%BB%BA%E8%BF%87%E7%A8%8B"><span class="nav-number">4.</span> <span class="nav-text">剖析 gcBgMarkWorker 创建过程</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#notesleepg"><span class="nav-number">4.1.</span> <span class="nav-text">notesleepg</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#go-gcBgMarkWorker"><span class="nav-number">4.2.</span> <span class="nav-text">go gcBgMarkWorker</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BB%93%E5%90%88%E7%9D%80%E7%9C%8B"><span class="nav-number">4.3.</span> <span class="nav-text">结合着看</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#gcMarkWorker-%E6%89%A7%E8%A1%8C%E8%BF%87%E7%A8%8B"><span class="nav-number">5.</span> <span class="nav-text">gcMarkWorker 执行过程</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#gcBgMarkWorker-%E6%BA%90%E7%A0%81%E5%89%96%E6%9E%90"><span class="nav-number">5.1.</span> <span class="nav-text">gcBgMarkWorker 源码剖析</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#GC-%E6%A0%87%E8%AE%B0%E7%9A%84%E5%87%A0%E4%B8%AA%E5%B7%A5%E4%BD%9C%E6%A8%A1%E5%BC%8F"><span class="nav-number">5.2.</span> <span class="nav-text">GC 标记的几个工作模式</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#bitmap-%E4%B8%8E-ha-%E7%9A%84%E6%98%A0%E5%B0%84%E5%85%B3%E7%B3%BB%EF%BC%88%E6%A0%87%E8%AE%B0%E8%BF%87%E7%A8%8B%E7%94%A8%E5%88%B0%E7%9A%84%E4%BD%8D%E5%9B%BE%EF%BC%89"><span class="nav-number">5.3.</span> <span class="nav-text">bitmap 与 ha 的映射关系（标记过程用到的位图）</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#bitmap-%E7%9A%84%E4%BD%BF%E7%94%A8"><span class="nav-number">5.3.1.</span> <span class="nav-text">bitmap 的使用</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#heapBitsForAddr"><span class="nav-number">5.3.2.</span> <span class="nav-text">heapBitsForAddr</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#gcDrain-%E6%A0%87%E8%AE%B0%E8%BF%87%E7%A8%8B"><span class="nav-number">5.4.</span> <span class="nav-text">gcDrain 标记过程</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%A0%87%E8%AE%B0%E5%B7%A5%E4%BD%9C%E7%9A%84%E5%B9%B3%E8%A1%A1"><span class="nav-number">5.4.1.</span> <span class="nav-text">标记工作的平衡</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#balance"><span class="nav-number">5.4.1.1.</span> <span class="nav-text">balance</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#enlistWorker"><span class="nav-number">5.4.1.2.</span> <span class="nav-text">enlistWorker</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#handoff"><span class="nav-number">5.4.1.3.</span> <span class="nav-text">handoff</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#GC-%E8%BF%87%E7%A8%8B%E4%B8%AD-P-%E7%9A%84-gcw-%E9%98%9F%E5%88%97"><span class="nav-number">5.4.2.</span> <span class="nav-text">GC 过程中 P 的 gcw 队列</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#wbuf1-%E5%92%8C-wbuf2"><span class="nav-number">5.4.2.1.</span> <span class="nav-text">wbuf1 和 wbuf2</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#work-full-%E5%92%8C-work-empty"><span class="nav-number">5.4.2.2.</span> <span class="nav-text">work.full 和 work.empty</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#GC-%E8%BF%87%E7%A8%8B%E4%B8%AD%E8%B4%9F%E8%B4%A3%E6%A0%87%E8%AE%B0%E7%9A%84%E5%87%BD%E6%95%B0"><span class="nav-number">5.4.3.</span> <span class="nav-text">GC 过程中负责标记的函数</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#markroot"><span class="nav-number">5.4.3.1.</span> <span class="nav-text">markroot</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#markrootBlock"><span class="nav-number">5.4.3.2.</span> <span class="nav-text">markrootBlock</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#markrootFreeGStacks"><span class="nav-number">5.4.3.3.</span> <span class="nav-text">markrootFreeGStacks</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#markrootSpans"><span class="nav-number">5.4.3.4.</span> <span class="nav-text">markrootSpans</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#scanstack"><span class="nav-number">5.4.3.5.</span> <span class="nav-text">scanstack</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#scanobject"><span class="nav-number">5.4.3.6.</span> <span class="nav-text">scanobject</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#scanblock"><span class="nav-number">5.4.3.7.</span> <span class="nav-text">scanblock</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#gcmarknewobject"><span class="nav-number">5.4.3.8.</span> <span class="nav-text">gcmarknewobject</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#gcMarkTinyAllocs"><span class="nav-number">5.4.3.9.</span> <span class="nav-text">gcMarkTinyAllocs</span></a></li></ol></li></ol></li></ol></li></ol></div>
       </div>
       <!--/noindex-->
 
