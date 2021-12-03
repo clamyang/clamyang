@@ -20,16 +20,16 @@
     var CONFIG = {"hostname":"bqyang.top","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"hide","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"gitalk","storage":true,"lazyload":false,"nav":{"gitalk":{"order":-2}},"activeClass":"gitalk"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
   </script>
 
-  <meta name="description" content="GC 知识点总结，未完结..">
+  <meta name="description" content="Golang GC 垃圾回收知识点总结，有些内容还没有完成，只是抛出了问题..">
 <meta property="og:type" content="article">
-<meta property="og:title" content="GC 十全大补知识点">
+<meta property="og:title" content="GC 源码梳理">
 <meta property="og:url" content="https://bqyang.top/2021/GC/index.html">
 <meta property="og:site_name" content="杨宝强的技术笔记">
-<meta property="og:description" content="GC 知识点总结，未完结..">
+<meta property="og:description" content="Golang GC 垃圾回收知识点总结，有些内容还没有完成，只是抛出了问题..">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://blogstatic.haohtml.com/uploads/2021/04/d2b5ca33bd970f64a6301fa75ae2eb22-6.png?x-oss-process=image/format,webp">
 <meta property="article:published_time" content="2021-12-02T08:11:37.293Z">
-<meta property="article:modified_time" content="2021-12-02T08:28:47.254Z">
+<meta property="article:modified_time" content="2021-12-03T02:09:49.852Z">
 <meta property="article:author" content="杨宝强">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="https://blogstatic.haohtml.com/uploads/2021/04/d2b5ca33bd970f64a6301fa75ae2eb22-6.png?x-oss-process=image/format,webp">
@@ -47,7 +47,7 @@
   };
 </script>
 
-  <title>GC 十全大补知识点 | 杨宝强的技术笔记</title>
+  <title>GC 源码梳理 | 杨宝强的技术笔记</title>
   
 
 
@@ -171,7 +171,7 @@
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          GC 十全大补知识点
+          GC 源码梳理
         </h1>
 
         <div class="post-meta">
@@ -180,10 +180,16 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">发表于</span>
-              
 
-              <time title="创建时间：2021-12-02 16:11:37 / 修改时间：16:28:47" itemprop="dateCreated datePublished" datetime="2021-12-02T16:11:37+08:00">2021-12-02</time>
+              <time title="创建时间：2021-12-02 16:11:37" itemprop="dateCreated datePublished" datetime="2021-12-02T16:11:37+08:00">2021-12-02</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2021-12-03 10:09:49" itemprop="dateModified" datetime="2021-12-03T10:09:49+08:00">2021-12-03</time>
+              </span>
 
           
 
@@ -196,7 +202,7 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <p>GC 知识点总结，未完结..</p>
+        <p>Golang GC 垃圾回收知识点总结，有些内容还没有完成，只是抛出了问题.. </p>
 <span id="more"></span>
 
 <h2 id="GC-n-连问"><a href="#GC-n-连问" class="headerlink" title="GC n 连问"></a>GC n 连问</h2><h3 id="GC-的流程阶段"><a href="#GC-的流程阶段" class="headerlink" title="GC 的流程阶段"></a>GC 的流程阶段</h3><ul>
@@ -283,12 +289,13 @@
     work<span class="token punctuation">.</span>markrootJobs <span class="token operator">=</span> <span class="token function">uint32</span><span class="token punctuation">(</span>fixedRootCount <span class="token operator">+</span> work<span class="token punctuation">.</span>nDataRoots <span class="token operator">+</span> work<span class="token punctuation">.</span>nBSSRoots <span class="token operator">+</span> work<span class="token punctuation">.</span>nSpanRoots <span class="token operator">+</span> work<span class="token punctuation">.</span>nStackRoots<span class="token punctuation">)</span>
 
     <span class="token comment">// Calculate base indexes of each root type</span>
+    <span class="token comment">// markroot 标记的时候会根据不同的 i 找到不同的根</span>
     work<span class="token punctuation">.</span>baseData <span class="token operator">=</span> <span class="token function">uint32</span><span class="token punctuation">(</span>fixedRootCount<span class="token punctuation">)</span>
     work<span class="token punctuation">.</span>baseBSS <span class="token operator">=</span> work<span class="token punctuation">.</span>baseData <span class="token operator">+</span> <span class="token function">uint32</span><span class="token punctuation">(</span>work<span class="token punctuation">.</span>nDataRoots<span class="token punctuation">)</span>
     work<span class="token punctuation">.</span>baseSpans <span class="token operator">=</span> work<span class="token punctuation">.</span>baseBSS <span class="token operator">+</span> <span class="token function">uint32</span><span class="token punctuation">(</span>work<span class="token punctuation">.</span>nBSSRoots<span class="token punctuation">)</span>
     work<span class="token punctuation">.</span>baseStacks <span class="token operator">=</span> work<span class="token punctuation">.</span>baseSpans <span class="token operator">+</span> <span class="token function">uint32</span><span class="token punctuation">(</span>work<span class="token punctuation">.</span>nSpanRoots<span class="token punctuation">)</span>
     work<span class="token punctuation">.</span>baseEnd <span class="token operator">=</span> work<span class="token punctuation">.</span>baseStacks <span class="token operator">+</span> <span class="token function">uint32</span><span class="token punctuation">(</span>work<span class="token punctuation">.</span>nStackRoots<span class="token punctuation">)</span>
-<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <ul>
 <li>结合上边代码来看，GC 标记过程中涉及到的根有：全局变量，stack，heap（span）</li>
@@ -920,6 +927,7 @@
 <span class="token comment">//go:nosplit</span>
 <span class="token keyword">func</span> <span class="token function">heapBitsForAddr</span><span class="token punctuation">(</span>addr <span class="token builtin">uintptr</span><span class="token punctuation">)</span> <span class="token punctuation">(</span>h heapBits<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
     <span class="token comment">// 2 bits per word, 4 pairs per byte, and a mask is hard coded.</span>
+    <span class="token comment">// 如注释所说，两个比特可以用来表示一个字的大小</span>
     arena <span class="token operator">:=</span> <span class="token function">arenaIndex</span><span class="token punctuation">(</span>addr<span class="token punctuation">)</span>
     ha <span class="token operator">:=</span> mheap_<span class="token punctuation">.</span>arenas<span class="token punctuation">[</span>arena<span class="token punctuation">.</span><span class="token function">l1</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">]</span><span class="token punctuation">[</span>arena<span class="token punctuation">.</span><span class="token function">l2</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">]</span>
     <span class="token comment">// The compiler uses a load for nil checking ha, but in this</span>
@@ -930,12 +938,39 @@
         <span class="token comment">// we expect to crash in the caller.</span>
         <span class="token keyword">return</span>
     <span class="token punctuation">&#125;</span>
+    <span class="token comment">// 笔者理解：之所以要 *4，就是因为 bitmap 与 ha 的映射关系</span>
+    <span class="token comment">// 一字节可以表示堆上 4 个连续的指针内存</span>
     h<span class="token punctuation">.</span>bitp <span class="token operator">=</span> <span class="token operator">&amp;</span>ha<span class="token punctuation">.</span>bitmap<span class="token punctuation">[</span><span class="token punctuation">(</span>addr<span class="token operator">/</span><span class="token punctuation">(</span>sys<span class="token punctuation">.</span>PtrSize<span class="token operator">*</span><span class="token number">4</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token operator">%</span>heapArenaBitmapBytes<span class="token punctuation">]</span>
+    <span class="token comment">// 笔者理解：shift 就像掩码一样，用来计算低位与高位比特的位置</span>
+    <span class="token comment">// &amp;3 的运算也能说明这一点，&amp;3 的结果只能是 0 1 2 3，</span>
+    <span class="token comment">// 这里就对应上了 8 比特的低四位</span>
     h<span class="token punctuation">.</span>shift <span class="token operator">=</span> <span class="token function">uint32</span><span class="token punctuation">(</span><span class="token punctuation">(</span>addr <span class="token operator">/</span> sys<span class="token punctuation">.</span>PtrSize<span class="token punctuation">)</span> <span class="token operator">&amp;</span> <span class="token number">3</span><span class="token punctuation">)</span>
+    <span class="token comment">// 记录当前 arena 的位置</span>
     h<span class="token punctuation">.</span>arena <span class="token operator">=</span> <span class="token function">uint32</span><span class="token punctuation">(</span>arena<span class="token punctuation">)</span>
+    <span class="token comment">// 记录当前 arena 对应的 bitmap 中的最后一字节</span>
     h<span class="token punctuation">.</span>last <span class="token operator">=</span> <span class="token operator">&amp;</span>ha<span class="token punctuation">.</span>bitmap<span class="token punctuation">[</span><span class="token function">len</span><span class="token punctuation">(</span>ha<span class="token punctuation">.</span>bitmap<span class="token punctuation">)</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">]</span>
     <span class="token keyword">return</span>
-<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// next returns the heapBits describing the next pointer-sized word in memory.</span>
+<span class="token comment">// That is, if h describes address p, h.next() describes p+ptrSize.</span>
+<span class="token comment">// Note that next does not modify h. The caller must record the result.</span>
+<span class="token comment">//</span>
+<span class="token comment">// 如注释所描述的，next 函数，返回描述了在内存中下一个指针类型的word的heapBits</span>
+<span class="token comment">// 如果 h 表示的是指针 p 的地址，那么 h.next() 表示的就是 p+ptrSize 的heapBits</span>
+<span class="token comment">// nosplit because it is used during write barriers and must not be preempted.</span>
+<span class="token comment">//go:nosplit</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>h heapBits<span class="token punctuation">)</span> <span class="token function">next</span><span class="token punctuation">(</span><span class="token punctuation">)</span> heapBits <span class="token punctuation">&#123;</span>
+    <span class="token keyword">if</span> h<span class="token punctuation">.</span>shift <span class="token operator">&lt;</span> <span class="token number">3</span><span class="token operator">*</span>heapBitsShift <span class="token punctuation">&#123;</span> <span class="token comment">// 在同一字节上扫描，四个连续的ptr还没扫描完</span>
+        h<span class="token punctuation">.</span>shift <span class="token operator">+=</span> heapBitsShift
+    <span class="token punctuation">&#125;</span> <span class="token keyword">else</span> <span class="token keyword">if</span> h<span class="token punctuation">.</span>bitp <span class="token operator">!=</span> h<span class="token punctuation">.</span>last <span class="token punctuation">&#123;</span>	<span class="token comment">// 如果没扫描到该 ha 的最后一字节，那么扫描下一个byte</span>
+        h<span class="token punctuation">.</span>bitp<span class="token punctuation">,</span> h<span class="token punctuation">.</span>shift <span class="token operator">=</span> <span class="token function">add1</span><span class="token punctuation">(</span>h<span class="token punctuation">.</span>bitp<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token number">0</span>
+    <span class="token punctuation">&#125;</span> <span class="token keyword">else</span> <span class="token punctuation">&#123;</span>	<span class="token comment">// 此时，当前已经扫描完了当前 ha 的所有内容，移动到下一个 ha 进行扫描</span>
+        <span class="token comment">// Move to the next arena.</span>
+        <span class="token keyword">return</span> h<span class="token punctuation">.</span><span class="token function">nextArena</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token keyword">return</span> h
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h3 id="gcDrain-标记过程"><a href="#gcDrain-标记过程" class="headerlink" title="gcDrain 标记过程"></a>gcDrain 标记过程</h3><pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// gcDrain 扫描 work buffer 中的根节点和对象，</span>
 <span class="token comment">// gcDrain 会将队列中所有的对象标记为灰色。</span>
@@ -1168,8 +1203,124 @@
 <p>具体的交换过程，注释中并没有提到，需要在梳理标记过程时整理出来。</p>
 <h5 id="work-full-和-work-empty"><a href="#work-full-和-work-empty" class="headerlink" title="work.full 和 work.empty"></a>work.full 和 work.empty</h5><p>全局 work 中有两个队列，full 和 empty，灰色对象入队过程：</p>
 <p>fastPath: 检查 wbuf1 是否为空，是否满了，是就返回；都不是，将灰色对象入队。<br>slowPath：检查 wbuf1 是否为 nil，为 nil，执行初始化。否则，判断是否满了，满了，交换 wbuf1 和 wbuf2，再次判断 wbuf1 是否满了，满了加入到全局 full 队列中，然后从 empty 队列获取一个空的并赋值给 wbuf1，最后把这个灰色对象入队。</p>
-<h4 id="GC-过程中负责标记的函数"><a href="#GC-过程中负责标记的函数" class="headerlink" title="GC 过程中负责标记的函数"></a>GC 过程中负责标记的函数</h4><h5 id="markroot"><a href="#markroot" class="headerlink" title="markroot"></a>markroot</h5><h5 id="markrootBlock"><a href="#markrootBlock" class="headerlink" title="markrootBlock"></a>markrootBlock</h5><h5 id="markrootFreeGStacks"><a href="#markrootFreeGStacks" class="headerlink" title="markrootFreeGStacks"></a>markrootFreeGStacks</h5><h5 id="markrootSpans"><a href="#markrootSpans" class="headerlink" title="markrootSpans"></a>markrootSpans</h5><h5 id="scanstack"><a href="#scanstack" class="headerlink" title="scanstack"></a>scanstack</h5><p>扫描 goroutine 栈</p>
-<h5 id="scanobject"><a href="#scanobject" class="headerlink" title="scanobject"></a>scanobject</h5><h5 id="scanblock"><a href="#scanblock" class="headerlink" title="scanblock"></a>scanblock</h5><h5 id="gcmarknewobject"><a href="#gcmarknewobject" class="headerlink" title="gcmarknewobject"></a>gcmarknewobject</h5><h5 id="gcMarkTinyAllocs"><a href="#gcMarkTinyAllocs" class="headerlink" title="gcMarkTinyAllocs"></a>gcMarkTinyAllocs</h5>
+<h4 id="GC-过程中负责标记的函数"><a href="#GC-过程中负责标记的函数" class="headerlink" title="GC 过程中负责标记的函数"></a>GC 过程中负责标记的函数</h4><h5 id="markroot"><a href="#markroot" class="headerlink" title="markroot"></a>markroot</h5><p>​    markroot 主要是根据不同的 i 来定位要扫描哪些区域，当 i == 0 ，i == 1 时，对应到以下两种情况，</p>
+<p>具体是干啥的目前还不清晰，</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// TODO 了解这两种分别是什么</span>
+<span class="token keyword">case</span> i <span class="token operator">==</span> fixedRootFinalizers<span class="token punctuation">:</span>
+   <span class="token keyword">for</span> fb <span class="token operator">:=</span> allfin<span class="token punctuation">;</span> fb <span class="token operator">!=</span> <span class="token boolean">nil</span><span class="token punctuation">;</span> fb <span class="token operator">=</span> fb<span class="token punctuation">.</span>alllink <span class="token punctuation">&#123;</span>
+      cnt <span class="token operator">:=</span> <span class="token function">uintptr</span><span class="token punctuation">(</span>atomic<span class="token punctuation">.</span><span class="token function">Load</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>fb<span class="token punctuation">.</span>cnt<span class="token punctuation">)</span><span class="token punctuation">)</span>
+      <span class="token function">scanblock</span><span class="token punctuation">(</span><span class="token function">uintptr</span><span class="token punctuation">(</span>unsafe<span class="token punctuation">.</span><span class="token function">Pointer</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>fb<span class="token punctuation">.</span>fin<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">,</span> cnt<span class="token operator">*</span>unsafe<span class="token punctuation">.</span><span class="token function">Sizeof</span><span class="token punctuation">(</span>fb<span class="token punctuation">.</span>fin<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token operator">&amp;</span>finptrmask<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span> gcw<span class="token punctuation">,</span> <span class="token boolean">nil</span><span class="token punctuation">)</span>
+   <span class="token punctuation">&#125;</span>
+
+<span class="token keyword">case</span> i <span class="token operator">==</span> fixedRootFreeGStacks<span class="token punctuation">:</span>
+   <span class="token comment">// Switch to the system stack so we can call</span>
+   <span class="token comment">// stackfree.</span>
+   <span class="token function">systemstack</span><span class="token punctuation">(</span>markrootFreeGStacks<span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h5 id="markrootBlock"><a href="#markrootBlock" class="headerlink" title="markrootBlock"></a>markrootBlock</h5><h5 id="markrootFreeGStacks"><a href="#markrootFreeGStacks" class="headerlink" title="markrootFreeGStacks"></a>markrootFreeGStacks</h5><h5 id="markrootSpans"><a href="#markrootSpans" class="headerlink" title="markrootSpans"></a>markrootSpans</h5><h5 id="scanstack"><a href="#scanstack" class="headerlink" title="scanstack"></a>scanstack</h5><p>扫描 goroutine 栈</p>
+<h5 id="scanobject"><a href="#scanobject" class="headerlink" title="scanobject"></a>scanobject</h5><pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// scanobject scans the object starting at b, adding pointers to gcw.</span>
+<span class="token comment">// b must point to the beginning of a heap object or an oblet.</span>
+<span class="token comment">// scanobject consults the GC bitmap for the pointer mask and the</span>
+<span class="token comment">// spans for the size of the object.</span>
+<span class="token comment">//</span>
+<span class="token comment">// 如注释所写，scanobject 扫描从 b 为起始地址的对象，并添加指针到 gcw 队列中。</span>
+<span class="token comment">// b 必须指向堆对象的起始地址，或者一个 oblet。</span>
+<span class="token comment">//go:nowritebarrier</span>
+<span class="token keyword">func</span> <span class="token function">scanobject</span><span class="token punctuation">(</span>b <span class="token builtin">uintptr</span><span class="token punctuation">,</span> gcw <span class="token operator">*</span>gcWork<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token comment">// Find the bits for b and the size of the object at b.</span>
+    <span class="token comment">//</span>
+    <span class="token comment">// b is either the beginning of an object, in which case this</span>
+    <span class="token comment">// is the size of the object to scan, or it points to an</span>
+    <span class="token comment">// oblet, in which case we compute the size to scan below.</span>
+	<span class="token comment">// 这个函数前边已经详细的分析过了，没啥好说的</span>
+    hbits <span class="token operator">:=</span> <span class="token function">heapBitsForAddr</span><span class="token punctuation">(</span>b<span class="token punctuation">)</span>
+    <span class="token comment">// 找到指针 b 对应的 span</span>
+    s <span class="token operator">:=</span> <span class="token function">spanOfUnchecked</span><span class="token punctuation">(</span>b<span class="token punctuation">)</span>
+    n <span class="token operator">:=</span> s<span class="token punctuation">.</span>elemsize
+    <span class="token keyword">if</span> n <span class="token operator">==</span> <span class="token number">0</span> <span class="token punctuation">&#123;</span>
+        <span class="token function">throw</span><span class="token punctuation">(</span><span class="token string">"scanobject n == 0"</span><span class="token punctuation">)</span>
+    <span class="token punctuation">&#125;</span>
+	<span class="token comment">/*
+		这里对大对象（这里的大对象与内存分配的有些许差异
+		内存分配大对象指的是大于32KB的，这里指的是大于 128KB的）
+		进行了进一步的区分
+		maxobletBytes = 128 &lt;&lt; 10 = 128 KB
+		意味着，当前 span 的大小超过了 128KB
+		要进行一些优化操作
+	*/</span>
+    <span class="token keyword">if</span> n <span class="token operator">></span> maxObletBytes <span class="token punctuation">&#123;</span>
+        <span class="token comment">// Large object. Break into oblets for better</span>
+        <span class="token comment">// parallelism and lower latency.</span>
+        <span class="token keyword">if</span> b <span class="token operator">==</span> s<span class="token punctuation">.</span><span class="token function">base</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+            <span class="token comment">// It's possible this is a noscan object (not</span>
+            <span class="token comment">// from greyobject, but from other code</span>
+            <span class="token comment">// paths), in which case we must *not* enqueue</span>
+            <span class="token comment">// oblets since their bitmaps will be</span>
+            <span class="token comment">// uninitialized.</span>
+            <span class="token keyword">if</span> s<span class="token punctuation">.</span>spanclass<span class="token punctuation">.</span><span class="token function">noscan</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+                <span class="token comment">// Bypass the whole scan.</span>
+                gcw<span class="token punctuation">.</span>bytesMarked <span class="token operator">+=</span> <span class="token function">uint64</span><span class="token punctuation">(</span>n<span class="token punctuation">)</span>
+                <span class="token keyword">return</span>
+            <span class="token punctuation">&#125;</span>
+
+            <span class="token comment">// Enqueue the other oblets to scan later.</span>
+            <span class="token comment">// Some oblets may be in b's scalar tail, but</span>
+            <span class="token comment">// these will be marked as "no more pointers",</span>
+            <span class="token comment">// so we'll drop out immediately when we go to</span>
+            <span class="token comment">// scan those.</span>
+            <span class="token keyword">for</span> oblet <span class="token operator">:=</span> b <span class="token operator">+</span> maxObletBytes<span class="token punctuation">;</span> oblet <span class="token operator">&lt;</span> s<span class="token punctuation">.</span><span class="token function">base</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">+</span>s<span class="token punctuation">.</span>elemsize<span class="token punctuation">;</span> oblet <span class="token operator">+=</span> maxObletBytes <span class="token punctuation">&#123;</span>
+                <span class="token keyword">if</span> <span class="token operator">!</span>gcw<span class="token punctuation">.</span><span class="token function">putFast</span><span class="token punctuation">(</span>oblet<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+                    gcw<span class="token punctuation">.</span><span class="token function">put</span><span class="token punctuation">(</span>oblet<span class="token punctuation">)</span>
+                <span class="token punctuation">&#125;</span>
+            <span class="token punctuation">&#125;</span>
+        <span class="token punctuation">&#125;</span>
+
+        <span class="token comment">// Compute the size of the oblet. Since this object</span>
+        <span class="token comment">// must be a large object, s.base() is the beginning</span>
+        <span class="token comment">// of the object.</span>
+        n <span class="token operator">=</span> s<span class="token punctuation">.</span><span class="token function">base</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">+</span> s<span class="token punctuation">.</span>elemsize <span class="token operator">-</span> b
+        <span class="token keyword">if</span> n <span class="token operator">></span> maxObletBytes <span class="token punctuation">&#123;</span>
+            n <span class="token operator">=</span> maxObletBytes
+        <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">&#125;</span>
+
+    <span class="token keyword">var</span> i <span class="token builtin">uintptr</span>
+    <span class="token keyword">for</span> i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> n<span class="token punctuation">;</span> i<span class="token punctuation">,</span> hbits <span class="token operator">=</span> i<span class="token operator">+</span>sys<span class="token punctuation">.</span>PtrSize<span class="token punctuation">,</span> hbits<span class="token punctuation">.</span><span class="token function">next</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        <span class="token comment">// Load bits once. See CL 22712 and issue 16973 for discussion.</span>
+        bits <span class="token operator">:=</span> hbits<span class="token punctuation">.</span><span class="token function">bits</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+        <span class="token keyword">if</span> bits<span class="token operator">&amp;</span>bitScan <span class="token operator">==</span> <span class="token number">0</span> <span class="token punctuation">&#123;</span>
+            <span class="token keyword">break</span> <span class="token comment">// no more pointers in this object</span>
+        <span class="token punctuation">&#125;</span>
+        <span class="token keyword">if</span> bits<span class="token operator">&amp;</span>bitPointer <span class="token operator">==</span> <span class="token number">0</span> <span class="token punctuation">&#123;</span>
+            <span class="token keyword">continue</span> <span class="token comment">// not a pointer</span>
+        <span class="token punctuation">&#125;</span>
+
+        <span class="token comment">// Work here is duplicated in scanblock and above.</span>
+        <span class="token comment">// If you make changes here, make changes there too.</span>
+        obj <span class="token operator">:=</span> <span class="token operator">*</span><span class="token punctuation">(</span><span class="token operator">*</span><span class="token builtin">uintptr</span><span class="token punctuation">)</span><span class="token punctuation">(</span>unsafe<span class="token punctuation">.</span><span class="token function">Pointer</span><span class="token punctuation">(</span>b <span class="token operator">+</span> i<span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+        <span class="token comment">// At this point we have extracted the next potential pointer.</span>
+        <span class="token comment">// Quickly filter out nil and pointers back to the current object.</span>
+        <span class="token keyword">if</span> obj <span class="token operator">!=</span> <span class="token number">0</span> <span class="token operator">&amp;&amp;</span> obj<span class="token operator">-</span>b <span class="token operator">>=</span> n <span class="token punctuation">&#123;</span>
+            <span class="token comment">// Test if obj points into the Go heap and, if so,</span>
+            <span class="token comment">// mark the object.</span>
+            <span class="token comment">//</span>
+            <span class="token comment">// Note that it's possible for findObject to</span>
+            <span class="token comment">// fail if obj points to a just-allocated heap</span>
+            <span class="token comment">// object because of a race with growing the</span>
+            <span class="token comment">// heap. In this case, we know the object was</span>
+            <span class="token comment">// just allocated and hence will be marked by</span>
+            <span class="token comment">// allocation itself.</span>
+            <span class="token keyword">if</span> obj<span class="token punctuation">,</span> span<span class="token punctuation">,</span> objIndex <span class="token operator">:=</span> <span class="token function">findObject</span><span class="token punctuation">(</span>obj<span class="token punctuation">,</span> b<span class="token punctuation">,</span> i<span class="token punctuation">)</span><span class="token punctuation">;</span> obj <span class="token operator">!=</span> <span class="token number">0</span> <span class="token punctuation">&#123;</span>
+                <span class="token function">greyobject</span><span class="token punctuation">(</span>obj<span class="token punctuation">,</span> b<span class="token punctuation">,</span> i<span class="token punctuation">,</span> span<span class="token punctuation">,</span> gcw<span class="token punctuation">,</span> objIndex<span class="token punctuation">)</span>
+            <span class="token punctuation">&#125;</span>
+        <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">&#125;</span>
+    gcw<span class="token punctuation">.</span>bytesMarked <span class="token operator">+=</span> <span class="token function">uint64</span><span class="token punctuation">(</span>n<span class="token punctuation">)</span>
+    gcw<span class="token punctuation">.</span>scanWork <span class="token operator">+=</span> <span class="token function">int64</span><span class="token punctuation">(</span>i<span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h5 id="scanblock"><a href="#scanblock" class="headerlink" title="scanblock"></a>scanblock</h5><h5 id="gcmarknewobject"><a href="#gcmarknewobject" class="headerlink" title="gcmarknewobject"></a>gcmarknewobject</h5><h5 id="gcMarkTinyAllocs"><a href="#gcMarkTinyAllocs" class="headerlink" title="gcMarkTinyAllocs"></a>gcMarkTinyAllocs</h5>
     </div>
 
     
@@ -1204,7 +1355,7 @@
   </li>
   <li class="post-copyright-link">
     <strong>本文链接：</strong>
-    <a href="https://bqyang.top/2021/GC/" title="GC 十全大补知识点">https://bqyang.top/2021/GC/</a>
+    <a href="https://bqyang.top/2021/GC/" title="GC 源码梳理">https://bqyang.top/2021/GC/</a>
   </li>
   <li class="post-copyright-license">
     <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/zh-Hans" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
