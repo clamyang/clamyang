@@ -29,7 +29,7 @@
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://blogstatic.haohtml.com/uploads/2021/04/d2b5ca33bd970f64a6301fa75ae2eb22-6.png?x-oss-process=image/format,webp">
 <meta property="article:published_time" content="2021-12-02T08:11:37.293Z">
-<meta property="article:modified_time" content="2021-12-03T02:09:49.852Z">
+<meta property="article:modified_time" content="2021-12-03T11:58:47.496Z">
 <meta property="article:author" content="杨宝强">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="https://blogstatic.haohtml.com/uploads/2021/04/d2b5ca33bd970f64a6301fa75ae2eb22-6.png?x-oss-process=image/format,webp">
@@ -188,7 +188,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2021-12-03 10:09:49" itemprop="dateModified" datetime="2021-12-03T10:09:49+08:00">2021-12-03</time>
+                <time title="修改时间：2021-12-03 19:58:47" itemprop="dateModified" datetime="2021-12-03T19:58:47+08:00">2021-12-03</time>
               </span>
 
           
@@ -917,7 +917,7 @@
 <p>ha 64 M，bitmap 2 M，bitmap 中的一个字节可以表示ha连续4个指针的内存大小。</p>
 <p>0-4，1-5， 2-6， 3-7 </p>
 <p>低位 bit 用于表示是否为指针，0 为非指针，1 为指针。</p>
-<p>高位 bit 用于表示是否要继续扫描，// TODO 1 和 0 分别代表什么。</p>
+<p>高位 bit 用于表示是否要继续扫描，0 为没有指针，1 为有指针。</p>
 <p><img src="https://blogstatic.haohtml.com/uploads/2021/04/d2b5ca33bd970f64a6301fa75ae2eb22-6.png?x-oss-process=image/format,webp" alt="img"></p>
 <h4 id="heapBitsForAddr"><a href="#heapBitsForAddr" class="headerlink" title="heapBitsForAddr"></a>heapBitsForAddr</h4><pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// heapBitsForAddr returns the heapBits for the address addr.</span>
 <span class="token comment">// The caller must ensure addr is in an allocated span.</span>
@@ -1232,7 +1232,7 @@
     <span class="token comment">// b is either the beginning of an object, in which case this</span>
     <span class="token comment">// is the size of the object to scan, or it points to an</span>
     <span class="token comment">// oblet, in which case we compute the size to scan below.</span>
-	<span class="token comment">// 这个函数前边已经详细的分析过了，没啥好说的</span>
+    <span class="token comment">// 这个函数前边已经详细的分析过了，没啥好说的</span>
     hbits <span class="token operator">:=</span> <span class="token function">heapBitsForAddr</span><span class="token punctuation">(</span>b<span class="token punctuation">)</span>
     <span class="token comment">// 找到指针 b 对应的 span</span>
     s <span class="token operator">:=</span> <span class="token function">spanOfUnchecked</span><span class="token punctuation">(</span>b<span class="token punctuation">)</span>
@@ -1240,7 +1240,7 @@
     <span class="token keyword">if</span> n <span class="token operator">==</span> <span class="token number">0</span> <span class="token punctuation">&#123;</span>
         <span class="token function">throw</span><span class="token punctuation">(</span><span class="token string">"scanobject n == 0"</span><span class="token punctuation">)</span>
     <span class="token punctuation">&#125;</span>
-	<span class="token comment">/*
+    <span class="token comment">/*
 		这里对大对象（这里的大对象与内存分配的有些许差异
 		内存分配大对象指的是大于32KB的，这里指的是大于 128KB的）
 		进行了进一步的区分
@@ -1288,6 +1288,8 @@
     <span class="token keyword">for</span> i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> n<span class="token punctuation">;</span> i<span class="token punctuation">,</span> hbits <span class="token operator">=</span> i<span class="token operator">+</span>sys<span class="token punctuation">.</span>PtrSize<span class="token punctuation">,</span> hbits<span class="token punctuation">.</span><span class="token function">next</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
         <span class="token comment">// Load bits once. See CL 22712 and issue 16973 for discussion.</span>
         bits <span class="token operator">:=</span> hbits<span class="token punctuation">.</span><span class="token function">bits</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+        <span class="token comment">// 这里的两个 if 判断就好像两个卡尺</span>
+        <span class="token comment">// 分别对高位和低位进行处理</span>
         <span class="token keyword">if</span> bits<span class="token operator">&amp;</span>bitScan <span class="token operator">==</span> <span class="token number">0</span> <span class="token punctuation">&#123;</span>
             <span class="token keyword">break</span> <span class="token comment">// no more pointers in this object</span>
         <span class="token punctuation">&#125;</span>
@@ -1297,10 +1299,19 @@
 
         <span class="token comment">// Work here is duplicated in scanblock and above.</span>
         <span class="token comment">// If you make changes here, make changes there too.</span>
+        <span class="token comment">// 如下的表达式可以计算出 b+i 这个位置存储的是一个指针还是标量</span>
+        <span class="token comment">// 如果 obj != 0 说明是一个指针</span>
+        <span class="token comment">// 如果 obj == 0 说明是一个标量或为 nil？？？</span>
+        <span class="token comment">/*
+			令 fakeObj = (*uintptr)(unsafe.Pointer(b + i))
+			这时候如果对 fakeObj j
+        */</span>
         obj <span class="token operator">:=</span> <span class="token operator">*</span><span class="token punctuation">(</span><span class="token operator">*</span><span class="token builtin">uintptr</span><span class="token punctuation">)</span><span class="token punctuation">(</span>unsafe<span class="token punctuation">.</span><span class="token function">Pointer</span><span class="token punctuation">(</span>b <span class="token operator">+</span> i<span class="token punctuation">)</span><span class="token punctuation">)</span>
+
 
         <span class="token comment">// At this point we have extracted the next potential pointer.</span>
         <span class="token comment">// Quickly filter out nil and pointers back to the current object.</span>
+        <span class="token comment">// 如果 obj 是一个指针，并且 obj 不是当前 span</span>
         <span class="token keyword">if</span> obj <span class="token operator">!=</span> <span class="token number">0</span> <span class="token operator">&amp;&amp;</span> obj<span class="token operator">-</span>b <span class="token operator">>=</span> n <span class="token punctuation">&#123;</span>
             <span class="token comment">// Test if obj points into the Go heap and, if so,</span>
             <span class="token comment">// mark the object.</span>
@@ -1318,7 +1329,7 @@
     <span class="token punctuation">&#125;</span>
     gcw<span class="token punctuation">.</span>bytesMarked <span class="token operator">+=</span> <span class="token function">uint64</span><span class="token punctuation">(</span>n<span class="token punctuation">)</span>
     gcw<span class="token punctuation">.</span>scanWork <span class="token operator">+=</span> <span class="token function">int64</span><span class="token punctuation">(</span>i<span class="token punctuation">)</span>
-<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h5 id="scanblock"><a href="#scanblock" class="headerlink" title="scanblock"></a>scanblock</h5><h5 id="gcmarknewobject"><a href="#gcmarknewobject" class="headerlink" title="gcmarknewobject"></a>gcmarknewobject</h5><h5 id="gcMarkTinyAllocs"><a href="#gcMarkTinyAllocs" class="headerlink" title="gcMarkTinyAllocs"></a>gcMarkTinyAllocs</h5>
     </div>
