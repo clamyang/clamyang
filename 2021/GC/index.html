@@ -29,7 +29,7 @@
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://blogstatic.haohtml.com/uploads/2021/04/d2b5ca33bd970f64a6301fa75ae2eb22-6.png?x-oss-process=image/format,webp">
 <meta property="article:published_time" content="2021-12-02T08:11:37.293Z">
-<meta property="article:modified_time" content="2021-12-05T03:44:56.467Z">
+<meta property="article:modified_time" content="2021-12-05T12:48:53.613Z">
 <meta property="article:author" content="杨宝强">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="https://blogstatic.haohtml.com/uploads/2021/04/d2b5ca33bd970f64a6301fa75ae2eb22-6.png?x-oss-process=image/format,webp">
@@ -188,7 +188,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2021-12-05 11:44:56" itemprop="dateModified" datetime="2021-12-05T11:44:56+08:00">2021-12-05</time>
+                <time title="修改时间：2021-12-05 20:48:53" itemprop="dateModified" datetime="2021-12-05T20:48:53+08:00">2021-12-05</time>
               </span>
 
           
@@ -216,7 +216,7 @@
 </li>
 </ul>
 <h3 id="GC-的触发时机"><a href="#GC-的触发时机" class="headerlink" title="GC 的触发时机"></a>GC 的触发时机</h3><p>1.runtime.GC 手动触发</p>
-<p>2.mallocgc 根据内存分配大小，比如当前使用 4M，当内存分配到达 8M 时，会触发 GC，这个百分比是可以调整的，通过 设置triggerRatio 指定触发 GC 的阈值 go1.16.5 中，是 7/8.0 = 87.5% </p>
+<p>2.mallocgc 根据内存分配大小，比如当前使用 4M，当内存分配到达 8M 时，会触发 GC，这个百分比是可以调整的，通过 设置 triggerRatio 指定触发 GC 的阈值 go1.16.5 中，是 7/8.0 = 87.5% </p>
 <p>3.forcegchelper 定时触发 GC</p>
 <p>mallocgc 是主要的触发函数。</p>
 <h3 id="GC-的起点"><a href="#GC-的起点" class="headerlink" title="GC 的起点"></a>GC 的起点</h3><p>gcStart，控制 worker 的数量，大约占 CPU 的 1/4。</p>
@@ -316,9 +316,7 @@
 <li>gcTriggerTime 到达触发时间</li>
 <li>gcTriggerCycle 可以理解为用户手动触发类型</li>
 </ul>
-<h3 id="STW-时间怎么算出来的？"><a href="#STW-时间怎么算出来的？" class="headerlink" title="STW 时间怎么算出来的？"></a>STW 时间怎么算出来的？</h3><pre class="line-numbers language-go" data-language="go"><code class="language-go">memstats<span class="token punctuation">.</span>gcPauseDist<span class="token punctuation">.</span><span class="token function">record</span><span class="token punctuation">(</span>now <span class="token operator">-</span> work<span class="token punctuation">.</span>pauseStart<span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
-
-<h3 id="GC-过程中是什么时候将对象标记为黑色的"><a href="#GC-过程中是什么时候将对象标记为黑色的" class="headerlink" title="GC 过程中是什么时候将对象标记为黑色的"></a>GC 过程中是什么时候将对象标记为黑色的</h3><p>换句话说，是通过修改了什么变量，就代表这个指针被标记为黑色。</p>
+<h3 id="STW-时间怎么算出来的？"><a href="#STW-时间怎么算出来的？" class="headerlink" title="STW 时间怎么算出来的？"></a>STW 时间怎么算出来的？</h3><h3 id="GC-过程中是什么时候将对象标记为黑色的"><a href="#GC-过程中是什么时候将对象标记为黑色的" class="headerlink" title="GC 过程中是什么时候将对象标记为黑色的"></a>GC 过程中是什么时候将对象标记为黑色的</h3><p>换句话说，是通过修改了什么变量，就代表这个指针被标记为黑色。</p>
 <p>解释如下：</p>
 <p>​    通过源码分析，我们可以知道，从白色对象到灰色对象是通过 greyobject 来实现的，同事也能够知道在 gcw 队列中的对象都是灰色的。</p>
 <p>​    标记为黑色的过程是从 gcw 队列中取出灰色对象，再遍历其子对象并将其标灰，也即是说当灰色对象出队的时候就自动变成黑色了，就完成了将一个灰色对象标记位黑色的过程，在 Go 的源码中，其实并不存在的某个方法或者某个标志位，来表示一个对象是黑色的。</p>
@@ -352,7 +350,7 @@
         <span class="token keyword">return</span>
     <span class="token punctuation">&#125;</span>
     <span class="token function">releasem</span><span class="token punctuation">(</span>mp<span class="token punctuation">)</span>
-    mp <span class="token operator">=</span> nilx	
+    mp <span class="token operator">=</span> <span class="token boolean">nil</span>	
 
     <span class="token comment">// Pick up the remaining unswept/not being swept spans concurrently</span>
     <span class="token comment">//</span>
@@ -402,6 +400,7 @@
     <span class="token punctuation">&#125;</span>
 
     <span class="token comment">// Ok, we're doing it! Stop everybody else</span>
+    <span class="token comment">// 获取 STW 需要的 semaphore</span>
     <span class="token function">semacquire</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>gcsema<span class="token punctuation">)</span>
     <span class="token function">semacquire</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>worldsema<span class="token punctuation">)</span>
 
@@ -420,7 +419,7 @@
 
     <span class="token comment">// 开启 nproc 个 gcMarkWorker，加入到 workerPool 中</span>
     <span class="token comment">// 创建完一个 worker，休眠一个 worker</span>
-    <span class="token comment">// schedule.findRunnableGCWorker 会唤醒</span>
+    <span class="token comment">// 由 schedule.findRunnableGCWorker 唤醒</span>
     <span class="token function">gcBgMarkStartWorkers</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
 
     <span class="token comment">// 重置标志位，allg 的标志位，heapArena 的标志位</span>
@@ -444,7 +443,7 @@
         <span class="token function">traceGCSTWStart</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span>
     <span class="token punctuation">&#125;</span>
 
-    <span class="token comment">// stw 调用者必须为 stopTheWorldWithSema 获取 worldsema 并且 关闭抢占</span>
+    <span class="token comment">// STW 调用者必须为 stopTheWorldWithSema 获取 worldsema 并且 关闭抢占</span>
     <span class="token function">systemstack</span><span class="token punctuation">(</span>stopTheWorldWithSema<span class="token punctuation">)</span>
 
     <span class="token comment">// Finish sweep before we start concurrent scan.</span>
@@ -538,7 +537,7 @@
 
     <span class="token function">semrelease</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>work<span class="token punctuation">.</span>startSema<span class="token punctuation">)</span>
 <span class="token punctuation">&#125;</span>
-<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h2 id="findRunnableGCWorker-源码剖析"><a href="#findRunnableGCWorker-源码剖析" class="headerlink" title="findRunnableGCWorker 源码剖析"></a>findRunnableGCWorker 源码剖析</h2><pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// findRunnableGCWorker returns a background mark worker for _p_ if it</span>
 <span class="token comment">// should be run. This must only be called when gcBlackenEnabled != 0.</span>
@@ -557,7 +556,7 @@
     <span class="token punctuation">&#125;</span>
 
     <span class="token comment">// Grab a worker before we commit to running below.</span>
-    <span class="token comment">// 从 workpool 中一个 markNode</span>
+    <span class="token comment">// 从 workpool 中弹出一个 gcMarkWorker</span>
     node <span class="token operator">:=</span> <span class="token punctuation">(</span><span class="token operator">*</span>gcBgMarkWorkerNode<span class="token punctuation">)</span><span class="token punctuation">(</span>gcBgMarkWorkerPool<span class="token punctuation">.</span><span class="token function">pop</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
     <span class="token keyword">if</span> node <span class="token operator">==</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
         <span class="token comment">// There is at least one worker per P, so normally there are</span>
@@ -801,7 +800,7 @@
         node<span class="token punctuation">.</span>m<span class="token punctuation">.</span><span class="token function">set</span><span class="token punctuation">(</span><span class="token function">acquirem</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
         pp <span class="token operator">:=</span> gp<span class="token punctuation">.</span>m<span class="token punctuation">.</span>p<span class="token punctuation">.</span><span class="token function">ptr</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token comment">// P can't change with preemption disabled.</span>
 
-        <span class="token comment">// 标记是否已开启</span>
+        <span class="token comment">// 是否已开启标记</span>
         <span class="token keyword">if</span> gcBlackenEnabled <span class="token operator">==</span> <span class="token number">0</span> <span class="token punctuation">&#123;</span>
             <span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"worker mode"</span><span class="token punctuation">,</span> pp<span class="token punctuation">.</span>gcMarkWorkerMode<span class="token punctuation">)</span>
             <span class="token function">throw</span><span class="token punctuation">(</span><span class="token string">"gcBgMarkWorker: blackening not enabled"</span><span class="token punctuation">)</span>
@@ -836,28 +835,28 @@
             <span class="token function">casgstatus</span><span class="token punctuation">(</span>gp<span class="token punctuation">,</span> _Grunning<span class="token punctuation">,</span> _Gwaiting<span class="token punctuation">)</span>
             <span class="token keyword">switch</span> pp<span class="token punctuation">.</span>gcMarkWorkerMode <span class="token punctuation">&#123;</span>
                 <span class="token keyword">default</span><span class="token punctuation">:</span>
-                <span class="token function">throw</span><span class="token punctuation">(</span><span class="token string">"gcBgMarkWorker: unexpected gcMarkWorkerMode"</span><span class="token punctuation">)</span>
+                	<span class="token function">throw</span><span class="token punctuation">(</span><span class="token string">"gcBgMarkWorker: unexpected gcMarkWorkerMode"</span><span class="token punctuation">)</span>
                 <span class="token keyword">case</span> gcMarkWorkerDedicatedMode<span class="token punctuation">:</span>
-                <span class="token function">gcDrain</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>pp<span class="token punctuation">.</span>gcw<span class="token punctuation">,</span> gcDrainUntilPreempt<span class="token operator">|</span>gcDrainFlushBgCredit<span class="token punctuation">)</span>
-                <span class="token keyword">if</span> gp<span class="token punctuation">.</span>preempt <span class="token punctuation">&#123;</span>
-                    <span class="token comment">// We were preempted. This is</span>
-                    <span class="token comment">// a useful signal to kick</span>
-                    <span class="token comment">// everything out of the run</span>
-                    <span class="token comment">// queue so it can run</span>
-                    <span class="token comment">// somewhere else.</span>
-                    <span class="token keyword">if</span> drainQ<span class="token punctuation">,</span> n <span class="token operator">:=</span> <span class="token function">runqdrain</span><span class="token punctuation">(</span>pp<span class="token punctuation">)</span><span class="token punctuation">;</span> n <span class="token operator">></span> <span class="token number">0</span> <span class="token punctuation">&#123;</span>
-                        <span class="token function">lock</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>sched<span class="token punctuation">.</span>lock<span class="token punctuation">)</span>
-                        <span class="token function">globrunqputbatch</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>drainQ<span class="token punctuation">,</span> <span class="token function">int32</span><span class="token punctuation">(</span>n<span class="token punctuation">)</span><span class="token punctuation">)</span>
-                        <span class="token function">unlock</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>sched<span class="token punctuation">.</span>lock<span class="token punctuation">)</span>
+                	<span class="token function">gcDrain</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>pp<span class="token punctuation">.</span>gcw<span class="token punctuation">,</span> gcDrainUntilPreempt<span class="token operator">|</span>gcDrainFlushBgCredit<span class="token punctuation">)</span>
+                    <span class="token keyword">if</span> gp<span class="token punctuation">.</span>preempt <span class="token punctuation">&#123;</span>
+                        <span class="token comment">// We were preempted. This is</span>
+                        <span class="token comment">// a useful signal to kick</span>
+                        <span class="token comment">// everything out of the run</span>
+                        <span class="token comment">// queue so it can run</span>
+                        <span class="token comment">// somewhere else.</span>
+                        <span class="token keyword">if</span> drainQ<span class="token punctuation">,</span> n <span class="token operator">:=</span> <span class="token function">runqdrain</span><span class="token punctuation">(</span>pp<span class="token punctuation">)</span><span class="token punctuation">;</span> n <span class="token operator">></span> <span class="token number">0</span> <span class="token punctuation">&#123;</span>
+                            <span class="token function">lock</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>sched<span class="token punctuation">.</span>lock<span class="token punctuation">)</span>
+                            <span class="token function">globrunqputbatch</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>drainQ<span class="token punctuation">,</span> <span class="token function">int32</span><span class="token punctuation">(</span>n<span class="token punctuation">)</span><span class="token punctuation">)</span>
+                            <span class="token function">unlock</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>sched<span class="token punctuation">.</span>lock<span class="token punctuation">)</span>
+                        <span class="token punctuation">&#125;</span>
                     <span class="token punctuation">&#125;</span>
-                <span class="token punctuation">&#125;</span>
-                <span class="token comment">// Go back to draining, this time</span>
-                <span class="token comment">// without preemption.</span>
-                <span class="token function">gcDrain</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>pp<span class="token punctuation">.</span>gcw<span class="token punctuation">,</span> gcDrainFlushBgCredit<span class="token punctuation">)</span>
+                    <span class="token comment">// Go back to draining, this time</span>
+                    <span class="token comment">// without preemption.</span>
+                    <span class="token function">gcDrain</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>pp<span class="token punctuation">.</span>gcw<span class="token punctuation">,</span> gcDrainFlushBgCredit<span class="token punctuation">)</span>
                 <span class="token keyword">case</span> gcMarkWorkerFractionalMode<span class="token punctuation">:</span>
-                <span class="token function">gcDrain</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>pp<span class="token punctuation">.</span>gcw<span class="token punctuation">,</span> gcDrainFractional<span class="token operator">|</span>gcDrainUntilPreempt<span class="token operator">|</span>gcDrainFlushBgCredit<span class="token punctuation">)</span>
+                	<span class="token function">gcDrain</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>pp<span class="token punctuation">.</span>gcw<span class="token punctuation">,</span> gcDrainFractional<span class="token operator">|</span>gcDrainUntilPreempt<span class="token operator">|</span>gcDrainFlushBgCredit<span class="token punctuation">)</span>
                 <span class="token keyword">case</span> gcMarkWorkerIdleMode<span class="token punctuation">:</span>
-                <span class="token function">gcDrain</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>pp<span class="token punctuation">.</span>gcw<span class="token punctuation">,</span> gcDrainIdle<span class="token operator">|</span>gcDrainUntilPreempt<span class="token operator">|</span>gcDrainFlushBgCredit<span class="token punctuation">)</span>
+                	<span class="token function">gcDrain</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>pp<span class="token punctuation">.</span>gcw<span class="token punctuation">,</span> gcDrainIdle<span class="token operator">|</span>gcDrainUntilPreempt<span class="token operator">|</span>gcDrainFlushBgCredit<span class="token punctuation">)</span>
             <span class="token punctuation">&#125;</span>
             <span class="token function">casgstatus</span><span class="token punctuation">(</span>gp<span class="token punctuation">,</span> _Gwaiting<span class="token punctuation">,</span> _Grunning<span class="token punctuation">)</span>
         <span class="token punctuation">&#125;</span><span class="token punctuation">)</span>
@@ -866,13 +865,13 @@
         duration <span class="token operator">:=</span> <span class="token function">nanotime</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">-</span> startTime
         <span class="token keyword">switch</span> pp<span class="token punctuation">.</span>gcMarkWorkerMode <span class="token punctuation">&#123;</span>
             <span class="token keyword">case</span> gcMarkWorkerDedicatedMode<span class="token punctuation">:</span>
-            atomic<span class="token punctuation">.</span><span class="token function">Xaddint64</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>gcController<span class="token punctuation">.</span>dedicatedMarkTime<span class="token punctuation">,</span> duration<span class="token punctuation">)</span>
-            atomic<span class="token punctuation">.</span><span class="token function">Xaddint64</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>gcController<span class="token punctuation">.</span>dedicatedMarkWorkersNeeded<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span>
+                atomic<span class="token punctuation">.</span><span class="token function">Xaddint64</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>gcController<span class="token punctuation">.</span>dedicatedMarkTime<span class="token punctuation">,</span> duration<span class="token punctuation">)</span>
+                atomic<span class="token punctuation">.</span><span class="token function">Xaddint64</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>gcController<span class="token punctuation">.</span>dedicatedMarkWorkersNeeded<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span>
             <span class="token keyword">case</span> gcMarkWorkerFractionalMode<span class="token punctuation">:</span>
-            atomic<span class="token punctuation">.</span><span class="token function">Xaddint64</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>gcController<span class="token punctuation">.</span>fractionalMarkTime<span class="token punctuation">,</span> duration<span class="token punctuation">)</span>
-            atomic<span class="token punctuation">.</span><span class="token function">Xaddint64</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>pp<span class="token punctuation">.</span>gcFractionalMarkTime<span class="token punctuation">,</span> duration<span class="token punctuation">)</span>
+                atomic<span class="token punctuation">.</span><span class="token function">Xaddint64</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>gcController<span class="token punctuation">.</span>fractionalMarkTime<span class="token punctuation">,</span> duration<span class="token punctuation">)</span>
+                atomic<span class="token punctuation">.</span><span class="token function">Xaddint64</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>pp<span class="token punctuation">.</span>gcFractionalMarkTime<span class="token punctuation">,</span> duration<span class="token punctuation">)</span>
             <span class="token keyword">case</span> gcMarkWorkerIdleMode<span class="token punctuation">:</span>
-            atomic<span class="token punctuation">.</span><span class="token function">Xaddint64</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>gcController<span class="token punctuation">.</span>idleMarkTime<span class="token punctuation">,</span> duration<span class="token punctuation">)</span>
+                atomic<span class="token punctuation">.</span><span class="token function">Xaddint64</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>gcController<span class="token punctuation">.</span>idleMarkTime<span class="token punctuation">,</span> duration<span class="token punctuation">)</span>
         <span class="token punctuation">&#125;</span>
 
         <span class="token comment">// Was this the last worker and did we run out</span>
@@ -963,7 +962,7 @@
 <span class="token keyword">func</span> <span class="token punctuation">(</span>h heapBits<span class="token punctuation">)</span> <span class="token function">next</span><span class="token punctuation">(</span><span class="token punctuation">)</span> heapBits <span class="token punctuation">&#123;</span>
     <span class="token keyword">if</span> h<span class="token punctuation">.</span>shift <span class="token operator">&lt;</span> <span class="token number">3</span><span class="token operator">*</span>heapBitsShift <span class="token punctuation">&#123;</span> <span class="token comment">// 在同一字节上扫描，四个连续的ptr还没扫描完</span>
         h<span class="token punctuation">.</span>shift <span class="token operator">+=</span> heapBitsShift
-    <span class="token punctuation">&#125;</span> <span class="token keyword">else</span> <span class="token keyword">if</span> h<span class="token punctuation">.</span>bitp <span class="token operator">!=</span> h<span class="token punctuation">.</span>last <span class="token punctuation">&#123;</span>	<span class="token comment">// 如果没扫描到该 ha 的最后一字节，那么扫描下一个byte</span>
+    <span class="token punctuation">&#125;</span> <span class="token keyword">else</span> <span class="token keyword">if</span> h<span class="token punctuation">.</span>bitp <span class="token operator">!=</span> h<span class="token punctuation">.</span>last <span class="token punctuation">&#123;</span>	<span class="token comment">// 如果没扫描到该 bitmap 的最后一字节，那么扫描下一个byte</span>
         h<span class="token punctuation">.</span>bitp<span class="token punctuation">,</span> h<span class="token punctuation">.</span>shift <span class="token operator">=</span> <span class="token function">add1</span><span class="token punctuation">(</span>h<span class="token punctuation">.</span>bitp<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token number">0</span>
     <span class="token punctuation">&#125;</span> <span class="token keyword">else</span> <span class="token punctuation">&#123;</span>	<span class="token comment">// 此时，当前已经扫描完了当前 ha 的所有内容，移动到下一个 ha 进行扫描</span>
         <span class="token comment">// Move to the next arena.</span>
@@ -1033,7 +1032,8 @@
         <span class="token keyword">if</span> work<span class="token punctuation">.</span>full <span class="token operator">==</span> <span class="token number">0</span> <span class="token punctuation">&#123;</span>
             gcw<span class="token punctuation">.</span><span class="token function">balance</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
         <span class="token punctuation">&#125;</span>
-
+		
+        <span class="token comment">// 从 gcw 队列中取值</span>
         b <span class="token operator">:=</span> gcw<span class="token punctuation">.</span><span class="token function">tryGetFast</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
         <span class="token keyword">if</span> b <span class="token operator">==</span> <span class="token number">0</span> <span class="token punctuation">&#123;</span>
             b <span class="token operator">=</span> gcw<span class="token punctuation">.</span><span class="token function">tryGet</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
@@ -1041,6 +1041,7 @@
                 <span class="token comment">// Flush the write barrier</span>
                 <span class="token comment">// buffer; this may create</span>
                 <span class="token comment">// more work.</span>
+                如果说 wbuf 中都没有，将
                 <span class="token function">wbBufFlush</span><span class="token punctuation">(</span><span class="token boolean">nil</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span>
                 b <span class="token operator">=</span> gcw<span class="token punctuation">.</span><span class="token function">tryGet</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
             <span class="token punctuation">&#125;</span>
@@ -1081,7 +1082,7 @@
         <span class="token punctuation">&#125;</span>
         gcw<span class="token punctuation">.</span>scanWork <span class="token operator">=</span> <span class="token number">0</span>
     <span class="token punctuation">&#125;</span>
-<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h4 id="标记工作的平衡"><a href="#标记工作的平衡" class="headerlink" title="标记工作的平衡"></a>标记工作的平衡</h4><h5 id="balance"><a href="#balance" class="headerlink" title="balance"></a>balance</h5><pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// balance moves some work that's cached in this gcWork back on the</span>
 <span class="token comment">// global queue.</span>
