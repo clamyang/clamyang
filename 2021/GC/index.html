@@ -29,7 +29,7 @@
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://blogstatic.haohtml.com/uploads/2021/04/d2b5ca33bd970f64a6301fa75ae2eb22-6.png?x-oss-process=image/format,webp">
 <meta property="article:published_time" content="2021-12-02T08:11:37.293Z">
-<meta property="article:modified_time" content="2021-12-05T12:48:53.613Z">
+<meta property="article:modified_time" content="2021-12-06T09:46:18.966Z">
 <meta property="article:author" content="杨宝强">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="https://blogstatic.haohtml.com/uploads/2021/04/d2b5ca33bd970f64a6301fa75ae2eb22-6.png?x-oss-process=image/format,webp">
@@ -188,7 +188,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2021-12-05 20:48:53" itemprop="dateModified" datetime="2021-12-05T20:48:53+08:00">2021-12-05</time>
+                <time title="修改时间：2021-12-06 17:46:18" itemprop="dateModified" datetime="2021-12-06T17:46:18+08:00">2021-12-06</time>
               </span>
 
           
@@ -280,6 +280,9 @@
     <span class="token comment">// ignore them because they begin life without any roots, so</span>
     <span class="token comment">// there's nothing to scan, and any roots they create during</span>
     <span class="token comment">// the concurrent phase will be caught by the write barrier.</span>
+    <span class="token comment">// 如注释所说，尽管这时候有 goroutine 被创建，也不需要担心</span>
+    <span class="token comment">// 因为他们没有 root，即不需要扫描。如果在并发阶段创建出来的 goroutine，</span>
+    <span class="token comment">// 这个 G 使用的 root 会被 write barrier 捕获到。</span>
     work<span class="token punctuation">.</span>nStackRoots <span class="token operator">=</span> <span class="token function">int</span><span class="token punctuation">(</span>atomic<span class="token punctuation">.</span><span class="token function">Loaduintptr</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>allglen<span class="token punctuation">)</span><span class="token punctuation">)</span>
 
     <span class="token comment">// 初始化标记的开始位置</span>
@@ -295,7 +298,7 @@
     work<span class="token punctuation">.</span>baseSpans <span class="token operator">=</span> work<span class="token punctuation">.</span>baseBSS <span class="token operator">+</span> <span class="token function">uint32</span><span class="token punctuation">(</span>work<span class="token punctuation">.</span>nBSSRoots<span class="token punctuation">)</span>
     work<span class="token punctuation">.</span>baseStacks <span class="token operator">=</span> work<span class="token punctuation">.</span>baseSpans <span class="token operator">+</span> <span class="token function">uint32</span><span class="token punctuation">(</span>work<span class="token punctuation">.</span>nSpanRoots<span class="token punctuation">)</span>
     work<span class="token punctuation">.</span>baseEnd <span class="token operator">=</span> work<span class="token punctuation">.</span>baseStacks <span class="token operator">+</span> <span class="token function">uint32</span><span class="token punctuation">(</span>work<span class="token punctuation">.</span>nStackRoots<span class="token punctuation">)</span>
-<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <ul>
 <li>结合上边代码来看，GC 标记过程中涉及到的根有：全局变量，stack，heap（span）</li>
@@ -1200,12 +1203,10 @@
 <p>这样我们就有了一个缓冲区的滞后值，它可以将获取或放置工作缓冲区的成本分摊到至少一个工作缓冲区上，并减少全局工作列表上的争用。</p>
 <p>wbuf1 永远都是我们正在操作的那个 buffer，wbuf2 是接下来要丢弃的缓冲区。</p>
 <p>总结：</p>
-<p>wbuf1 和 wbuf2 都是用来存储灰色指针的，wbuf1 是我们真正操作的那个队列，入队出队操作的都是它，wbuf2 起到的是替换作用，当 wbuf1 空了，替换 wbuf2，当 wbuf1 满了，替换 wbuf2？？？</p>
-<p>具体的交换过程，注释中并没有提到，需要在梳理标记过程时整理出来。</p>
+<p>wbuf1 和 wbuf2 都是用来存储灰色指针的，wbuf1 是我们真正操作的那个队列，入队出队操作的都是它，wbuf2 起到的是替换作用，当 wbuf1 空了，替换 wbuf2，当 wbuf1 满了，替换 wbuf2。</p>
 <h5 id="work-full-和-work-empty"><a href="#work-full-和-work-empty" class="headerlink" title="work.full 和 work.empty"></a>work.full 和 work.empty</h5><p>全局 work 中有两个队列，full 和 empty，灰色对象入队过程：</p>
 <p>fastPath: 检查 wbuf1 是否为空，是否满了，是就返回；都不是，将灰色对象入队。<br>slowPath：检查 wbuf1 是否为 nil，为 nil，执行初始化。否则，判断是否满了，满了，交换 wbuf1 和 wbuf2，再次判断 wbuf1 是否满了，满了加入到全局 full 队列中，然后从 empty 队列获取一个空的并赋值给 wbuf1，最后把这个灰色对象入队。</p>
-<h4 id="GC-过程中负责标记的函数"><a href="#GC-过程中负责标记的函数" class="headerlink" title="GC 过程中负责标记的函数"></a>GC 过程中负责标记的函数</h4><h5 id="markroot"><a href="#markroot" class="headerlink" title="markroot"></a>markroot</h5><p>​    markroot 主要是根据不同的 i 来定位要扫描哪些区域，当 i == 0 ，i == 1 时，对应到以下两种情况，</p>
-<p>具体是干啥的目前还不清晰，</p>
+<h4 id="GC-过程中负责标记的函数"><a href="#GC-过程中负责标记的函数" class="headerlink" title="GC 过程中负责标记的函数"></a>GC 过程中负责标记的函数</h4><h5 id="markroot"><a href="#markroot" class="headerlink" title="markroot"></a>markroot</h5><p>markroot 主要是根据不同的 i 来定位要扫描哪些区域，当 i == 0 ，i == 1 时，对应到以下两种情况，具体的含义暂时还不清晰。</p>
 <pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// TODO 了解这两种分别是什么</span>
 <span class="token keyword">case</span> i <span class="token operator">==</span> fixedRootFinalizers<span class="token punctuation">:</span>
    <span class="token keyword">for</span> fb <span class="token operator">:=</span> allfin<span class="token punctuation">;</span> fb <span class="token operator">!=</span> <span class="token boolean">nil</span><span class="token punctuation">;</span> fb <span class="token operator">=</span> fb<span class="token punctuation">.</span>alllink <span class="token punctuation">&#123;</span>
