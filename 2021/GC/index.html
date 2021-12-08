@@ -29,7 +29,7 @@
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://blogstatic.haohtml.com/uploads/2021/04/d2b5ca33bd970f64a6301fa75ae2eb22-6.png?x-oss-process=image/format,webp">
 <meta property="article:published_time" content="2021-12-02T08:11:37.293Z">
-<meta property="article:modified_time" content="2021-12-06T14:31:05.397Z">
+<meta property="article:modified_time" content="2021-12-08T05:55:15.832Z">
 <meta property="article:author" content="杨宝强">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="https://blogstatic.haohtml.com/uploads/2021/04/d2b5ca33bd970f64a6301fa75ae2eb22-6.png?x-oss-process=image/format,webp">
@@ -188,7 +188,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2021-12-06 22:31:05" itemprop="dateModified" datetime="2021-12-06T22:31:05+08:00">2021-12-06</time>
+                <time title="修改时间：2021-12-08 13:55:15" itemprop="dateModified" datetime="2021-12-08T13:55:15+08:00">2021-12-08</time>
               </span>
 
           
@@ -1381,157 +1381,168 @@
 </ul>
 </li>
 </ul>
-<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">//go:systemstack</span>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">/*
+    suspendG 在一个安全时刻暂停 goroutine 并且返回被挂起 goroutine 的状态。
+    suspendG 的调用者拥有该 goroutine 的读权限直到调用的 resumeG。
+
+    多个调用者在同一时刻想挂起同一个 goroutine 是安全的。
+    The goroutine may execute between subsequent successful suspend operations.
+    当前的实现为互斥访问 goroutine，因此多个调用者的访问会被串行化。
+    然而，这样的目的是为了读共享，所以请不要依赖互斥访问。
+
+    suspendG 一定要在 system stack 上调用并且当前 M 上的 goroutine 一定是可以被抢占的状态。这阻止了两个 goroutine 尝试相互挂起但是他们都处在非抢占状态下发生死锁的情况。虽然还有其他的方式可以解决死锁，但是这种是最简单的方式。
+*/</span>
+<span class="token comment">//go:systemstack</span>
 <span class="token keyword">func</span> <span class="token function">suspendG</span><span class="token punctuation">(</span>gp <span class="token operator">*</span>g<span class="token punctuation">)</span> suspendGState <span class="token punctuation">&#123;</span>
-   <span class="token keyword">if</span> mp <span class="token operator">:=</span> <span class="token function">getg</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>m<span class="token punctuation">;</span> mp<span class="token punctuation">.</span>curg <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token operator">&amp;&amp;</span> <span class="token function">readgstatus</span><span class="token punctuation">(</span>mp<span class="token punctuation">.</span>curg<span class="token punctuation">)</span> <span class="token operator">==</span> _Grunning <span class="token punctuation">&#123;</span>
-      <span class="token comment">// Since we're on the system stack of this M, the user</span>
-      <span class="token comment">// G is stuck at an unsafe point. If another goroutine</span>
-      <span class="token comment">// were to try to preempt m.curg, it could deadlock.</span>
-      <span class="token function">throw</span><span class="token punctuation">(</span><span class="token string">"suspendG from non-preemptible goroutine"</span><span class="token punctuation">)</span>
-   <span class="token punctuation">&#125;</span>
+    <span class="token keyword">if</span> mp <span class="token operator">:=</span> <span class="token function">getg</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>m<span class="token punctuation">;</span> mp<span class="token punctuation">.</span>curg <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token operator">&amp;&amp;</span> <span class="token function">readgstatus</span><span class="token punctuation">(</span>mp<span class="token punctuation">.</span>curg<span class="token punctuation">)</span> <span class="token operator">==</span> _Grunning <span class="token punctuation">&#123;</span>
+        <span class="token comment">// Since we're on the system stack of this M, the user</span>
+        <span class="token comment">// G is stuck at an unsafe point. If another goroutine</span>
+        <span class="token comment">// were to try to preempt m.curg, it could deadlock.</span>
+        <span class="token function">throw</span><span class="token punctuation">(</span><span class="token string">"suspendG from non-preemptible goroutine"</span><span class="token punctuation">)</span>
+    <span class="token punctuation">&#125;</span>
 
-   <span class="token comment">// See https://golang.org/cl/21503 for justification of the yield delay.</span>
-   <span class="token keyword">const</span> yieldDelay <span class="token operator">=</span> <span class="token number">10</span> <span class="token operator">*</span> <span class="token number">1000</span>
-   <span class="token keyword">var</span> nextYield <span class="token builtin">int64</span>
+    <span class="token comment">// See https://golang.org/cl/21503 for justification of the yield delay.</span>
+    <span class="token keyword">const</span> yieldDelay <span class="token operator">=</span> <span class="token number">10</span> <span class="token operator">*</span> <span class="token number">1000</span>
+    <span class="token keyword">var</span> nextYield <span class="token builtin">int64</span>
 
-   <span class="token comment">// Drive the goroutine to a preemption point.</span>
-   stopped <span class="token operator">:=</span> <span class="token boolean">false</span>
-   <span class="token keyword">var</span> asyncM <span class="token operator">*</span>m
-   <span class="token keyword">var</span> asyncGen <span class="token builtin">uint32</span>
-   <span class="token keyword">var</span> nextPreemptM <span class="token builtin">int64</span>
-   <span class="token keyword">for</span> i <span class="token operator">:=</span> <span class="token number">0</span><span class="token punctuation">;</span> <span class="token punctuation">;</span> i<span class="token operator">++</span> <span class="token punctuation">&#123;</span>
-      <span class="token keyword">switch</span> s <span class="token operator">:=</span> <span class="token function">readgstatus</span><span class="token punctuation">(</span>gp<span class="token punctuation">)</span><span class="token punctuation">;</span> s <span class="token punctuation">&#123;</span>
-      <span class="token keyword">default</span><span class="token punctuation">:</span>
-         <span class="token keyword">if</span> s<span class="token operator">&amp;</span>_Gscan <span class="token operator">!=</span> <span class="token number">0</span> <span class="token punctuation">&#123;</span>
-            <span class="token comment">// Someone else is suspending it. Wait</span>
-            <span class="token comment">// for them to finish.</span>
-            <span class="token comment">//</span>
-            <span class="token comment">// TODO: It would be nicer if we could</span>
-            <span class="token comment">// coalesce suspends.</span>
-            <span class="token keyword">break</span>
-         <span class="token punctuation">&#125;</span>
-
-         <span class="token function">dumpgstatus</span><span class="token punctuation">(</span>gp<span class="token punctuation">)</span>
-         <span class="token function">throw</span><span class="token punctuation">(</span><span class="token string">"invalid g status"</span><span class="token punctuation">)</span>
-
-      <span class="token keyword">case</span> _Gdead<span class="token punctuation">:</span>
-         <span class="token comment">// Nothing to suspend.</span>
-         <span class="token comment">//</span>
-         <span class="token comment">// preemptStop may need to be cleared, but</span>
-         <span class="token comment">// doing that here could race with goroutine</span>
-         <span class="token comment">// reuse. Instead, goexit0 clears it.</span>
-         <span class="token keyword">return</span> suspendGState<span class="token punctuation">&#123;</span>dead<span class="token punctuation">:</span> <span class="token boolean">true</span><span class="token punctuation">&#125;</span>
-
-      <span class="token keyword">case</span> _Gcopystack<span class="token punctuation">:</span>
-         <span class="token comment">// The stack is being copied. We need to wait</span>
-         <span class="token comment">// until this is done.</span>
-
-      <span class="token keyword">case</span> _Gpreempted<span class="token punctuation">:</span>
-         <span class="token comment">// We (or someone else) suspended the G. Claim</span>
-         <span class="token comment">// ownership of it by transitioning it to</span>
-         <span class="token comment">// _Gwaiting.</span>
-         <span class="token keyword">if</span> <span class="token operator">!</span><span class="token function">casGFromPreempted</span><span class="token punctuation">(</span>gp<span class="token punctuation">,</span> _Gpreempted<span class="token punctuation">,</span> _Gwaiting<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
-            <span class="token keyword">break</span>
-         <span class="token punctuation">&#125;</span>
-
-         <span class="token comment">// We stopped the G, so we have to ready it later.</span>
-         stopped <span class="token operator">=</span> <span class="token boolean">true</span>
-
-         s <span class="token operator">=</span> _Gwaiting
-         <span class="token keyword">fallthrough</span>
-
-      <span class="token keyword">case</span> _Grunnable<span class="token punctuation">,</span> _Gsyscall<span class="token punctuation">,</span> _Gwaiting<span class="token punctuation">:</span>
-         <span class="token comment">// Claim goroutine by setting scan bit.</span>
-         <span class="token comment">// This may race with execution or readying of gp.</span>
-         <span class="token comment">// The scan bit keeps it from transition state.</span>
-         <span class="token keyword">if</span> <span class="token operator">!</span><span class="token function">castogscanstatus</span><span class="token punctuation">(</span>gp<span class="token punctuation">,</span> s<span class="token punctuation">,</span> s<span class="token operator">|</span>_Gscan<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
-            <span class="token keyword">break</span>
-         <span class="token punctuation">&#125;</span>
-
-         <span class="token comment">// Clear the preemption request. It's safe to</span>
-         <span class="token comment">// reset the stack guard because we hold the</span>
-         <span class="token comment">// _Gscan bit and thus own the stack.</span>
-         gp<span class="token punctuation">.</span>preemptStop <span class="token operator">=</span> <span class="token boolean">false</span>
-         gp<span class="token punctuation">.</span>preempt <span class="token operator">=</span> <span class="token boolean">false</span>
-         gp<span class="token punctuation">.</span>stackguard0 <span class="token operator">=</span> gp<span class="token punctuation">.</span>stack<span class="token punctuation">.</span>lo <span class="token operator">+</span> _StackGuard
-
-         <span class="token comment">// The goroutine was already at a safe-point</span>
-         <span class="token comment">// and we've now locked that in.</span>
-         <span class="token comment">//</span>
-         <span class="token comment">// TODO: It would be much better if we didn't</span>
-         <span class="token comment">// leave it in _Gscan, but instead gently</span>
-         <span class="token comment">// prevented its scheduling until resumption.</span>
-         <span class="token comment">// Maybe we only use this to bump a suspended</span>
-         <span class="token comment">// count and the scheduler skips suspended</span>
-         <span class="token comment">// goroutines? That wouldn't be enough for</span>
-         <span class="token comment">// &#123;_Gsyscall,_Gwaiting&#125; -> _Grunning. Maybe</span>
-         <span class="token comment">// for all those transitions we need to check</span>
-         <span class="token comment">// suspended and deschedule?</span>
-         <span class="token keyword">return</span> suspendGState<span class="token punctuation">&#123;</span>g<span class="token punctuation">:</span> gp<span class="token punctuation">,</span> stopped<span class="token punctuation">:</span> stopped<span class="token punctuation">&#125;</span>
-
-      <span class="token keyword">case</span> _Grunning<span class="token punctuation">:</span>
-         <span class="token comment">// Optimization: if there is already a pending preemption request</span>
-         <span class="token comment">// (from the previous loop iteration), don't bother with the atomics.</span>
-         <span class="token keyword">if</span> gp<span class="token punctuation">.</span>preemptStop <span class="token operator">&amp;&amp;</span> gp<span class="token punctuation">.</span>preempt <span class="token operator">&amp;&amp;</span> gp<span class="token punctuation">.</span>stackguard0 <span class="token operator">==</span> stackPreempt <span class="token operator">&amp;&amp;</span> asyncM <span class="token operator">==</span> gp<span class="token punctuation">.</span>m <span class="token operator">&amp;&amp;</span> atomic<span class="token punctuation">.</span><span class="token function">Load</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>asyncM<span class="token punctuation">.</span>preemptGen<span class="token punctuation">)</span> <span class="token operator">==</span> asyncGen <span class="token punctuation">&#123;</span>
-            <span class="token keyword">break</span>
-         <span class="token punctuation">&#125;</span>
-
-         <span class="token comment">// Temporarily block state transitions.</span>
-         <span class="token keyword">if</span> <span class="token operator">!</span><span class="token function">castogscanstatus</span><span class="token punctuation">(</span>gp<span class="token punctuation">,</span> _Grunning<span class="token punctuation">,</span> _Gscanrunning<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
-            <span class="token keyword">break</span>
-         <span class="token punctuation">&#125;</span>
-
-         <span class="token comment">// Request synchronous preemption.</span>
-         gp<span class="token punctuation">.</span>preemptStop <span class="token operator">=</span> <span class="token boolean">true</span>
-         gp<span class="token punctuation">.</span>preempt <span class="token operator">=</span> <span class="token boolean">true</span>
-         gp<span class="token punctuation">.</span>stackguard0 <span class="token operator">=</span> stackPreempt
-
-         <span class="token comment">// Prepare for asynchronous preemption.</span>
-         asyncM2 <span class="token operator">:=</span> gp<span class="token punctuation">.</span>m
-         asyncGen2 <span class="token operator">:=</span> atomic<span class="token punctuation">.</span><span class="token function">Load</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>asyncM2<span class="token punctuation">.</span>preemptGen<span class="token punctuation">)</span>
-         needAsync <span class="token operator">:=</span> asyncM <span class="token operator">!=</span> asyncM2 <span class="token operator">||</span> asyncGen <span class="token operator">!=</span> asyncGen2
-         asyncM <span class="token operator">=</span> asyncM2
-         asyncGen <span class="token operator">=</span> asyncGen2
-
-         <span class="token function">casfrom_Gscanstatus</span><span class="token punctuation">(</span>gp<span class="token punctuation">,</span> _Gscanrunning<span class="token punctuation">,</span> _Grunning<span class="token punctuation">)</span>
-
-         <span class="token comment">// Send asynchronous preemption. We do this</span>
-         <span class="token comment">// after CASing the G back to _Grunning</span>
-         <span class="token comment">// because preemptM may be synchronous and we</span>
-         <span class="token comment">// don't want to catch the G just spinning on</span>
-         <span class="token comment">// its status.</span>
-         <span class="token keyword">if</span> preemptMSupported <span class="token operator">&amp;&amp;</span> debug<span class="token punctuation">.</span>asyncpreemptoff <span class="token operator">==</span> <span class="token number">0</span> <span class="token operator">&amp;&amp;</span> needAsync <span class="token punctuation">&#123;</span>
-            <span class="token comment">// Rate limit preemptM calls. This is</span>
-            <span class="token comment">// particularly important on Windows</span>
-            <span class="token comment">// where preemptM is actually</span>
-            <span class="token comment">// synchronous and the spin loop here</span>
-            <span class="token comment">// can lead to live-lock.</span>
-            now <span class="token operator">:=</span> <span class="token function">nanotime</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
-            <span class="token keyword">if</span> now <span class="token operator">>=</span> nextPreemptM <span class="token punctuation">&#123;</span>
-               nextPreemptM <span class="token operator">=</span> now <span class="token operator">+</span> yieldDelay<span class="token operator">/</span><span class="token number">2</span>
-               <span class="token function">preemptM</span><span class="token punctuation">(</span>asyncM<span class="token punctuation">)</span>
+    <span class="token comment">// Drive the goroutine to a preemption point.</span>
+    stopped <span class="token operator">:=</span> <span class="token boolean">false</span>
+    <span class="token keyword">var</span> asyncM <span class="token operator">*</span>m
+    <span class="token keyword">var</span> asyncGen <span class="token builtin">uint32</span>
+    <span class="token keyword">var</span> nextPreemptM <span class="token builtin">int64</span>
+    <span class="token keyword">for</span> i <span class="token operator">:=</span> <span class="token number">0</span><span class="token punctuation">;</span> <span class="token punctuation">;</span> i<span class="token operator">++</span> <span class="token punctuation">&#123;</span>
+        <span class="token keyword">switch</span> s <span class="token operator">:=</span> <span class="token function">readgstatus</span><span class="token punctuation">(</span>gp<span class="token punctuation">)</span><span class="token punctuation">;</span> s <span class="token punctuation">&#123;</span>
+            <span class="token keyword">default</span><span class="token punctuation">:</span>
+            <span class="token keyword">if</span> s<span class="token operator">&amp;</span>_Gscan <span class="token operator">!=</span> <span class="token number">0</span> <span class="token punctuation">&#123;</span>
+                <span class="token comment">// Someone else is suspending it. Wait</span>
+                <span class="token comment">// for them to finish.</span>
+                <span class="token comment">//</span>
+                <span class="token comment">// TODO: It would be nicer if we could</span>
+                <span class="token comment">// coalesce suspends.</span>
+                <span class="token keyword">break</span>
             <span class="token punctuation">&#125;</span>
-         <span class="token punctuation">&#125;</span>
-      <span class="token punctuation">&#125;</span>
 
-      <span class="token comment">// TODO: Don't busy wait. This loop should really only</span>
-      <span class="token comment">// be a simple read/decide/CAS loop that only fails if</span>
-      <span class="token comment">// there's an active race. Once the CAS succeeds, we</span>
-      <span class="token comment">// should queue up the preemption (which will require</span>
-      <span class="token comment">// it to be reliable in the _Grunning case, not</span>
-      <span class="token comment">// best-effort) and then sleep until we're notified</span>
-      <span class="token comment">// that the goroutine is suspended.</span>
-      <span class="token keyword">if</span> i <span class="token operator">==</span> <span class="token number">0</span> <span class="token punctuation">&#123;</span>
-         nextYield <span class="token operator">=</span> <span class="token function">nanotime</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">+</span> yieldDelay
-      <span class="token punctuation">&#125;</span>
-      <span class="token keyword">if</span> <span class="token function">nanotime</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">&lt;</span> nextYield <span class="token punctuation">&#123;</span>
-         <span class="token function">procyield</span><span class="token punctuation">(</span><span class="token number">10</span><span class="token punctuation">)</span>
-      <span class="token punctuation">&#125;</span> <span class="token keyword">else</span> <span class="token punctuation">&#123;</span>
-         <span class="token function">osyield</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
-         nextYield <span class="token operator">=</span> <span class="token function">nanotime</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">+</span> yieldDelay<span class="token operator">/</span><span class="token number">2</span>
-      <span class="token punctuation">&#125;</span>
-   <span class="token punctuation">&#125;</span>
-<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+            <span class="token function">dumpgstatus</span><span class="token punctuation">(</span>gp<span class="token punctuation">)</span>
+            <span class="token function">throw</span><span class="token punctuation">(</span><span class="token string">"invalid g status"</span><span class="token punctuation">)</span>
+
+            <span class="token keyword">case</span> _Gdead<span class="token punctuation">:</span>
+            <span class="token comment">// Nothing to suspend.</span>
+            <span class="token comment">//</span>
+            <span class="token comment">// preemptStop may need to be cleared, but</span>
+            <span class="token comment">// doing that here could race with goroutine</span>
+            <span class="token comment">// reuse. Instead, goexit0 clears it.</span>
+            <span class="token keyword">return</span> suspendGState<span class="token punctuation">&#123;</span>dead<span class="token punctuation">:</span> <span class="token boolean">true</span><span class="token punctuation">&#125;</span>
+
+            <span class="token keyword">case</span> _Gcopystack<span class="token punctuation">:</span>
+            <span class="token comment">// The stack is being copied. We need to wait</span>
+            <span class="token comment">// until this is done.</span>
+
+            <span class="token keyword">case</span> _Gpreempted<span class="token punctuation">:</span>
+            <span class="token comment">// We (or someone else) suspended the G. Claim</span>
+            <span class="token comment">// ownership of it by transitioning it to</span>
+            <span class="token comment">// _Gwaiting.</span>
+            <span class="token keyword">if</span> <span class="token operator">!</span><span class="token function">casGFromPreempted</span><span class="token punctuation">(</span>gp<span class="token punctuation">,</span> _Gpreempted<span class="token punctuation">,</span> _Gwaiting<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+                <span class="token keyword">break</span>
+            <span class="token punctuation">&#125;</span>
+
+            <span class="token comment">// We stopped the G, so we have to ready it later.</span>
+            stopped <span class="token operator">=</span> <span class="token boolean">true</span>
+
+            s <span class="token operator">=</span> _Gwaiting
+            <span class="token keyword">fallthrough</span>
+
+            <span class="token keyword">case</span> _Grunnable<span class="token punctuation">,</span> _Gsyscall<span class="token punctuation">,</span> _Gwaiting<span class="token punctuation">:</span>
+            <span class="token comment">// Claim goroutine by setting scan bit.</span>
+            <span class="token comment">// This may race with execution or readying of gp.</span>
+            <span class="token comment">// The scan bit keeps it from transition state.</span>
+            <span class="token keyword">if</span> <span class="token operator">!</span><span class="token function">castogscanstatus</span><span class="token punctuation">(</span>gp<span class="token punctuation">,</span> s<span class="token punctuation">,</span> s<span class="token operator">|</span>_Gscan<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+                <span class="token keyword">break</span>
+            <span class="token punctuation">&#125;</span>
+
+            <span class="token comment">// Clear the preemption request. It's safe to</span>
+            <span class="token comment">// reset the stack guard because we hold the</span>
+            <span class="token comment">// _Gscan bit and thus own the stack.</span>
+            gp<span class="token punctuation">.</span>preemptStop <span class="token operator">=</span> <span class="token boolean">false</span>
+            gp<span class="token punctuation">.</span>preempt <span class="token operator">=</span> <span class="token boolean">false</span>
+            gp<span class="token punctuation">.</span>stackguard0 <span class="token operator">=</span> gp<span class="token punctuation">.</span>stack<span class="token punctuation">.</span>lo <span class="token operator">+</span> _StackGuard
+
+            <span class="token comment">// The goroutine was already at a safe-point</span>
+            <span class="token comment">// and we've now locked that in.</span>
+            <span class="token comment">//</span>
+            <span class="token comment">// TODO: It would be much better if we didn't</span>
+            <span class="token comment">// leave it in _Gscan, but instead gently</span>
+            <span class="token comment">// prevented its scheduling until resumption.</span>
+            <span class="token comment">// Maybe we only use this to bump a suspended</span>
+            <span class="token comment">// count and the scheduler skips suspended</span>
+            <span class="token comment">// goroutines? That wouldn't be enough for</span>
+            <span class="token comment">// &#123;_Gsyscall,_Gwaiting&#125; -> _Grunning. Maybe</span>
+            <span class="token comment">// for all those transitions we need to check</span>
+            <span class="token comment">// suspended and deschedule?</span>
+            <span class="token keyword">return</span> suspendGState<span class="token punctuation">&#123;</span>g<span class="token punctuation">:</span> gp<span class="token punctuation">,</span> stopped<span class="token punctuation">:</span> stopped<span class="token punctuation">&#125;</span>
+
+            <span class="token keyword">case</span> _Grunning<span class="token punctuation">:</span>
+            <span class="token comment">// Optimization: if there is already a pending preemption request</span>
+            <span class="token comment">// (from the previous loop iteration), don't bother with the atomics.</span>
+            <span class="token keyword">if</span> gp<span class="token punctuation">.</span>preemptStop <span class="token operator">&amp;&amp;</span> gp<span class="token punctuation">.</span>preempt <span class="token operator">&amp;&amp;</span> gp<span class="token punctuation">.</span>stackguard0 <span class="token operator">==</span> stackPreempt <span class="token operator">&amp;&amp;</span> asyncM <span class="token operator">==</span> gp<span class="token punctuation">.</span>m <span class="token operator">&amp;&amp;</span> atomic<span class="token punctuation">.</span><span class="token function">Load</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>asyncM<span class="token punctuation">.</span>preemptGen<span class="token punctuation">)</span> <span class="token operator">==</span> asyncGen <span class="token punctuation">&#123;</span>
+                <span class="token keyword">break</span>
+            <span class="token punctuation">&#125;</span>
+
+            <span class="token comment">// Temporarily block state transitions.</span>
+            <span class="token keyword">if</span> <span class="token operator">!</span><span class="token function">castogscanstatus</span><span class="token punctuation">(</span>gp<span class="token punctuation">,</span> _Grunning<span class="token punctuation">,</span> _Gscanrunning<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+                <span class="token keyword">break</span>
+            <span class="token punctuation">&#125;</span>
+
+            <span class="token comment">// Request synchronous preemption.</span>
+            gp<span class="token punctuation">.</span>preemptStop <span class="token operator">=</span> <span class="token boolean">true</span>
+            gp<span class="token punctuation">.</span>preempt <span class="token operator">=</span> <span class="token boolean">true</span>
+            gp<span class="token punctuation">.</span>stackguard0 <span class="token operator">=</span> stackPreempt
+
+            <span class="token comment">// Prepare for asynchronous preemption.</span>
+            asyncM2 <span class="token operator">:=</span> gp<span class="token punctuation">.</span>m
+            asyncGen2 <span class="token operator">:=</span> atomic<span class="token punctuation">.</span><span class="token function">Load</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>asyncM2<span class="token punctuation">.</span>preemptGen<span class="token punctuation">)</span>
+            needAsync <span class="token operator">:=</span> asyncM <span class="token operator">!=</span> asyncM2 <span class="token operator">||</span> asyncGen <span class="token operator">!=</span> asyncGen2
+            asyncM <span class="token operator">=</span> asyncM2
+            asyncGen <span class="token operator">=</span> asyncGen2
+
+            <span class="token function">casfrom_Gscanstatus</span><span class="token punctuation">(</span>gp<span class="token punctuation">,</span> _Gscanrunning<span class="token punctuation">,</span> _Grunning<span class="token punctuation">)</span>
+
+            <span class="token comment">// Send asynchronous preemption. We do this</span>
+            <span class="token comment">// after CASing the G back to _Grunning</span>
+            <span class="token comment">// because preemptM may be synchronous and we</span>
+            <span class="token comment">// don't want to catch the G just spinning on</span>
+            <span class="token comment">// its status.</span>
+            <span class="token keyword">if</span> preemptMSupported <span class="token operator">&amp;&amp;</span> debug<span class="token punctuation">.</span>asyncpreemptoff <span class="token operator">==</span> <span class="token number">0</span> <span class="token operator">&amp;&amp;</span> needAsync <span class="token punctuation">&#123;</span>
+                <span class="token comment">// Rate limit preemptM calls. This is</span>
+                <span class="token comment">// particularly important on Windows</span>
+                <span class="token comment">// where preemptM is actually</span>
+                <span class="token comment">// synchronous and the spin loop here</span>
+                <span class="token comment">// can lead to live-lock.</span>
+                now <span class="token operator">:=</span> <span class="token function">nanotime</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+                <span class="token keyword">if</span> now <span class="token operator">>=</span> nextPreemptM <span class="token punctuation">&#123;</span>
+                    nextPreemptM <span class="token operator">=</span> now <span class="token operator">+</span> yieldDelay<span class="token operator">/</span><span class="token number">2</span>
+                    <span class="token function">preemptM</span><span class="token punctuation">(</span>asyncM<span class="token punctuation">)</span>
+                <span class="token punctuation">&#125;</span>
+            <span class="token punctuation">&#125;</span>
+        <span class="token punctuation">&#125;</span>
+
+        <span class="token comment">// TODO: Don't busy wait. This loop should really only</span>
+        <span class="token comment">// be a simple read/decide/CAS loop that only fails if</span>
+        <span class="token comment">// there's an active race. Once the CAS succeeds, we</span>
+        <span class="token comment">// should queue up the preemption (which will require</span>
+        <span class="token comment">// it to be reliable in the _Grunning case, not</span>
+        <span class="token comment">// best-effort) and then sleep until we're notified</span>
+        <span class="token comment">// that the goroutine is suspended.</span>
+        <span class="token keyword">if</span> i <span class="token operator">==</span> <span class="token number">0</span> <span class="token punctuation">&#123;</span>
+            nextYield <span class="token operator">=</span> <span class="token function">nanotime</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">+</span> yieldDelay
+        <span class="token punctuation">&#125;</span>
+        <span class="token keyword">if</span> <span class="token function">nanotime</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">&lt;</span> nextYield <span class="token punctuation">&#123;</span>
+            <span class="token function">procyield</span><span class="token punctuation">(</span><span class="token number">10</span><span class="token punctuation">)</span>
+        <span class="token punctuation">&#125;</span> <span class="token keyword">else</span> <span class="token punctuation">&#123;</span>
+            <span class="token function">osyield</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+            nextYield <span class="token operator">=</span> <span class="token function">nanotime</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">+</span> yieldDelay<span class="token operator">/</span><span class="token number">2</span>
+        <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h3 id="resumeG"><a href="#resumeG" class="headerlink" title="resumeG"></a>resumeG</h3>
     </div>
@@ -1665,7 +1676,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">12</span>
+          <span class="site-state-item-count">13</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
