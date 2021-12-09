@@ -6,7 +6,7 @@
   <link href="https://bqyang.top/atom.xml" rel="self"/>
   
   <link href="https://bqyang.top/"/>
-  <updated>2021-12-08T14:45:04.207Z</updated>
+  <updated>2021-12-09T03:10:36.218Z</updated>
   <id>https://bqyang.top/</id>
   
   <author>
@@ -15,6 +15,27 @@
   </author>
   
   <generator uri="https://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>git rebase</title>
+    <link href="https://bqyang.top/2021/git-rebase/"/>
+    <id>https://bqyang.top/2021/git-rebase/</id>
+    <published>2021-12-09T03:03:59.875Z</published>
+    <updated>2021-12-09T03:10:36.218Z</updated>
+    
+    <content type="html"><![CDATA[<p>以前合分支，用的都是 git merge 但是发现用 merge 合并总是会出现一条自动添加的 commit 这样导致历史提交记录显得非常乱。就比如下面这个样子</p><p><img src="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20211209110709842.png" alt="image-20211209110709842"></p><p>没提交几个 commit 全都是 Merge branch xxxx into xxxx。有一次我在提交 pr 的时候，当时已经提交完了，但是显示我的分支是落后的，上边有个 merge 按钮，我点了以后就出现了这种“不干净的” commit。</p><p>在了解之后，通过 rebase 命令可以避免这种，所以简单看下 git rebase 是怎么玩的。</p>]]></content>
+    
+    
+      
+      
+    <summary type="html">&lt;p&gt;以前合分支，用的都是 git merge 但是发现用 merge 合并总是会出现一条自动添加的 commit 这样导致历史提交记录显得非常乱。就比如下面这个样子&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;https://gitee.com/yangbaoqiang/images/r</summary>
+      
+    
+    
+    
+    
+  </entry>
   
   <entry>
     <title>linker and loader</title>

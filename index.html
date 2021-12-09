@@ -153,6 +153,68 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://bqyang.top/2021/git-rebase/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="杨宝强">
+      <meta itemprop="description" content="记录技术精进之路，记录生活的打情骂俏">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="杨宝强的技术笔记">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2021/git-rebase/" class="post-title-link" itemprop="url">git rebase</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2021-12-09 11:03:59 / 修改时间：11:10:36" itemprop="dateCreated datePublished" datetime="2021-12-09T11:03:59+08:00">2021-12-09</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>以前合分支，用的都是 git merge 但是发现用 merge 合并总是会出现一条自动添加的 commit 这样导致历史提交记录显得非常乱。就比如下面这个样子</p>
+<p><img src="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20211209110709842.png" alt="image-20211209110709842"></p>
+<p>没提交几个 commit 全都是 Merge branch xxxx into xxxx。有一次我在提交 pr 的时候，当时已经提交完了，但是显示我的分支是落后的，上边有个 merge 按钮，我点了以后就出现了这种“不干净的” commit。</p>
+<p>在了解之后，通过 rebase 命令可以避免这种，所以简单看下 git rebase 是怎么玩的。</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="https://bqyang.top/2021/linker&loader/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1122,7 +1184,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">13</span>
+          <span class="site-state-item-count">14</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
