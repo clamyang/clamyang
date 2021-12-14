@@ -4,7 +4,21 @@
   <url>
     <loc>https://bqyang.top/2021/linker&loader/</loc>
     
-    <lastmod>2021-12-09</lastmod>
+    <lastmod>2021-12-14</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://bqyang.top/2021/GC/</loc>
+    
+    <lastmod>2021-12-14</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://bqyang.top/2021/planB/</loc>
+    
+    <lastmod>2021-12-14</lastmod>
     
   </url>
   
@@ -19,13 +33,6 @@
     <loc>https://bqyang.top/2021/git-rebase/</loc>
     
     <lastmod>2021-12-09</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://bqyang.top/2021/GC/</loc>
-    
-    <lastmod>2021-12-08</lastmod>
     
   </url>
   
@@ -59,13 +66,6 @@
   
   <url>
     <loc>https://bqyang.top/2021/timer%20%E6%B5%85%E6%9E%90/</loc>
-    
-    <lastmod>2021-12-05</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://bqyang.top/2021/planB/</loc>
     
     <lastmod>2021-12-05</lastmod>
     
@@ -116,7 +116,7 @@
 
   <url>
     <loc>https://bqyang.top/</loc>
-    <lastmod>2021-12-10</lastmod>
+    <lastmod>2021-12-14</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
