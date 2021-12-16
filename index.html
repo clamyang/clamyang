@@ -178,7 +178,7 @@
               <span class="post-meta-item-text">发表于</span>
               
 
-              <time title="创建时间：2021-12-16 20:14:24 / 修改时间：21:26:43" itemprop="dateCreated datePublished" datetime="2021-12-16T20:14:24+08:00">2021-12-16</time>
+              <time title="创建时间：2021-12-16 20:14:24 / 修改时间：22:31:09" itemprop="dateCreated datePublished" datetime="2021-12-16T20:14:24+08:00">2021-12-16</time>
             </span>
 
           
@@ -193,32 +193,14 @@
 
       
           <p>关于 kubernetes in action 的读书笔记</p>
-<h2 id="第一章"><a href="#第一章" class="headerlink" title="第一章"></a>第一章</h2><p>首先介绍了传统 VM 和 Container 的区别，以及各自的优缺点，还针对 microservice 进行了系统的概述，怎么一步步从 big 架构演进到 microservice，以及垂直扩展、水平扩展。</p>
-<p>如何 big 架构拆分出来的 service 进行管理？</p>
-<p>结尾描述了 k8s 集群的 architectue：</p>
-<p>从硬件角度区分，可以分为 master node 和 worker node</p>
-<ul>
-<li>master  node 运行 K8s Control Plane 用来控制和管理 k8s 系统</li>
-<li>worker nodes 是实际运行我们 app 的节点</li>
-</ul>
-<p>master node 又是由以下几个组件组成：</p>
-<ul>
-<li>Kubernetes API Server 用来和其他的 K8s Control Plane 组件进行通信</li>
-<li>Scheduler 调度我们的部署的</li>
-<li>Controller Manager 执行集群级别的函数，比如跟踪 work node，replicating components，处理失败的节点等</li>
-<li>etcd 一个可靠的分布式数据存储，用来持久化存储集群配置</li>
-</ul>
-<p>worker nodes 有如下的组件：</p>
-<ul>
-<li><p>Kubernetes Service Proxy 可以在我们的应用组件件提供 LB 功能</p>
-</li>
-<li><p>Docker, rkt (rock-it) 用来执行我们的容器化的app</p>
-</li>
-<li><p>Kubelet 管理当前 node 上的容器和 API server 通信</p>
-</li>
-</ul>
-<p><img src="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/k8s-overview.png" alt="k8s-overview"></p>
-
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2021/kubernetes-in-action-note/" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 

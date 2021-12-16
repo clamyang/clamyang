@@ -20,16 +20,16 @@
     var CONFIG = {"hostname":"bqyang.top","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"hide","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"gitalk","storage":true,"lazyload":false,"nav":{"gitalk":{"order":-2}},"activeClass":"gitalk"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
   </script>
 
-  <meta name="description" content="关于 kubernetes in action 的读书笔记 第一章首先介绍了传统 VM 和 Container 的区别，以及各自的优缺点，还针对 microservice 进行了系统的概述，怎么一步步从 big 架构演进到 microservice，以及垂直扩展、水平扩展。 如何 big 架构拆分出来的 service 进行管理？ 结尾描述了 k8s 集群的 architectue： 从硬件角度区">
+  <meta name="description" content="关于 kubernetes in action 的读书笔记">
 <meta property="og:type" content="article">
 <meta property="og:title" content="kubernetes in action 读书笔记">
 <meta property="og:url" content="https://bqyang.top/2021/kubernetes-in-action-note/index.html">
 <meta property="og:site_name" content="杨宝强的技术笔记">
-<meta property="og:description" content="关于 kubernetes in action 的读书笔记 第一章首先介绍了传统 VM 和 Container 的区别，以及各自的优缺点，还针对 microservice 进行了系统的概述，怎么一步步从 big 架构演进到 microservice，以及垂直扩展、水平扩展。 如何 big 架构拆分出来的 service 进行管理？ 结尾描述了 k8s 集群的 architectue： 从硬件角度区">
+<meta property="og:description" content="关于 kubernetes in action 的读书笔记">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/k8s-overview.png">
 <meta property="article:published_time" content="2021-12-16T12:14:24.744Z">
-<meta property="article:modified_time" content="2021-12-16T13:26:43.685Z">
+<meta property="article:modified_time" content="2021-12-16T14:31:09.158Z">
 <meta property="article:author" content="杨宝强">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/k8s-overview.png">
@@ -182,7 +182,7 @@
               <span class="post-meta-item-text">发表于</span>
               
 
-              <time title="创建时间：2021-12-16 20:14:24 / 修改时间：21:26:43" itemprop="dateCreated datePublished" datetime="2021-12-16T20:14:24+08:00">2021-12-16</time>
+              <time title="创建时间：2021-12-16 20:14:24 / 修改时间：22:31:09" itemprop="dateCreated datePublished" datetime="2021-12-16T20:14:24+08:00">2021-12-16</time>
             </span>
 
           
@@ -197,6 +197,8 @@
 
       
         <p>关于 kubernetes in action 的读书笔记</p>
+<span id="more"></span>
+
 <h2 id="第一章"><a href="#第一章" class="headerlink" title="第一章"></a>第一章</h2><p>首先介绍了传统 VM 和 Container 的区别，以及各自的优缺点，还针对 microservice 进行了系统的概述，怎么一步步从 big 架构演进到 microservice，以及垂直扩展、水平扩展。</p>
 <p>如何 big 架构拆分出来的 service 进行管理？</p>
 <p>结尾描述了 k8s 集群的 architectue：</p>
