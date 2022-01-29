@@ -31,8 +31,15 @@
 <meta property="og:image" content="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220119160204309.png">
 <meta property="og:image" content="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220119161051840.png">
 <meta property="og:image" content="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220119165619717.png">
+<meta property="og:image" content="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220124184754571.png">
+<meta property="og:image" content="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220127203058810.png">
+<meta property="og:image" content="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220127205128006.png">
+<meta property="og:image" content="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220128100950280.png">
+<meta property="og:image" content="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220128102336567.png">
+<meta property="og:image" content="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220128104519124.png">
+<meta property="og:image" content="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220128115616403.png">
 <meta property="article:published_time" content="2022-01-13T07:09:49.584Z">
-<meta property="article:modified_time" content="2022-01-23T14:51:15.713Z">
+<meta property="article:modified_time" content="2022-01-28T07:17:08.413Z">
 <meta property="article:author" content="杨宝强">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220119160522679.png">
@@ -191,7 +198,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2022-01-23 22:51:15" itemprop="dateModified" datetime="2022-01-23T22:51:15+08:00">2022-01-23</time>
+                <time title="修改时间：2022-01-28 15:17:08" itemprop="dateModified" datetime="2022-01-28T15:17:08+08:00">2022-01-28</time>
               </span>
 
           
@@ -430,12 +437,12 @@
 <p><em>Hash Map</em> 带来的限制：</p>
 <ul>
 <li>hash map 不能太大，必须保证内存可以装下</li>
-<li>范围查询效率不搞</li>
+<li>范围查询效率不高</li>
 </ul>
 <p><strong>SSTable and LSM-Trees</strong></p>
 <p>SSTable (Sorted String Table) 按照 Key 进行排序，如下。</p>
 <p><img src="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220119165619717.png" alt="image-20220119165619717"></p>
-<p>看的过程中我想到一个问题，很容易发现，不同的 key 在不同的 log 文件中都有存在，是怎么在合并后的 log 文件中进行存储的呢？难道是每次读取到同样的 key 的时候都要再进行一次更新操作吗？</p>
+<p>看的过程中我想到一个问题，不同的 key 在不同的 log 文件中都有存在，是怎么在合并后的 log 文件中进行存储的呢？难道是每次读取到同样的 key 的时候都要再进行一次更新操作吗？</p>
 <p>紧接着，作者在下文中就提到了这个问题：</p>
 <p><code>What if the same key appears in several input segments?</code></p>
 <p>在看“答案”的时候，作者提到了一点，当出现这种情况的时候，以最新的 log 文件中的数据为准，忽略旧的（在这之前操作）log 文件。</p>
@@ -455,7 +462,7 @@
 </blockquote>
 <p><em>LSM-tree</em></p>
 <p>LSM - log structured merge</p>
-<p>当在 LST-tree 中查找一个不存在的 key 时，需要从 memtable 找到最后一个 log 文件。为了优化这个问题，引入了 <code>Bloom Filter</code>。</p>
+<p>当在 LSM-tree 中查找一个不存在的 key 时，需要从 memtable 找到最后一个 log 文件。为了优化这个问题，引入了 <code>Bloom Filter</code>。</p>
 <p>LSM-tree 两种压缩策略</p>
 <ul>
 <li>size-tiered</li>
@@ -466,7 +473,120 @@
 </blockquote>
 <p><em>B 树</em></p>
 <p>学过很多次，看看作者是怎么结合实例进行讲解的。。</p>
-<p>LSM 最后将数据划分到大小不一的 log 文件中（通常是 Mb）<strong>B</strong> 树采用的是，固定的块大小或页大小的方式进行存储。这样能更贴合硬件，因为磁盘也是采用这种固定大小块的方式进行数据的写入和存储。</p>
+<p>LSM 最后将数据划分到大小不一的 log 文件中（通常是 Mb）<strong>B</strong> 树采用的是，固定的块大小或页大小（通常大小为 4 KB）的方式进行存储。这样能更贴合硬件，因为磁盘也是采用这种固定大小块的方式进行数据的写入和存储。</p>
+<p>B 树中，每一页都是存储在磁盘上，可以通过地址进行索引，并且页与页之间可以相互引用</p>
+<p>分支因子：branch childs ，表示一个父节点拥有多少个子节点，实际使用中，分支因子的数量<em>取决于</em>存储页引用需要的空间大小和范围边界，通常来说是几百个。</p>
+<p>在添加数据到叶子结点的时候，可能会导致页的拆分</p>
+<p><img src="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220124184754571.png" alt="image-20220124184754571"></p>
+<p>假设当前page已经不能再容纳新的key时，在添加 key 334 后，进行了 page 的拆分。</p>
+<p>平衡二叉树通过自旋算法，能想起来的有 LL，RR，LR，RL…保证了任意两个节点之间的只能有一个节点。我记得是有这么一条定义。。记不清楚了。。</p>
+<p>作者举例，当 page = 4 KB，branching factor = 500 的时候，一个四层的 B 树可以容纳 250 TB 的数据。</p>
+<p>如果在写入数据的时候，数据库崩溃了，会出现什么问题？</p>
+<ul>
+<li>比如，上述发生插入操作的时候，导致了 page 的分裂，这时候需要将当前这个 range 拆分成两个，并修改父节点对他们的引用。如果这时候数据库崩溃了，可能会出现类似<em>悬垂指针</em>的问题。为了解决这个问题，让数据库对崩溃有一定的容错能力，在实现 B-tree 的时候会额外在磁盘上添加一个数据结构，<em>write-ahead logging</em> (WAL, 也被称为 redo log)。</li>
+</ul>
+<blockquote>
+<p>怪不得都说 DDIA 是必读书籍，读起来就是两个字，畅快。循序渐进，对我这种菜鸟来说太棒了！</p>
+</blockquote>
+<p>WAL ，append-only 的文件格式。<strong>在将修改操作实际应用到磁盘中数据的之前，必须将修改写入到这个文件中</strong>，恢复后，可以使用这个文件进行恢复。</p>
+<p><strong>优化 B 树</strong></p>
+<ul>
+<li>copy-on-write</li>
+<li>尽量减少key所占用的空间，可以通过缩写的方式，key 只是用来表明边界的。</li>
+<li>保持相邻的key在磁盘上的位置也是相邻的，如果一个查询要查出一个很大范文的内容并要求是有序的，一页一页查找的效率十分低下。<ul>
+<li>想法时候，但是随着数据的增长，很难维护一个这样的数据结构</li>
+</ul>
+</li>
+<li>添加额外的指针，将兄弟节点连接起来，这样在遍历的时候就不需要回到父节点找到其他的兄弟节点。</li>
+<li>从 B 树优化出来一个叫 <code>fractal tree</code> 听都没听过…</li>
+</ul>
+<p><strong>对比 B 树 和 LSM 树</strong></p>
+<p>当我们评测存储引擎性能的时候有哪些事情是值得考虑的？</p>
+<ul>
+<li><em>write amplification</em>（写放大）<ul>
+<li>在数据库的生命周期中，一次写入数据库的操作导致多次写入磁盘的操作被称为写放大。</li>
+<li>注：SSD 被写入的次数是有限制的</li>
+</ul>
+</li>
+</ul>
+<p>LSM 优缺点：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// TODO </span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+
+
+<p><strong>索引</strong></p>
+<ul>
+<li>Secondary Index （二级索引）<ul>
+<li>索引中 value 存储的是引用</li>
+</ul>
+</li>
+<li>Clustered Index （聚簇索引）<ul>
+<li>索引中 value 存储的是数据</li>
+</ul>
+</li>
+<li>Covring Index （覆盖索引）<ul>
+<li>是聚簇和非聚簇索引的一种折中方式</li>
+<li>覆盖索引对应的 value 中可以包含多个列</li>
+</ul>
+</li>
+</ul>
+<p>注：MySQL 中，二级索引的 value 存储的是主键 id</p>
+<p><strong>多列索引</strong></p>
+<p>作者给我们做了一个科普吧算是，介绍了一维索引的局限性，已经多维索引可以在哪些场景中用到。</p>
+<p><strong>全文搜索，模糊索引</strong></p>
+<p>同上</p>
+<p><strong>事务处理与分析处理</strong></p>
+<p>作者对事务（transaction）进行了解释，并没有像教科书那种直接给出定义，而是结合历史告诉我们，事务一词的来源。以前在商业数据处理中， 一个往数据库中写入的操作往往意味着背后发生了一笔交易，或者是一笔订单，给员工汇款等操作。随着数据库不仅仅用于商业领域，transaction 这个词仍然延续使用。</p>
+<p>其代表的是，一个逻辑单元中全部的写操作和读操作。</p>
+<blockquote>
+<p>事务并不一定要有 ACID （atomicity, consistency, isolation, durability）</p>
+</blockquote>
+<p>OLTP (online transaction processing)</p>
+<p>OLAP (online analystic processing)</p>
+<p><img src="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220127203058810.png" alt="image-20220127203058810"></p>
+<p><em>数据仓库的由来</em></p>
+<p>90 年左右，一些公司开始停止在 OLTP 中进行数据分析，而是在一个单独的数据库中进行分析，这种独立的数据库被称为：data warehouse. 数据仓库。</p>
+<p><strong>数据仓库</strong></p>
+<p>从 OLTP 提取数据到  OLAP 的过程被称为： ETL (extract-transform-load)</p>
+<p><img src="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220127205128006.png" alt="image-20220127205128006"></p>
+<blockquote>
+<p>作者提到。。小规模的公司可能都没听过数据仓库。。。身在其中啊。。</p>
+</blockquote>
+<p><strong>Stars schema and Snowflakes</strong></p>
+<p>这一小节通读下来，可以学习到的是：</p>
+<p>星模式-一个主表中存储的都是其他表（子表）的主键。比如，订单表中存储的商户id，商户表中存储了商户信息</p>
+<p>雪花模式-星模式的一种变种，子表中存储的其他表的主键。订单表中存储的商户id，商户表中存储了商户信息，还存储了户主信息，户主表中存储了户主的信息。</p>
+<p>可以理解为雪花模式是比星模式表达的更完整，拓展的更多的一种模式。</p>
+<p><strong>面向列的存储</strong></p>
+<p>row-oriented 和 column-oriented 存储方式上的区别</p>
+<p><img src="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220128100950280.png" alt="image-20220128100950280"></p>
+<p><em>采用位图压缩列</em></p>
+<p><img src="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220128102336567.png" alt="image-20220128102336567"></p>
+<p>这里感觉书中描述的不是那么清晰（也可能是我自己翻译后理解的比较烂哈哈）：</p>
+<ul>
+<li>比如我们有 n 个列，但是经过去重后发现只有 m 个商品，可以通过，建立 m 个 bitmap 然后，每一个 bitmap 的长度是  n 的方式，来压缩列。</li>
+<li>如果 bitmap 中，对应比特位为 1 说明该行有这个值，为 0，说明无。</li>
+</ul>
+<p><em>在 bitmap 中查找数据</em></p>
+<p><img src="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220128104519124.png" alt="image-20220128104519124"></p>
+<p>这个地方确实是非常巧妙，比如要找 product_sk 的 id 在 30，68，69 这三个数之间的，直接把这三个对应的 bitmap 找出来，进行 OR 运算，bit 位 是 1 的就代表找到了。</p>
+<p>第二个例子中展示了当进行 AND （与）运算的时候，直接将不同的 bitmap 进行 AND，可以这样做的根本原因是，虽然不同的数据在不同的 bitmap 中，但是 bitmap 中的每一位都是彼此对应的。</p>
+<p><em>内存带宽和矢量化处理</em></p>
+<p>内存带宽这里涉及到 SIMD 一个指令，包含多个数据。跟普通的三、四地址的指令好像还不太一样。。</p>
+<p><em>data cube and materialized view</em></p>
+<p><img src="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220128115616403.png" alt="image-20220128115616403"></p>
+<p>缓存聚合数据。</p>
+<h2 id="CH4-Encoding-and-Evolution"><a href="#CH4-Encoding-and-Evolution" class="headerlink" title="CH4. Encoding and Evolution"></a>CH4. Encoding and Evolution</h2><p>Backward compatibility</p>
+<p>​    Newer code can read data that was written by older code.</p>
+<p>Forward compatibility</p>
+<p>​    Older code can read data that was written by newer code.</p>
+<p><strong>数据的编码方式</strong></p>
+<p>程序处理的数据通常由两种（至少）表示方式：</p>
+<ul>
+<li>In memory</li>
+<li>self-contained sequence of bytes （Json）</li>
+</ul>
+<p>encoding ： In memory —&gt; sequence</p>
 
     </div>
 
@@ -582,7 +702,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#CH1%EF%BC%9A-Reliable-Scalable-Maintainable"><span class="nav-number">1.</span> <span class="nav-text">CH1： Reliable, Scalable, Maintainable</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#CH2%EF%BC%9AData-Models-And-Query-Languages"><span class="nav-number">2.</span> <span class="nav-text">CH2：Data Models And Query Languages</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#CH3%EF%BC%9AStore-and-Retrieval"><span class="nav-number">3.</span> <span class="nav-text">CH3：Store and Retrieval</span></a></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#CH1%EF%BC%9A-Reliable-Scalable-Maintainable"><span class="nav-number">1.</span> <span class="nav-text">CH1： Reliable, Scalable, Maintainable</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#CH2%EF%BC%9AData-Models-And-Query-Languages"><span class="nav-number">2.</span> <span class="nav-text">CH2：Data Models And Query Languages</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#CH3%EF%BC%9AStore-and-Retrieval"><span class="nav-number">3.</span> <span class="nav-text">CH3：Store and Retrieval</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#CH4-Encoding-and-Evolution"><span class="nav-number">4.</span> <span class="nav-text">CH4. Encoding and Evolution</span></a></li></ol></div>
       </div>
       <!--/noindex-->
 
