@@ -45,8 +45,18 @@
 <meta property="og:image" content="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220202144206792.png">
 <meta property="og:image" content="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220202145651487.png">
 <meta property="og:image" content="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220214213701624.png">
+<meta property="og:image" content="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220215194050809.png">
+<meta property="og:image" content="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220216101704556.png">
+<meta property="og:image" content="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220216113018175.png">
+<meta property="og:image" content="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220216134733352.png">
+<meta property="og:image" content="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220216170024338.png">
+<meta property="og:image" content="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220216214050273.png">
+<meta property="og:image" content="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220216214512962.png">
+<meta property="og:image" content="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220217151555996.png">
+<meta property="og:image" content="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220217173344302.png">
+<meta property="og:image" content="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220217173515223.png">
 <meta property="article:published_time" content="2022-01-13T07:09:49.584Z">
-<meta property="article:modified_time" content="2022-02-15T06:03:55.698Z">
+<meta property="article:modified_time" content="2022-02-17T11:59:58.370Z">
 <meta property="article:author" content="杨宝强">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220119160522679.png">
@@ -205,7 +215,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2022-02-15 14:03:55" itemprop="dateModified" datetime="2022-02-15T14:03:55+08:00">2022-02-15</time>
+                <time title="修改时间：2022-02-17 19:59:58" itemprop="dateModified" datetime="2022-02-17T19:59:58+08:00">2022-02-17</time>
               </span>
 
           
@@ -583,7 +593,7 @@
 <p><em>data cube and materialized view</em></p>
 <p><img src="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220128115616403.png" alt="image-20220128115616403"></p>
 <p>缓存聚合数据。</p>
-<h2 id="CH4-Encoding-and-Evolution"><a href="#CH4-Encoding-and-Evolution" class="headerlink" title="CH4. Encoding and Evolution"></a>CH4. Encoding and Evolution</h2><p>Backward compatibility</p>
+<h2 id="CH4：-Encoding-and-Evolution"><a href="#CH4：-Encoding-and-Evolution" class="headerlink" title="CH4： Encoding and Evolution"></a>CH4： Encoding and Evolution</h2><p>Backward compatibility</p>
 <p>​    Newer code can read data that was written by older code.</p>
 <p>Forward compatibility</p>
 <p>​    Older code can read data that was written by newer code.</p>
@@ -614,7 +624,7 @@
 <blockquote>
 <p>这章节后半部分是在手机上阅读的。。没来得及做笔记整理，等我二刷中文版的时候，着重把这块补上。</p>
 </blockquote>
-<h2 id="CH5-：Replication"><a href="#CH5-：Replication" class="headerlink" title="CH5 ：Replication"></a>CH5 ：Replication</h2><p>从单一的数据系统转变为分布式的数据系统。</p>
+<h2 id="CH5：Replication"><a href="#CH5：Replication" class="headerlink" title="CH5：Replication"></a>CH5：Replication</h2><p>从单一的数据系统转变为分布式的数据系统。</p>
 <p>分布式系统有两种形式的存在方式</p>
 <ul>
 <li>Replication</li>
@@ -699,8 +709,150 @@
 <p><strong>分片和副本</strong></p>
 <p>这俩通常会结合使用，如下：</p>
 <p><img src="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220214213701624.png" alt="image-20220214213701624"></p>
-<p><strong>Key-Value 类型数据的分片</strong></p>
-
+<h4 id="Key-Value-类型数据的分片"><a href="#Key-Value-类型数据的分片" class="headerlink" title="Key-Value 类型数据的分片"></a>Key-Value 类型数据的分片</h4><p>学到了几个名词：</p>
+<p>skewed 倾斜，某个分区的数据要多余其他分区，把这种情况称为倾斜。</p>
+<p>hot pot 热点，某个分区的负载比其他分区都要高，把这种情况的分区叫做热点。</p>
+<p>避免热点分区最简单的方法就是，插入记录的时候随机选择分区。</p>
+<p><img src="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220215194050809.png" alt="image-20220215194050809"></p>
+<p>图中索引为 12 的范围，包括了 T - Z，这种简单的将一本书包括两个字母索引，会导致其他的卷包含的索引不均匀。<em>为了使数据分布的更均匀，分区的边界需要适应数据。</em></p>
+<h4 id="通过-key-的-hash-值进行分区"><a href="#通过-key-的-hash-值进行分区" class="headerlink" title="通过 key 的 hash 值进行分区"></a>通过 key 的 hash 值进行分区</h4><p><img src="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220216101704556.png" alt="image-20220216101704556"></p>
+<p>使用key的哈希值作为分区，给我们带来的一个损失就是：没办法执行高效的范围查询。</p>
+<p><strong>Skewed Workloads and Relieving Hot Spots</strong></p>
+<p>倾斜的工作负载指的是，某个分区的负载要明显高于其他分区。比如社交媒体中的明星有很多的粉丝，这种情况下很容易引起，瞬间大量操作同一个 key。</p>
+<p>解决这种问题的办法就叫做：Relieving Hot Spots</p>
+<p>就是让打在同一个分区上的请求，再次分布到别的分区之中。</p>
+<p>作者提到的一个最简单的方法是：在 key 的开头或结尾添加随机数，这两个随机数可以将打在一个分区的请求均匀分布到 100 个 key 上，而不是只操作一个 key。</p>
+<p>但是这又带来了另一个问题，就是读取数据的时候变得更加困难，需要将这100个key 都读取出来，再做汇总。</p>
+<h4 id="Partitioning-and-Secondary-Indexes"><a href="#Partitioning-and-Secondary-Indexes" class="headerlink" title="Partitioning and Secondary Indexes"></a>Partitioning and Secondary Indexes</h4><p><strong>Partitioning Secondary Indexes by Document</strong></p>
+<p>主要讲了分区和二级索引怎么搭配使用。</p>
+<p><img src="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220216113018175.png" alt="image-20220216113018175"></p>
+<p>基于文档的二级索引分区，每个分区中的二级索引都是独立的，各自维护各自的索引，也被称为本地索引。</p>
+<p><strong>Partitioning Secondary Indexes by Term</strong></p>
+<p>按术语划分二级索引</p>
+<p><img src="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220216134733352.png" alt="image-20220216134733352"></p>
+<p>与基于文档的方式相比，很容易看出，二级索引变成了全局索引。</p>
+<p>但是也不能把索引全部放在一个分区上，会破坏分区的目的，也可能会成为性能的瓶颈。</p>
+<h4 id="Rebalancing-Partitions"><a href="#Rebalancing-Partitions" class="headerlink" title="Rebalancing Partitions"></a>Rebalancing Partitions</h4><p>为什么我们需要对分区进行重平衡？</p>
+<ul>
+<li>查询吞吐量增加，需要添加 CPU 应对高负载。</li>
+<li>数据规模增长，需要添加磁盘和 RAM 存储。</li>
+<li>机器宕机的时候，其他的机器需要接管失败的机器。</li>
+</ul>
+<p><em>rebalancing</em> 的过程就是，将集群中一个节点负载转移到另一个。</p>
+<p>期望 <em>rebalancing</em> 达到什么目的？</p>
+<ul>
+<li>在重平衡之后，负载能够均匀的分布在集群的节点上。</li>
+<li>即发生了 rebalancing，也可以正常处理读、写请求。</li>
+<li>不应该在节点间移动不必要的数据，快速重新平衡并最小化网络和磁盘 I/O 负载。</li>
+</ul>
+<p><strong>重平衡的策略</strong></p>
+<p><em>hash mod N</em></p>
+<p>对 N 取模带来的问题是，如果 node 数量 N 变化了，大多数 key 都需要从原 node 移动到另一个 node。</p>
+<p><em>固定数量的 partitions</em></p>
+<p>这里采用了一种在 node 上创建比 node 数量更多分区的方法，比如 node 数量是 10，一个 node 上创建 100 个分区，这样总数就是 1000 个分区。</p>
+<p>按照上述的分配，如果这是新加入了一个 node ，这个新的 node 从那 10 个 node 上 steal 几个分区过来，如下图。</p>
+<p><img src="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220216170024338.png" alt="image-20220216170024338"></p>
+<p>分区编号不会改变，分区中的 key 也不会改变。唯一改变的就是分区所在的 node，但是这个改变不是立即发生的，通过网络传输数据到另一个 node 需要花费很多时间。</p>
+<p>这时，旧的分区在这个传输的过程中仍然用于处理读写请求。</p>
+<p>这种模式在 ES 中有使用到。</p>
+<p>一般是怎么确定固定数量的分区的数量呢？</p>
+<ul>
+<li>the number of partitions configured at the outset is the maximum number of nodes you can have</li>
+</ul>
+<blockquote>
+<p>管理分区也是有开销的，所以选择了一个非常高的分区数量时，可能会适得其反。</p>
+</blockquote>
+<p><em>动态 partitions</em></p>
+<p>大的会拆成小的，太小了会合并成一个。</p>
+<p>动态分区的好处</p>
+<ul>
+<li>分区的数量可以适应数据的变化。</li>
+</ul>
+<blockquote>
+<p>空的数据库会以一个唯一的分区开始，这时所有的读写操作只操作一个分区，直到达到了需要拆分的阈值。</p>
+</blockquote>
+<p><strong>Partitioning proportinally to nodes</strong></p>
+<p><strong>自动或手动进行重平衡</strong></p>
+<p>自动会很方便，运维只需要做很少的操作就能达到维护的目的。但是自动重平衡是不可预测的。</p>
+<p>当自动重平衡和故障检测结合使用时会更加危险，比如某个 node 负载比较高，会时不时出现响应慢的问题。这时其他节点要是判定这个 node 崩溃了，开启了自动重平衡，这不是我们期待的结果。</p>
+<p>所以，手动的可能没有自动的那么方便，但是可以阻止一些额外的问题。</p>
+<h4 id="请求路由"><a href="#请求路由" class="headerlink" title="请求路由"></a>请求路由</h4><p>常见的三种方式：</p>
+<ul>
+<li>直接访问一个node 如果有就返回，没有就找下一个node</li>
+<li>通过路由的方式，在 client 和 node 中间套一层。</li>
+<li>第三种需要客户端进行配合，客户端对哪些分区存储了哪些key是有感知的。</li>
+</ul>
+<p><img src="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220216214050273.png" alt="image-20220216214050273"></p>
+<p>另一种方式为，分布式系统以来一个独立的服务，比如 ZooKeeper 来跟踪集群中的元数据。</p>
+<p><img src="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220216214512962.png" alt="image-20220216214512962"></p>
+<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>这章讲了几种将数据库拆成分区的方法，不过针对的好像都是 key-value 类型的数据库。</p>
+<p>分区的目的：<strong>将数据和查询的负载更均匀的分配到多台机器上</strong></p>
+<p>两种分区的方法：</p>
+<ul>
+<li>key range 的分区方法，将 key 排序后进行存储的一个好处是，支持更高效的范围查询，同时也会带来一种风险，就是 hot spot 的问题。这种分区方式通常结合<strong>动态分区</strong>进行使用，在达到某个阈值的时候进行分区的拆分。</li>
+<li>hash 分区，通过散列函数将数据更均匀的分布在多台机器上。虽然损失了高效的范围查询，但是给我们带来了更均匀的数据分布和负载均衡。hash 分区的方式通常结合<strong>固定数量</strong>的分区进行使用。</li>
+</ul>
+<p><em>分区和二级索引</em>的结合</p>
+<ul>
+<li>基于文档的，也叫 local index</li>
+<li>基于术语的，也叫 global index</li>
+</ul>
+<h2 id="Ch7：Transactions"><a href="#Ch7：Transactions" class="headerlink" title="Ch7：Transactions"></a>Ch7：Transactions</h2><p>循序渐进，介绍了一些会导致数据系统出错的几个问题</p>
+<ul>
+<li>数据库软件或者硬件可能会随时出错，也包括在写操作执行一般的过程中</li>
+<li>应用可能会随时崩溃，包括一些逻辑只执行了一半</li>
+<li>网络的不可靠，切断了应用和数据库之间的关系</li>
+<li>客户端之间的并发操作</li>
+<li>客户端可能读取到了无意义的数据（脏数据）</li>
+</ul>
+<p><strong>事务</strong></p>
+<p>事务是简化上述问题的一种机制。<strong>事务是应用程序将多个读取和写入组合成一个逻辑单元的一种方式。</strong></p>
+<p>概念上，所有的读写操作在一个事务中被看成是一个操作，要么整个事务成功（commit），要么全部失败（abort, rollback）。</p>
+<p>这下我就有点明白了，总说的分布式事务是什么意思，比如一个写请求，需要多个服务进行协调，为了保证数据的可靠性，要么所有的服务都响应成功，要么就都失败。</p>
+<h4 id="ACID"><a href="#ACID" class="headerlink" title="ACID"></a>ACID</h4><p>atomicity 原子性</p>
+<p>consistency 一致性</p>
+<p>isolation 隔离性</p>
+<p>durability 持久性</p>
+<p>是数据库中的容错机制建立精确的术语</p>
+<p><strong>Atomicity</strong></p>
+<p>atomic 这个词通常代表的意思是，一个不可再分的操作。</p>
+<p>在计算机中，代表着一些其他的意思，比如多线程环境下，某个线程修改了某个值，由 1 改成 2，这时候其他线程是看不到的，其他线程看到的仍然是 1。</p>
+<p><strong>但是在 ACID 中</strong>，A 代表的意思是和并发没有任何关系的！像上述这种问题，在 ACID 中 I isolation 中覆盖了这样的场景。</p>
+<p>Atomicity 描述了如果客户端想要请求多个写操作，但是在一部分写操作执行完成后发生了错误。如果多个写操作聚合到一个 atomic 事务中，就说明这个事务是由于错误未完成的，然后这个事务就可以进行回滚，数据库必须忽略和恢复写入成功的值。</p>
+<p><strong>发生错误时，有回滚事务的能力，并且这个事务中的所有写操作都应该被忽略。</strong>这是 ACID 中 A 的定义。</p>
+<p>作者提到 abortability（可回滚能力）可能更适合这个 A。</p>
+<p><strong>Consitency</strong></p>
+<p>ACID中的一致性的主要是指对数据有特定的预期状态， 任何数据更改必须满足这些状态约束（或者恒等条件）。</p>
+<blockquote>
+<p>说实话，这句话有点难懂。。原文是这样的 <code>The idea of ACID consistency is that you have certain statements about your data (invariants) that must always be true</code></p>
+</blockquote>
+<p>一致性的概念依赖于应用程序的不变量概念，<em>一致性是应用程序的责任，来定义正确的事务，为了就是 app 可以正确保持一致性</em>。这也太拗口了。。</p>
+<p>这是数据库不能保证的，因为如果你想写入一些脏数据，数据库是没办法阻止的。</p>
+<p><strong>通常，应用程序会依赖数据库的 A 和 I 来实现 C</strong></p>
+<p><strong>Isolation</strong></p>
+<p><img src="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220217151555996.png" alt="image-20220217151555996"></p>
+<p>这个就有点和一开始说的 atomic 并发访问类似了。</p>
+<p><strong>Durability</strong></p>
+<p>数据库系统的目的就是提供一个安全的地方，可以用来存放数据，并且不需要担心数据的丢失。</p>
+<p>单节点中，持久性意味着数据成功的写入了。master - slave 中，意味着副本中的数据也成功写入了。</p>
+<p>完美的持久性其实并不存在，如果存储数据的磁盘和存储副本数据的磁盘都坏了，这也是一种情况。</p>
+<h4 id="单对象与多对象事务操作"><a href="#单对象与多对象事务操作" class="headerlink" title="单对象与多对象事务操作"></a>单对象与多对象事务操作</h4><p><img src="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220217173344302.png" alt="image-20220217173344302"></p>
+<p>如果没有隔离性，user2 会看到一种非常诡异的现象，就是有未读邮件，但是未读邮件的数量显示为 0。</p>
+<p><img src="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220217173515223.png" alt="image-20220217173515223"></p>
+<p>如果没有原子性，这时候未读邮件和未读数量的显示就不一致了。这种情况下，第二个更新数量的操作失败了，那么第一个插入未读邮件的操作是需要回滚的。</p>
+<p><strong>多对象事务的需求</strong></p>
+<p>主要还是为了事务的  A 和 I</p>
+<p><strong>错误处理和驳回</strong></p>
+<p>事务一个非常重要的特点：当错误发生的时候，可以进行驳回（忽略已修改的内容）并且安全的重试。</p>
+<p>ACID 的哲学：<strong>如果数据库违背了 AID ，那还不如摒弃 AID，这样也比把数据搞成半截子强。</strong></p>
+<p>重试事务也会有很多问题：</p>
+<ul>
+<li>比如事务执行成功了，但是 commit 未返回给客户端，此时客户端会认为这个事务是失败的，这样就会导致事务执行多次。。除非有一种去重的机制。。</li>
+<li>如果事务执行失败是由于过载导致，那么事务的重试会加重负载。这种情况下可以添加重试次数的限制。</li>
+<li>只有在”可控的“错误发生时，事务重试才有意义。如果这个事务中本身就有错误，那么怎么重试都是无意义的。（这句话是我自己理解的）</li>
+<li>如果事务的执行存在数据库之外的副作用，那么即使事务被驳回了，副作用仍然会发生。作者举了一个例子，特别好！如果这个事务的执行伴随着发送邮件，那么重试的时候仍然会发送邮件。。</li>
+</ul>
+<h4 id="弱隔离级别"><a href="#弱隔离级别" class="headerlink" title="弱隔离级别"></a>弱隔离级别</h4>
     </div>
 
     
@@ -818,7 +970,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#CH1%EF%BC%9A-Reliable-Scalable-Maintainable"><span class="nav-number">1.</span> <span class="nav-text">CH1： Reliable, Scalable, Maintainable</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#CH2%EF%BC%9AData-Models-And-Query-Languages"><span class="nav-number">2.</span> <span class="nav-text">CH2：Data Models And Query Languages</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#CH3%EF%BC%9AStore-and-Retrieval"><span class="nav-number">3.</span> <span class="nav-text">CH3：Store and Retrieval</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#CH4-Encoding-and-Evolution"><span class="nav-number">4.</span> <span class="nav-text">CH4. Encoding and Evolution</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#CH5-%EF%BC%9AReplication"><span class="nav-number">5.</span> <span class="nav-text">CH5 ：Replication</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#CH6%EF%BC%9APartitioning"><span class="nav-number">6.</span> <span class="nav-text">CH6：Partitioning</span></a></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#CH1%EF%BC%9A-Reliable-Scalable-Maintainable"><span class="nav-number">1.</span> <span class="nav-text">CH1： Reliable, Scalable, Maintainable</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#CH2%EF%BC%9AData-Models-And-Query-Languages"><span class="nav-number">2.</span> <span class="nav-text">CH2：Data Models And Query Languages</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#CH3%EF%BC%9AStore-and-Retrieval"><span class="nav-number">3.</span> <span class="nav-text">CH3：Store and Retrieval</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#CH4%EF%BC%9A-Encoding-and-Evolution"><span class="nav-number">4.</span> <span class="nav-text">CH4： Encoding and Evolution</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#CH5%EF%BC%9AReplication"><span class="nav-number">5.</span> <span class="nav-text">CH5：Replication</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#CH6%EF%BC%9APartitioning"><span class="nav-number">6.</span> <span class="nav-text">CH6：Partitioning</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Key-Value-%E7%B1%BB%E5%9E%8B%E6%95%B0%E6%8D%AE%E7%9A%84%E5%88%86%E7%89%87"><span class="nav-number">6.0.1.</span> <span class="nav-text">Key-Value 类型数据的分片</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%80%9A%E8%BF%87-key-%E7%9A%84-hash-%E5%80%BC%E8%BF%9B%E8%A1%8C%E5%88%86%E5%8C%BA"><span class="nav-number">6.0.2.</span> <span class="nav-text">通过 key 的 hash 值进行分区</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Partitioning-and-Secondary-Indexes"><span class="nav-number">6.0.3.</span> <span class="nav-text">Partitioning and Secondary Indexes</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Rebalancing-Partitions"><span class="nav-number">6.0.4.</span> <span class="nav-text">Rebalancing Partitions</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%AF%B7%E6%B1%82%E8%B7%AF%E7%94%B1"><span class="nav-number">6.0.5.</span> <span class="nav-text">请求路由</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">6.0.6.</span> <span class="nav-text">总结</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Ch7%EF%BC%9ATransactions"><span class="nav-number">7.</span> <span class="nav-text">Ch7：Transactions</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#ACID"><span class="nav-number">7.0.1.</span> <span class="nav-text">ACID</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%8D%95%E5%AF%B9%E8%B1%A1%E4%B8%8E%E5%A4%9A%E5%AF%B9%E8%B1%A1%E4%BA%8B%E5%8A%A1%E6%93%8D%E4%BD%9C"><span class="nav-number">7.0.2.</span> <span class="nav-text">单对象与多对象事务操作</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%BC%B1%E9%9A%94%E7%A6%BB%E7%BA%A7%E5%88%AB"><span class="nav-number">7.0.3.</span> <span class="nav-text">弱隔离级别</span></a></li></ol></li></ol></li></ol></div>
       </div>
       <!--/noindex-->
 
