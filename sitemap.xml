@@ -2,6 +2,20 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://bqyang.top/2022/chi/</loc>
+    
+    <lastmod>2022-02-22</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://bqyang.top/2022/DDIA/</loc>
+    
+    <lastmod>2022-02-22</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>https://bqyang.top/2022/webFrame/</loc>
     
     <lastmod>2022-02-20</lastmod>
@@ -10,13 +24,6 @@
   
   <url>
     <loc>https://bqyang.top/2022/summary2021/</loc>
-    
-    <lastmod>2022-02-18</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://bqyang.top/2022/DDIA/</loc>
     
     <lastmod>2022-02-18</lastmod>
     
@@ -158,7 +165,7 @@
 
   <url>
     <loc>https://bqyang.top/</loc>
-    <lastmod>2022-02-20</lastmod>
+    <lastmod>2022-02-22</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
