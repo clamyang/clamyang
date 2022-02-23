@@ -28,7 +28,7 @@
 <meta property="og:description" content="（暂时还没写完，不过为了方便阅读，我也发表了出来。这样回家就不用带电脑了。。） chi 框架相对容易一些，跟上一篇文章中的 appsrv 框架进行一个简单地对比，看一下实现的差异在哪里。">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2022-02-22T09:21:53.087Z">
-<meta property="article:modified_time" content="2022-02-23T10:05:37.434Z">
+<meta property="article:modified_time" content="2022-02-23T10:09:09.617Z">
 <meta property="article:author" content="杨宝强">
 <meta name="twitter:card" content="summary">
 
@@ -186,7 +186,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2022-02-23 18:05:37" itemprop="dateModified" datetime="2022-02-23T18:05:37+08:00">2022-02-23</time>
+                <time title="修改时间：2022-02-23 18:09:09" itemprop="dateModified" datetime="2022-02-23T18:09:09+08:00">2022-02-23</time>
               </span>
 
           
@@ -218,106 +218,106 @@
 <hr>
 <pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// 路由的插入</span>
 <span class="token keyword">func</span> <span class="token punctuation">(</span>n <span class="token operator">*</span>node<span class="token punctuation">)</span> <span class="token function">InsertRoute</span><span class="token punctuation">(</span>method methodTyp<span class="token punctuation">,</span> pattern <span class="token builtin">string</span><span class="token punctuation">,</span> handler http<span class="token punctuation">.</span>Handler<span class="token punctuation">)</span> <span class="token operator">*</span>node <span class="token punctuation">&#123;</span>
-	<span class="token keyword">var</span> parent <span class="token operator">*</span>node
+    <span class="token keyword">var</span> parent <span class="token operator">*</span>node
     <span class="token comment">// 获取访问路径，形如 /hello/world</span>
-	search <span class="token operator">:=</span> pattern
+    search <span class="token operator">:=</span> pattern
 
-	<span class="token keyword">for</span> <span class="token punctuation">&#123;</span>
-		<span class="token comment">// Handle key exhaustion</span>
-		<span class="token keyword">if</span> <span class="token function">len</span><span class="token punctuation">(</span>search<span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token number">0</span> <span class="token punctuation">&#123;</span>
-			<span class="token comment">// Insert or update the node's leaf handler</span>
-			n<span class="token punctuation">.</span><span class="token function">setEndpoint</span><span class="token punctuation">(</span>method<span class="token punctuation">,</span> handler<span class="token punctuation">,</span> pattern<span class="token punctuation">)</span>
-			<span class="token keyword">return</span> n
-		<span class="token punctuation">&#125;</span>
+    <span class="token keyword">for</span> <span class="token punctuation">&#123;</span>
+        <span class="token comment">// Handle key exhaustion</span>
+        <span class="token keyword">if</span> <span class="token function">len</span><span class="token punctuation">(</span>search<span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token number">0</span> <span class="token punctuation">&#123;</span>
+            <span class="token comment">// Insert or update the node's leaf handler</span>
+            n<span class="token punctuation">.</span><span class="token function">setEndpoint</span><span class="token punctuation">(</span>method<span class="token punctuation">,</span> handler<span class="token punctuation">,</span> pattern<span class="token punctuation">)</span>
+            <span class="token keyword">return</span> n
+        <span class="token punctuation">&#125;</span>
 
-		<span class="token comment">// We're going to be searching for a wild node next,</span>
-		<span class="token comment">// in this case, we need to get the tail</span>
-		<span class="token keyword">var</span> label <span class="token operator">=</span> search<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span>
-		<span class="token keyword">var</span> segTail <span class="token builtin">byte</span>
-		<span class="token keyword">var</span> segEndIdx <span class="token builtin">int</span>
-		<span class="token keyword">var</span> segTyp nodeTyp
-		<span class="token keyword">var</span> segRexpat <span class="token builtin">string</span>
-		<span class="token keyword">if</span> label <span class="token operator">==</span> <span class="token string">'&#123;'</span> <span class="token operator">||</span> label <span class="token operator">==</span> <span class="token string">'*'</span> <span class="token punctuation">&#123;</span>
-			segTyp<span class="token punctuation">,</span> <span class="token boolean">_</span><span class="token punctuation">,</span> segRexpat<span class="token punctuation">,</span> segTail<span class="token punctuation">,</span> <span class="token boolean">_</span><span class="token punctuation">,</span> segEndIdx <span class="token operator">=</span> <span class="token function">patNextSegment</span><span class="token punctuation">(</span>search<span class="token punctuation">)</span>
-		<span class="token punctuation">&#125;</span>
+        <span class="token comment">// We're going to be searching for a wild node next,</span>
+        <span class="token comment">// in this case, we need to get the tail</span>
+        <span class="token keyword">var</span> label <span class="token operator">=</span> search<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span>
+        <span class="token keyword">var</span> segTail <span class="token builtin">byte</span>
+        <span class="token keyword">var</span> segEndIdx <span class="token builtin">int</span>
+        <span class="token keyword">var</span> segTyp nodeTyp
+        <span class="token keyword">var</span> segRexpat <span class="token builtin">string</span>
+        <span class="token keyword">if</span> label <span class="token operator">==</span> <span class="token string">'&#123;'</span> <span class="token operator">||</span> label <span class="token operator">==</span> <span class="token string">'*'</span> <span class="token punctuation">&#123;</span>
+            segTyp<span class="token punctuation">,</span> <span class="token boolean">_</span><span class="token punctuation">,</span> segRexpat<span class="token punctuation">,</span> segTail<span class="token punctuation">,</span> <span class="token boolean">_</span><span class="token punctuation">,</span> segEndIdx <span class="token operator">=</span> <span class="token function">patNextSegment</span><span class="token punctuation">(</span>search<span class="token punctuation">)</span>
+        <span class="token punctuation">&#125;</span>
 
-		<span class="token keyword">var</span> prefix <span class="token builtin">string</span>
-		<span class="token keyword">if</span> segTyp <span class="token operator">==</span> ntRegexp <span class="token punctuation">&#123;</span>
-			prefix <span class="token operator">=</span> segRexpat
-		<span class="token punctuation">&#125;</span>
+        <span class="token keyword">var</span> prefix <span class="token builtin">string</span>
+        <span class="token keyword">if</span> segTyp <span class="token operator">==</span> ntRegexp <span class="token punctuation">&#123;</span>
+            prefix <span class="token operator">=</span> segRexpat
+        <span class="token punctuation">&#125;</span>
 
-		<span class="token comment">// Look for the edge to attach to</span>
-		parent <span class="token operator">=</span> n
-		n <span class="token operator">=</span> n<span class="token punctuation">.</span><span class="token function">getEdge</span><span class="token punctuation">(</span>segTyp<span class="token punctuation">,</span> label<span class="token punctuation">,</span> segTail<span class="token punctuation">,</span> prefix<span class="token punctuation">)</span>
+        <span class="token comment">// Look for the edge to attach to</span>
+        parent <span class="token operator">=</span> n
+        n <span class="token operator">=</span> n<span class="token punctuation">.</span><span class="token function">getEdge</span><span class="token punctuation">(</span>segTyp<span class="token punctuation">,</span> label<span class="token punctuation">,</span> segTail<span class="token punctuation">,</span> prefix<span class="token punctuation">)</span>
 
-		<span class="token comment">// No edge, create one</span>
-		<span class="token keyword">if</span> n <span class="token operator">==</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
-			child <span class="token operator">:=</span> <span class="token operator">&amp;</span>node<span class="token punctuation">&#123;</span>label<span class="token punctuation">:</span> label<span class="token punctuation">,</span> tail<span class="token punctuation">:</span> segTail<span class="token punctuation">,</span> prefix<span class="token punctuation">:</span> search<span class="token punctuation">&#125;</span>
-			hn <span class="token operator">:=</span> parent<span class="token punctuation">.</span><span class="token function">addChild</span><span class="token punctuation">(</span>child<span class="token punctuation">,</span> search<span class="token punctuation">)</span>
-			hn<span class="token punctuation">.</span><span class="token function">setEndpoint</span><span class="token punctuation">(</span>method<span class="token punctuation">,</span> handler<span class="token punctuation">,</span> pattern<span class="token punctuation">)</span>
+        <span class="token comment">// No edge, create one</span>
+        <span class="token keyword">if</span> n <span class="token operator">==</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
+            child <span class="token operator">:=</span> <span class="token operator">&amp;</span>node<span class="token punctuation">&#123;</span>label<span class="token punctuation">:</span> label<span class="token punctuation">,</span> tail<span class="token punctuation">:</span> segTail<span class="token punctuation">,</span> prefix<span class="token punctuation">:</span> search<span class="token punctuation">&#125;</span>
+            hn <span class="token operator">:=</span> parent<span class="token punctuation">.</span><span class="token function">addChild</span><span class="token punctuation">(</span>child<span class="token punctuation">,</span> search<span class="token punctuation">)</span>
+            hn<span class="token punctuation">.</span><span class="token function">setEndpoint</span><span class="token punctuation">(</span>method<span class="token punctuation">,</span> handler<span class="token punctuation">,</span> pattern<span class="token punctuation">)</span>
 
-			<span class="token keyword">return</span> hn
-		<span class="token punctuation">&#125;</span>
+            <span class="token keyword">return</span> hn
+        <span class="token punctuation">&#125;</span>
 
-		<span class="token comment">// Found an edge to match the pattern</span>
+        <span class="token comment">// Found an edge to match the pattern</span>
 
-		<span class="token keyword">if</span> n<span class="token punctuation">.</span>typ <span class="token operator">></span> ntStatic <span class="token punctuation">&#123;</span>
-			<span class="token comment">// We found a param node, trim the param from the search path and continue.</span>
-			<span class="token comment">// This param/wild pattern segment would already be on the tree from a previous</span>
-			<span class="token comment">// call to addChild when creating a new node.</span>
-			search <span class="token operator">=</span> search<span class="token punctuation">[</span>segEndIdx<span class="token punctuation">:</span><span class="token punctuation">]</span>
-			<span class="token keyword">continue</span>
-		<span class="token punctuation">&#125;</span>
+        <span class="token keyword">if</span> n<span class="token punctuation">.</span>typ <span class="token operator">></span> ntStatic <span class="token punctuation">&#123;</span>
+            <span class="token comment">// We found a param node, trim the param from the search path and continue.</span>
+            <span class="token comment">// This param/wild pattern segment would already be on the tree from a previous</span>
+            <span class="token comment">// call to addChild when creating a new node.</span>
+            search <span class="token operator">=</span> search<span class="token punctuation">[</span>segEndIdx<span class="token punctuation">:</span><span class="token punctuation">]</span>
+            <span class="token keyword">continue</span>
+        <span class="token punctuation">&#125;</span>
 
-		<span class="token comment">// Static nodes fall below here.</span>
-		<span class="token comment">// Determine longest prefix of the search key on match.</span>
+        <span class="token comment">// Static nodes fall below here.</span>
+        <span class="token comment">// Determine longest prefix of the search key on match.</span>
         <span class="token comment">// 匹配最长前缀，一个时间复杂度为 O(n) 的算法，遇到不同的直接 break</span>
-		commonPrefix <span class="token operator">:=</span> <span class="token function">longestPrefix</span><span class="token punctuation">(</span>search<span class="token punctuation">,</span> n<span class="token punctuation">.</span>prefix<span class="token punctuation">)</span>
-		<span class="token keyword">if</span> commonPrefix <span class="token operator">==</span> <span class="token function">len</span><span class="token punctuation">(</span>n<span class="token punctuation">.</span>prefix<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        commonPrefix <span class="token operator">:=</span> <span class="token function">longestPrefix</span><span class="token punctuation">(</span>search<span class="token punctuation">,</span> n<span class="token punctuation">.</span>prefix<span class="token punctuation">)</span>
+        <span class="token keyword">if</span> commonPrefix <span class="token operator">==</span> <span class="token function">len</span><span class="token punctuation">(</span>n<span class="token punctuation">.</span>prefix<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
             <span class="token comment">// 走到这个 if 里边，说明当前 parent 的前缀，被完全包含在了 child 中</span>
-			<span class="token comment">// the common prefix is as long as the current node's prefix we're attempting to insert.</span>
-			<span class="token comment">// keep the search going.</span>
-			search <span class="token operator">=</span> search<span class="token punctuation">[</span>commonPrefix<span class="token punctuation">:</span><span class="token punctuation">]</span>
-			<span class="token keyword">continue</span>
-		<span class="token punctuation">&#125;</span>
+            <span class="token comment">// the common prefix is as long as the current node's prefix we're attempting to insert.</span>
+            <span class="token comment">// keep the search going.</span>
+            search <span class="token operator">=</span> search<span class="token punctuation">[</span>commonPrefix<span class="token punctuation">:</span><span class="token punctuation">]</span>
+            <span class="token keyword">continue</span>
+        <span class="token punctuation">&#125;</span>
 
-		<span class="token comment">// Split the node</span>
-		child <span class="token operator">:=</span> <span class="token operator">&amp;</span>node<span class="token punctuation">&#123;</span>
-			typ<span class="token punctuation">:</span>    ntStatic<span class="token punctuation">,</span>
-			prefix<span class="token punctuation">:</span> search<span class="token punctuation">[</span><span class="token punctuation">:</span>commonPrefix<span class="token punctuation">]</span><span class="token punctuation">,</span>
-		<span class="token punctuation">&#125;</span>
+        <span class="token comment">// Split the node</span>
+        child <span class="token operator">:=</span> <span class="token operator">&amp;</span>node<span class="token punctuation">&#123;</span>
+            typ<span class="token punctuation">:</span>    ntStatic<span class="token punctuation">,</span>
+            prefix<span class="token punctuation">:</span> search<span class="token punctuation">[</span><span class="token punctuation">:</span>commonPrefix<span class="token punctuation">]</span><span class="token punctuation">,</span>
+        <span class="token punctuation">&#125;</span>
         <span class="token comment">// replace 的过程就是将，旧 node 替换成最大相同前缀的样子</span>
-		parent<span class="token punctuation">.</span><span class="token function">replaceChild</span><span class="token punctuation">(</span>search<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span> segTail<span class="token punctuation">,</span> child<span class="token punctuation">)</span>
+        parent<span class="token punctuation">.</span><span class="token function">replaceChild</span><span class="token punctuation">(</span>search<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span> segTail<span class="token punctuation">,</span> child<span class="token punctuation">)</span>
 
-		<span class="token comment">// Restore the existing node</span>
+        <span class="token comment">// Restore the existing node</span>
         <span class="token comment">// 上述已经替换了，但是还剩下 旧 node 除了最大相同前缀余下的部分，</span>
         <span class="token comment">// 这里的操作就是将这个 node 的后半部分重新插入</span>
-		n<span class="token punctuation">.</span>label <span class="token operator">=</span> n<span class="token punctuation">.</span>prefix<span class="token punctuation">[</span>commonPrefix<span class="token punctuation">]</span>
-		n<span class="token punctuation">.</span>prefix <span class="token operator">=</span> n<span class="token punctuation">.</span>prefix<span class="token punctuation">[</span>commonPrefix<span class="token punctuation">:</span><span class="token punctuation">]</span>
-		child<span class="token punctuation">.</span><span class="token function">addChild</span><span class="token punctuation">(</span>n<span class="token punctuation">,</span> n<span class="token punctuation">.</span>prefix<span class="token punctuation">)</span>
+        n<span class="token punctuation">.</span>label <span class="token operator">=</span> n<span class="token punctuation">.</span>prefix<span class="token punctuation">[</span>commonPrefix<span class="token punctuation">]</span>
+        n<span class="token punctuation">.</span>prefix <span class="token operator">=</span> n<span class="token punctuation">.</span>prefix<span class="token punctuation">[</span>commonPrefix<span class="token punctuation">:</span><span class="token punctuation">]</span>
+        child<span class="token punctuation">.</span><span class="token function">addChild</span><span class="token punctuation">(</span>n<span class="token punctuation">,</span> n<span class="token punctuation">.</span>prefix<span class="token punctuation">)</span>
 
-		<span class="token comment">// If the new key is a subset, set the method/handler on this node and finish.</span>
-		<span class="token comment">// 拆分后，如果search就没了，说明 search 是 parent node 的 prefix 的子集</span>
+        <span class="token comment">// If the new key is a subset, set the method/handler on this node and finish.</span>
+        <span class="token comment">// 拆分后，如果search就没了，说明 search 是 parent node 的 prefix 的子集</span>
         <span class="token comment">// 直接更新当前 node 的 handler 即可</span>
         search <span class="token operator">=</span> search<span class="token punctuation">[</span>commonPrefix<span class="token punctuation">:</span><span class="token punctuation">]</span>
-		<span class="token keyword">if</span> <span class="token function">len</span><span class="token punctuation">(</span>search<span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token number">0</span> <span class="token punctuation">&#123;</span>
-			child<span class="token punctuation">.</span><span class="token function">setEndpoint</span><span class="token punctuation">(</span>method<span class="token punctuation">,</span> handler<span class="token punctuation">,</span> pattern<span class="token punctuation">)</span>
-			<span class="token keyword">return</span> child
-		<span class="token punctuation">&#125;</span>
+        <span class="token keyword">if</span> <span class="token function">len</span><span class="token punctuation">(</span>search<span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token number">0</span> <span class="token punctuation">&#123;</span>
+            child<span class="token punctuation">.</span><span class="token function">setEndpoint</span><span class="token punctuation">(</span>method<span class="token punctuation">,</span> handler<span class="token punctuation">,</span> pattern<span class="token punctuation">)</span>
+            <span class="token keyword">return</span> child
+        <span class="token punctuation">&#125;</span>
 
-		<span class="token comment">// Create a new edge for the node</span>
+        <span class="token comment">// Create a new edge for the node</span>
         <span class="token comment">// 这里其实也好理解了，如果说拆分后，search 中还有内容，</span>
         <span class="token comment">// 也不用管了，直接扔到下一个child中，之后再添加的时候，</span>
         <span class="token comment">// 通过匹配最大相同前缀的方式，继续拆。。</span>
-		subchild <span class="token operator">:=</span> <span class="token operator">&amp;</span>node<span class="token punctuation">&#123;</span>
-			typ<span class="token punctuation">:</span>    ntStatic<span class="token punctuation">,</span>
-			label<span class="token punctuation">:</span>  search<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
-			prefix<span class="token punctuation">:</span> search<span class="token punctuation">,</span>
-		<span class="token punctuation">&#125;</span>
-		hn <span class="token operator">:=</span> child<span class="token punctuation">.</span><span class="token function">addChild</span><span class="token punctuation">(</span>subchild<span class="token punctuation">,</span> search<span class="token punctuation">)</span>
-		hn<span class="token punctuation">.</span><span class="token function">setEndpoint</span><span class="token punctuation">(</span>method<span class="token punctuation">,</span> handler<span class="token punctuation">,</span> pattern<span class="token punctuation">)</span>
-		<span class="token keyword">return</span> hn
-	<span class="token punctuation">&#125;</span>
+        subchild <span class="token operator">:=</span> <span class="token operator">&amp;</span>node<span class="token punctuation">&#123;</span>
+            typ<span class="token punctuation">:</span>    ntStatic<span class="token punctuation">,</span>
+            label<span class="token punctuation">:</span>  search<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+            prefix<span class="token punctuation">:</span> search<span class="token punctuation">,</span>
+        <span class="token punctuation">&#125;</span>
+        hn <span class="token operator">:=</span> child<span class="token punctuation">.</span><span class="token function">addChild</span><span class="token punctuation">(</span>subchild<span class="token punctuation">,</span> search<span class="token punctuation">)</span>
+        hn<span class="token punctuation">.</span><span class="token function">setEndpoint</span><span class="token punctuation">(</span>method<span class="token punctuation">,</span> handler<span class="token punctuation">,</span> pattern<span class="token punctuation">)</span>
+        <span class="token keyword">return</span> hn
+    <span class="token punctuation">&#125;</span>
 <span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p>个人感觉这个插入的过程还是挺绕的。。需要结合例子动手看一下，光在脑子里想，抱歉！我智商不够..</p>
@@ -451,35 +451,35 @@
 
 <pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// 写的 endpoint，其实就是给 node 设置上 handler，正如人家在下面注释所描述的</span>
 <span class="token keyword">func</span> <span class="token punctuation">(</span>n <span class="token operator">*</span>node<span class="token punctuation">)</span> <span class="token function">setEndpoint</span><span class="token punctuation">(</span>method methodTyp<span class="token punctuation">,</span> handler http<span class="token punctuation">.</span>Handler<span class="token punctuation">,</span> pattern <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
-	<span class="token comment">// Set the handler for the method type on the node</span>
-	<span class="token keyword">if</span> n<span class="token punctuation">.</span>endpoints <span class="token operator">==</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
-		n<span class="token punctuation">.</span>endpoints <span class="token operator">=</span> <span class="token function">make</span><span class="token punctuation">(</span>endpoints<span class="token punctuation">)</span>
-	<span class="token punctuation">&#125;</span>
-	
+    <span class="token comment">// Set the handler for the method type on the node</span>
+    <span class="token keyword">if</span> n<span class="token punctuation">.</span>endpoints <span class="token operator">==</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
+        n<span class="token punctuation">.</span>endpoints <span class="token operator">=</span> <span class="token function">make</span><span class="token punctuation">(</span>endpoints<span class="token punctuation">)</span>
+    <span class="token punctuation">&#125;</span>
+
     <span class="token comment">// &#123;name&#125; &#123;job&#125; paramKeys 中存储的就是这些名字</span>
-	paramKeys <span class="token operator">:=</span> <span class="token function">patParamKeys</span><span class="token punctuation">(</span>pattern<span class="token punctuation">)</span>
-	
- 	<span class="token comment">// 这里的就没啥好说了，通过位运算然后直接赋值就行了。。</span>
-	<span class="token keyword">if</span> method<span class="token operator">&amp;</span>mSTUB <span class="token operator">==</span> mSTUB <span class="token punctuation">&#123;</span>
-		n<span class="token punctuation">.</span>endpoints<span class="token punctuation">.</span><span class="token function">Value</span><span class="token punctuation">(</span>mSTUB<span class="token punctuation">)</span><span class="token punctuation">.</span>handler <span class="token operator">=</span> handler
-	<span class="token punctuation">&#125;</span>
-	<span class="token keyword">if</span> method<span class="token operator">&amp;</span>mALL <span class="token operator">==</span> mALL <span class="token punctuation">&#123;</span>
-		h <span class="token operator">:=</span> n<span class="token punctuation">.</span>endpoints<span class="token punctuation">.</span><span class="token function">Value</span><span class="token punctuation">(</span>mALL<span class="token punctuation">)</span>
-		h<span class="token punctuation">.</span>handler <span class="token operator">=</span> handler
-		h<span class="token punctuation">.</span>pattern <span class="token operator">=</span> pattern
-		h<span class="token punctuation">.</span>paramKeys <span class="token operator">=</span> paramKeys
-		<span class="token keyword">for</span> <span class="token boolean">_</span><span class="token punctuation">,</span> m <span class="token operator">:=</span> <span class="token keyword">range</span> methodMap <span class="token punctuation">&#123;</span>
-			h <span class="token operator">:=</span> n<span class="token punctuation">.</span>endpoints<span class="token punctuation">.</span><span class="token function">Value</span><span class="token punctuation">(</span>m<span class="token punctuation">)</span>
-			h<span class="token punctuation">.</span>handler <span class="token operator">=</span> handler
-			h<span class="token punctuation">.</span>pattern <span class="token operator">=</span> pattern
-			h<span class="token punctuation">.</span>paramKeys <span class="token operator">=</span> paramKeys
-		<span class="token punctuation">&#125;</span>
-	<span class="token punctuation">&#125;</span> <span class="token keyword">else</span> <span class="token punctuation">&#123;</span>
-		h <span class="token operator">:=</span> n<span class="token punctuation">.</span>endpoints<span class="token punctuation">.</span><span class="token function">Value</span><span class="token punctuation">(</span>method<span class="token punctuation">)</span>
-		h<span class="token punctuation">.</span>handler <span class="token operator">=</span> handler
-		h<span class="token punctuation">.</span>pattern <span class="token operator">=</span> pattern
-		h<span class="token punctuation">.</span>paramKeys <span class="token operator">=</span> paramKeys
-	<span class="token punctuation">&#125;</span>
+    paramKeys <span class="token operator">:=</span> <span class="token function">patParamKeys</span><span class="token punctuation">(</span>pattern<span class="token punctuation">)</span>
+
+    <span class="token comment">// 这里的就没啥好说了，通过位运算然后直接赋值就行了。。</span>
+    <span class="token keyword">if</span> method<span class="token operator">&amp;</span>mSTUB <span class="token operator">==</span> mSTUB <span class="token punctuation">&#123;</span>
+        n<span class="token punctuation">.</span>endpoints<span class="token punctuation">.</span><span class="token function">Value</span><span class="token punctuation">(</span>mSTUB<span class="token punctuation">)</span><span class="token punctuation">.</span>handler <span class="token operator">=</span> handler
+    <span class="token punctuation">&#125;</span>
+    <span class="token keyword">if</span> method<span class="token operator">&amp;</span>mALL <span class="token operator">==</span> mALL <span class="token punctuation">&#123;</span>
+        h <span class="token operator">:=</span> n<span class="token punctuation">.</span>endpoints<span class="token punctuation">.</span><span class="token function">Value</span><span class="token punctuation">(</span>mALL<span class="token punctuation">)</span>
+        h<span class="token punctuation">.</span>handler <span class="token operator">=</span> handler
+        h<span class="token punctuation">.</span>pattern <span class="token operator">=</span> pattern
+        h<span class="token punctuation">.</span>paramKeys <span class="token operator">=</span> paramKeys
+        <span class="token keyword">for</span> <span class="token boolean">_</span><span class="token punctuation">,</span> m <span class="token operator">:=</span> <span class="token keyword">range</span> methodMap <span class="token punctuation">&#123;</span>
+            h <span class="token operator">:=</span> n<span class="token punctuation">.</span>endpoints<span class="token punctuation">.</span><span class="token function">Value</span><span class="token punctuation">(</span>m<span class="token punctuation">)</span>
+            h<span class="token punctuation">.</span>handler <span class="token operator">=</span> handler
+            h<span class="token punctuation">.</span>pattern <span class="token operator">=</span> pattern
+            h<span class="token punctuation">.</span>paramKeys <span class="token operator">=</span> paramKeys
+        <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">&#125;</span> <span class="token keyword">else</span> <span class="token punctuation">&#123;</span>
+        h <span class="token operator">:=</span> n<span class="token punctuation">.</span>endpoints<span class="token punctuation">.</span><span class="token function">Value</span><span class="token punctuation">(</span>method<span class="token punctuation">)</span>
+        h<span class="token punctuation">.</span>handler <span class="token operator">=</span> handler
+        h<span class="token punctuation">.</span>pattern <span class="token operator">=</span> pattern
+        h<span class="token punctuation">.</span>paramKeys <span class="token operator">=</span> paramKeys
+    <span class="token punctuation">&#125;</span>
 <span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 
@@ -501,72 +501,72 @@
 
     <span class="token comment">// Add child depending on next up segment</span>
     <span class="token keyword">switch</span> segTyp <span class="token punctuation">&#123;</span>
-		<span class="token comment">// 这里直接判断类型呗，如果是static就直接加入到parent的children节点中</span>
+        <span class="token comment">// 这里直接判断类型呗，如果是static就直接加入到parent的children节点中</span>
         <span class="token keyword">case</span> ntStatic<span class="token punctuation">:</span>
-            <span class="token comment">// Search prefix is all static (that is, has no params in path)</span>
-            <span class="token comment">// noop</span>
+        <span class="token comment">// Search prefix is all static (that is, has no params in path)</span>
+        <span class="token comment">// noop</span>
 
         <span class="token keyword">default</span><span class="token punctuation">:</span>
-            <span class="token comment">// Search prefix contains a param, regexp or wildcard</span>
+        <span class="token comment">// Search prefix contains a param, regexp or wildcard</span>
 
-            <span class="token keyword">if</span> segTyp <span class="token operator">==</span> ntRegexp <span class="token punctuation">&#123;</span>
-                rex<span class="token punctuation">,</span> err <span class="token operator">:=</span> regexp<span class="token punctuation">.</span><span class="token function">Compile</span><span class="token punctuation">(</span>segRexpat<span class="token punctuation">)</span>
-                <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
-                    <span class="token function">panic</span><span class="token punctuation">(</span>fmt<span class="token punctuation">.</span><span class="token function">Sprintf</span><span class="token punctuation">(</span><span class="token string">"chi: invalid regexp pattern '%s' in route param"</span><span class="token punctuation">,</span> segRexpat<span class="token punctuation">)</span><span class="token punctuation">)</span>
-                <span class="token punctuation">&#125;</span>
-                child<span class="token punctuation">.</span>prefix <span class="token operator">=</span> segRexpat
-                child<span class="token punctuation">.</span>rex <span class="token operator">=</span> rex
+        <span class="token keyword">if</span> segTyp <span class="token operator">==</span> ntRegexp <span class="token punctuation">&#123;</span>
+            rex<span class="token punctuation">,</span> err <span class="token operator">:=</span> regexp<span class="token punctuation">.</span><span class="token function">Compile</span><span class="token punctuation">(</span>segRexpat<span class="token punctuation">)</span>
+            <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
+                <span class="token function">panic</span><span class="token punctuation">(</span>fmt<span class="token punctuation">.</span><span class="token function">Sprintf</span><span class="token punctuation">(</span><span class="token string">"chi: invalid regexp pattern '%s' in route param"</span><span class="token punctuation">,</span> segRexpat<span class="token punctuation">)</span><span class="token punctuation">)</span>
             <span class="token punctuation">&#125;</span>
+            child<span class="token punctuation">.</span>prefix <span class="token operator">=</span> segRexpat
+            child<span class="token punctuation">.</span>rex <span class="token operator">=</span> rex
+        <span class="token punctuation">&#125;</span>
 
-            <span class="token keyword">if</span> segStartIdx <span class="token operator">==</span> <span class="token number">0</span> <span class="token punctuation">&#123;</span>
-                <span class="token comment">// Route starts with a param</span>
-                child<span class="token punctuation">.</span>typ <span class="token operator">=</span> segTyp
+        <span class="token keyword">if</span> segStartIdx <span class="token operator">==</span> <span class="token number">0</span> <span class="token punctuation">&#123;</span>
+            <span class="token comment">// Route starts with a param</span>
+            child<span class="token punctuation">.</span>typ <span class="token operator">=</span> segTyp
 
-                <span class="token keyword">if</span> segTyp <span class="token operator">==</span> ntCatchAll <span class="token punctuation">&#123;</span>
-                    segStartIdx <span class="token operator">=</span> <span class="token operator">-</span><span class="token number">1</span>
-                <span class="token punctuation">&#125;</span> <span class="token keyword">else</span> <span class="token punctuation">&#123;</span>
-                    segStartIdx <span class="token operator">=</span> segEndIdx
-                <span class="token punctuation">&#125;</span>
-                <span class="token keyword">if</span> segStartIdx <span class="token operator">&lt;</span> <span class="token number">0</span> <span class="token punctuation">&#123;</span>
-                    segStartIdx <span class="token operator">=</span> <span class="token function">len</span><span class="token punctuation">(</span>search<span class="token punctuation">)</span>
-                <span class="token punctuation">&#125;</span>
-                child<span class="token punctuation">.</span>tail <span class="token operator">=</span> segTail <span class="token comment">// for params, we set the tail</span>
+            <span class="token keyword">if</span> segTyp <span class="token operator">==</span> ntCatchAll <span class="token punctuation">&#123;</span>
+                segStartIdx <span class="token operator">=</span> <span class="token operator">-</span><span class="token number">1</span>
+            <span class="token punctuation">&#125;</span> <span class="token keyword">else</span> <span class="token punctuation">&#123;</span>
+                segStartIdx <span class="token operator">=</span> segEndIdx
+            <span class="token punctuation">&#125;</span>
+            <span class="token keyword">if</span> segStartIdx <span class="token operator">&lt;</span> <span class="token number">0</span> <span class="token punctuation">&#123;</span>
+                segStartIdx <span class="token operator">=</span> <span class="token function">len</span><span class="token punctuation">(</span>search<span class="token punctuation">)</span>
+            <span class="token punctuation">&#125;</span>
+            child<span class="token punctuation">.</span>tail <span class="token operator">=</span> segTail <span class="token comment">// for params, we set the tail</span>
 
-                <span class="token keyword">if</span> segStartIdx <span class="token operator">!=</span> <span class="token function">len</span><span class="token punctuation">(</span>search<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
-                    <span class="token comment">// add static edge for the remaining part, split the end.</span>
-                    <span class="token comment">// its not possible to have adjacent param nodes, so its certainly</span>
-                    <span class="token comment">// going to be a static node next.</span>
+            <span class="token keyword">if</span> segStartIdx <span class="token operator">!=</span> <span class="token function">len</span><span class="token punctuation">(</span>search<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+                <span class="token comment">// add static edge for the remaining part, split the end.</span>
+                <span class="token comment">// its not possible to have adjacent param nodes, so its certainly</span>
+                <span class="token comment">// going to be a static node next.</span>
 
-                    search <span class="token operator">=</span> search<span class="token punctuation">[</span>segStartIdx<span class="token punctuation">:</span><span class="token punctuation">]</span> <span class="token comment">// advance search position</span>
-
-                    nn <span class="token operator">:=</span> <span class="token operator">&amp;</span>node<span class="token punctuation">&#123;</span>
-                        typ<span class="token punctuation">:</span>    ntStatic<span class="token punctuation">,</span>
-                        label<span class="token punctuation">:</span>  search<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
-                        prefix<span class="token punctuation">:</span> search<span class="token punctuation">,</span>
-                    <span class="token punctuation">&#125;</span>
-                    hn <span class="token operator">=</span> child<span class="token punctuation">.</span><span class="token function">addChild</span><span class="token punctuation">(</span>nn<span class="token punctuation">,</span> search<span class="token punctuation">)</span>
-                <span class="token punctuation">&#125;</span>
-
-            <span class="token punctuation">&#125;</span> <span class="token keyword">else</span> <span class="token keyword">if</span> segStartIdx <span class="token operator">></span> <span class="token number">0</span> <span class="token punctuation">&#123;</span>
-                <span class="token comment">// Route has some param</span>
-
-                <span class="token comment">// starts with a static segment</span>
-                child<span class="token punctuation">.</span>typ <span class="token operator">=</span> ntStatic
-                child<span class="token punctuation">.</span>prefix <span class="token operator">=</span> search<span class="token punctuation">[</span><span class="token punctuation">:</span>segStartIdx<span class="token punctuation">]</span>
-                child<span class="token punctuation">.</span>rex <span class="token operator">=</span> <span class="token boolean">nil</span>
-
-                <span class="token comment">// add the param edge node</span>
-                search <span class="token operator">=</span> search<span class="token punctuation">[</span>segStartIdx<span class="token punctuation">:</span><span class="token punctuation">]</span>
+                search <span class="token operator">=</span> search<span class="token punctuation">[</span>segStartIdx<span class="token punctuation">:</span><span class="token punctuation">]</span> <span class="token comment">// advance search position</span>
 
                 nn <span class="token operator">:=</span> <span class="token operator">&amp;</span>node<span class="token punctuation">&#123;</span>
-                    typ<span class="token punctuation">:</span>   segTyp<span class="token punctuation">,</span>
-                    label<span class="token punctuation">:</span> search<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
-                    tail<span class="token punctuation">:</span>  segTail<span class="token punctuation">,</span>
+                    typ<span class="token punctuation">:</span>    ntStatic<span class="token punctuation">,</span>
+                    label<span class="token punctuation">:</span>  search<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+                    prefix<span class="token punctuation">:</span> search<span class="token punctuation">,</span>
                 <span class="token punctuation">&#125;</span>
                 hn <span class="token operator">=</span> child<span class="token punctuation">.</span><span class="token function">addChild</span><span class="token punctuation">(</span>nn<span class="token punctuation">,</span> search<span class="token punctuation">)</span>
-
             <span class="token punctuation">&#125;</span>
+
+        <span class="token punctuation">&#125;</span> <span class="token keyword">else</span> <span class="token keyword">if</span> segStartIdx <span class="token operator">></span> <span class="token number">0</span> <span class="token punctuation">&#123;</span>
+            <span class="token comment">// Route has some param</span>
+
+            <span class="token comment">// starts with a static segment</span>
+            child<span class="token punctuation">.</span>typ <span class="token operator">=</span> ntStatic
+            child<span class="token punctuation">.</span>prefix <span class="token operator">=</span> search<span class="token punctuation">[</span><span class="token punctuation">:</span>segStartIdx<span class="token punctuation">]</span>
+            child<span class="token punctuation">.</span>rex <span class="token operator">=</span> <span class="token boolean">nil</span>
+
+            <span class="token comment">// add the param edge node</span>
+            search <span class="token operator">=</span> search<span class="token punctuation">[</span>segStartIdx<span class="token punctuation">:</span><span class="token punctuation">]</span>
+
+            nn <span class="token operator">:=</span> <span class="token operator">&amp;</span>node<span class="token punctuation">&#123;</span>
+                typ<span class="token punctuation">:</span>   segTyp<span class="token punctuation">,</span>
+                label<span class="token punctuation">:</span> search<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+                tail<span class="token punctuation">:</span>  segTail<span class="token punctuation">,</span>
+            <span class="token punctuation">&#125;</span>
+            hn <span class="token operator">=</span> child<span class="token punctuation">.</span><span class="token function">addChild</span><span class="token punctuation">(</span>nn<span class="token punctuation">,</span> search<span class="token punctuation">)</span>
+
         <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">&#125;</span>
 
     n<span class="token punctuation">.</span>children<span class="token punctuation">[</span>child<span class="token punctuation">.</span>typ<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">append</span><span class="token punctuation">(</span>n<span class="token punctuation">.</span>children<span class="token punctuation">[</span>child<span class="token punctuation">.</span>typ<span class="token punctuation">]</span><span class="token punctuation">,</span> child<span class="token punctuation">)</span>
     <span class="token comment">// 排序操作，暂时不知道人家这个用途。。</span>
