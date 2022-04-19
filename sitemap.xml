@@ -2,16 +2,30 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
-    <loc>https://bqyang.top/2022/tips0309/</loc>
+    <loc>https://bqyang.top/2022/RMO/</loc>
     
-    <lastmod>2022-03-10</lastmod>
+    <lastmod>2022-04-19</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://bqyang.top/2022/peterson/</loc>
+    
+    <lastmod>2022-04-19</lastmod>
     
   </url>
   
   <url>
     <loc>https://bqyang.top/2022/k8s2nd/</loc>
     
-    <lastmod>2022-03-08</lastmod>
+    <lastmod>2022-04-11</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://bqyang.top/2022/tips0309/</loc>
+    
+    <lastmod>2022-04-10</lastmod>
     
   </url>
   
@@ -179,7 +193,7 @@
 
   <url>
     <loc>https://bqyang.top/</loc>
-    <lastmod>2022-03-10</lastmod>
+    <lastmod>2022-04-19</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
