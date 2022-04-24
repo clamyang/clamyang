@@ -20,19 +20,19 @@
     var CONFIG = {"hostname":"bqyang.top","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"hide","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"gitalk","storage":true,"lazyload":false,"nav":{"gitalk":{"order":-2}},"activeClass":"gitalk"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
   </script>
 
-  <meta name="description" content="锁.">
+  <meta name="description" content="检查某些特定条件是否满足，然后决定线程是否继续执行。">
 <meta property="og:type" content="article">
-<meta property="og:title" content="并发控制-互斥（自旋锁、互斥锁）">
-<meta property="og:url" content="https://bqyang.top/2022/concurrency-lock/index.html">
+<meta property="og:title" content="并发控制-Condition-variables">
+<meta property="og:url" content="https://bqyang.top/2022/os/concurrency-cv/index.html">
 <meta property="og:site_name" content="杨宝强的技术笔记">
-<meta property="og:description" content="锁.">
+<meta property="og:description" content="检查某些特定条件是否满足，然后决定线程是否继续执行。">
 <meta property="og:locale" content="zh_CN">
-<meta property="article:published_time" content="2022-04-20T14:10:43.287Z">
-<meta property="article:modified_time" content="2022-04-22T07:14:27.256Z">
+<meta property="article:published_time" content="2022-04-24T08:51:57.520Z">
+<meta property="article:modified_time" content="2022-04-24T09:06:26.883Z">
 <meta property="article:author" content="杨宝强">
 <meta name="twitter:card" content="summary">
 
-<link rel="canonical" href="https://bqyang.top/2022/concurrency-lock/">
+<link rel="canonical" href="https://bqyang.top/2022/os/concurrency-cv/">
 
 
 <script id="page-configurations">
@@ -45,7 +45,7 @@
   };
 </script>
 
-  <title>并发控制-互斥（自旋锁、互斥锁） | 杨宝强的技术笔记</title>
+  <title>并发控制-Condition-variables | 杨宝强的技术笔记</title>
   
 
 
@@ -156,7 +156,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://bqyang.top/2022/concurrency-lock/">
+    <link itemprop="mainEntityOfPage" href="https://bqyang.top/2022/os/concurrency-cv/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.gif">
@@ -169,7 +169,7 @@
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          并发控制-互斥（自旋锁、互斥锁）
+          并发控制-Condition-variables
         </h1>
 
         <div class="post-meta">
@@ -178,16 +178,10 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">发表于</span>
+              
 
-              <time title="创建时间：2022-04-20 22:10:43" itemprop="dateCreated datePublished" datetime="2022-04-20T22:10:43+08:00">2022-04-20</time>
+              <time title="创建时间：2022-04-24 16:51:57 / 修改时间：17:06:26" itemprop="dateCreated datePublished" datetime="2022-04-24T16:51:57+08:00">2022-04-24</time>
             </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2022-04-22 15:14:27" itemprop="dateModified" datetime="2022-04-22T15:14:27+08:00">2022-04-22</time>
-              </span>
 
           
 
@@ -200,88 +194,66 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <p>锁.</p>
+        <p>检查某些<strong>特定条件</strong>是否满足，然后决定线程是否继续执行。</p>
 <span id="more"></span>
 
-<p>如何定义一把锁？</p>
-<ul>
-<li>basic - 能否达到互斥</li>
-<li>fairness - 能否保证公平，极端情况下，是否会出现 thread 获取不到锁的情况</li>
-<li>performance - 性能，使用锁带来的负载。<ul>
-<li>没有竞争时</li>
-<li>单核多线程竞争</li>
-<li>多核多线程竞争</li>
-</ul>
-</li>
-</ul>
-<h2 id="原子指令-Bus-Lock"><a href="#原子指令-Bus-Lock" class="headerlink" title="原子指令 Bus Lock"></a>原子指令 Bus Lock</h2><p>正如我们最熟悉的<strong>累加</strong>运算，很多像我一样的初级程序员都会在编写并发程序的时候注意不到这个问题，运算过程中涉及到 load/store 指令，但是并不是原子操作。</p>
-<p>所以在没有并发控制的情况下，很容易就会导致 data-race 的问题。我们可以通过算法，比如之前文章提到的 <code>Peterson</code> 来实现并发控制，但是我们可以图省事，把这项工作交给硬件工程师去做呀？</p>
-<p>我们向硬件工程师提需求，让底层提供一条可以在多线程场景下使用的指令而且还得是并发安全的</p>
-<p>有了硬件提供给我们一条原子的 读+写 （load+store） 指令，那我们就放心的去并发访问了，这里就是 exchange （x86 叫这个，别的又叫 Test_And_Set） 指令。</p>
-<blockquote>
-<p>请注意！不要误以为是 CAS</p>
-</blockquote>
-<p>只要执行 exchange 每次都会进行<strong>值的交换</strong>，就看交换得到的值是什么！</p>
-<p>如何使用 exchange 实现互斥？</p>
-<p><code>lock xchg</code> 这个 lock 就会将 bus 锁住（或许这就是为啥它叫 Bus Lock），所以这时候就不是共享的内存了，是<strong>持有这个 bus lock</strong> 线程专有的内存。</p>
-<pre class="line-numbers language-c" data-language="c"><code class="language-c"><span class="token comment">// global param</span>
-<span class="token keyword">int</span> table <span class="token operator">=</span> YES<span class="token punctuation">;</span>
-
-<span class="token keyword">void</span> <span class="token function">lock</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
-retry<span class="token operator">:</span>
-  <span class="token comment">// use NOPE exchange table(YES)</span>
-  <span class="token keyword">int</span> got <span class="token operator">=</span> <span class="token function">xchg</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>table<span class="token punctuation">,</span> NOPE<span class="token punctuation">)</span><span class="token punctuation">;</span>
-  <span class="token comment">// if got == NOPE mean other thread have exchanged; so should wait</span>
-  <span class="token keyword">if</span> <span class="token punctuation">(</span>got <span class="token operator">==</span> NOPE<span class="token punctuation">)</span>
-    <span class="token keyword">goto</span> retry<span class="token punctuation">;</span>
-  <span class="token function">assert</span><span class="token punctuation">(</span>got <span class="token operator">==</span> YES<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<p>就是使用<strong>变量</strong>控制具体该哪个线程执行，最终实现：</p>
+<pre class="line-numbers language-c" data-language="c"><code class="language-c"><span class="token keyword">int</span> buffer<span class="token punctuation">[</span>MAX<span class="token punctuation">]</span><span class="token punctuation">;</span>
+<span class="token keyword">int</span> fill_ptr <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token keyword">int</span> use_ptr <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token keyword">int</span> count <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token keyword">void</span> <span class="token function">put</span><span class="token punctuation">(</span><span class="token keyword">int</span> value<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    buffer<span class="token punctuation">[</span>fill_ptr<span class="token punctuation">]</span> <span class="token operator">=</span> value<span class="token punctuation">;</span>
+    fill_ptr <span class="token operator">=</span> <span class="token punctuation">(</span>fill_ptr <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">)</span> <span class="token operator">%</span> MAX<span class="token punctuation">;</span>
+    count<span class="token operator">++</span><span class="token punctuation">;</span>
 <span class="token punctuation">&#125;</span>
 
-<span class="token comment">// unlock: use YES exchange NOPE</span>
-<span class="token keyword">void</span> <span class="token function">unlock</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
-  <span class="token function">xchg</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>table<span class="token punctuation">,</span> YES<span class="token punctuation">)</span>
-<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<span class="token keyword">int</span> <span class="token function">get</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">int</span> tmp <span class="token operator">=</span> buffer<span class="token punctuation">[</span>use_ptr<span class="token punctuation">]</span><span class="token punctuation">;</span>
+    use_ptr <span class="token operator">=</span> <span class="token punctuation">(</span>use_ptr <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">)</span> <span class="token operator">%</span> MAX<span class="token punctuation">;</span>
+    count<span class="token operator">--</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> tmp<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
 
-<p>实现互斥的协议（即上述代码的描述）：</p>
-<ul>
-<li>想上厕所的同学 (一条 xchg 指令)<ul>
-<li>天黑请闭眼（锁总线）</li>
-<li>看一眼桌子上有什么 (🔑 或 🔞)</li>
-<li>把 🔞 放到桌上 (覆盖之前有的任何东西)</li>
-<li>天亮请睁眼；看到 🔑 才可以进厕所哦</li>
-</ul>
-</li>
-<li>出厕所的同学<ul>
-<li>把 🔑 放到桌上</li>
-</ul>
-</li>
-</ul>
+<span class="token class-name">cond_t</span> empty<span class="token punctuation">,</span> fill<span class="token punctuation">;</span>
+<span class="token class-name">mutex_t</span> mutex<span class="token punctuation">;</span>
+
+<span class="token keyword">void</span> <span class="token operator">*</span><span class="token function">producer</span><span class="token punctuation">(</span><span class="token keyword">void</span> <span class="token operator">*</span>arg<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">int</span> i<span class="token punctuation">;</span>
+    <span class="token keyword">for</span> <span class="token punctuation">(</span>i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> loops<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        <span class="token function">Pthread_mutex_lock</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>mutex<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// p1</span>
+        <span class="token keyword">while</span> <span class="token punctuation">(</span>count <span class="token operator">==</span> MAX<span class="token punctuation">)</span> <span class="token comment">// p2</span>
+            <span class="token function">Pthread_cond_wait</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>empty<span class="token punctuation">,</span> <span class="token operator">&amp;</span>mutex<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// p3</span>
+        <span class="token function">put</span><span class="token punctuation">(</span>i<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// p4</span>
+        <span class="token function">Pthread_cond_signal</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>fill<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// p5</span>
+        <span class="token function">Pthread_mutex_unlock</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>mutex<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// p6</span>
+    <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">void</span> <span class="token operator">*</span><span class="token function">consumer</span><span class="token punctuation">(</span><span class="token keyword">void</span> <span class="token operator">*</span>arg<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">int</span> i<span class="token punctuation">;</span>
+    <span class="token keyword">for</span> <span class="token punctuation">(</span>i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> loops<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        <span class="token function">Pthread_mutex_lock</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>mutex<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// c1</span>
+        <span class="token keyword">while</span> <span class="token punctuation">(</span>count <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token comment">// c2</span>
+            <span class="token function">Pthread_cond_wait</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>fill<span class="token punctuation">,</span> <span class="token operator">&amp;</span>mutex<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// c3</span>
+        <span class="token keyword">int</span> tmp <span class="token operator">=</span> <span class="token function">get</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// c4</span>
+        <span class="token function">Pthread_cond_signal</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>empty<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// c5</span>
+        <span class="token function">Pthread_mutex_unlock</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>mutex<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// c6</span>
+        <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"%d\n"</span><span class="token punctuation">,</span> tmp<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+
+
+<p>为什么判断 <code>count == MAX OR count == 0</code> 的时候使用 <code>while</code> 而不是 <code>if</code>？？</p>
 <blockquote>
-<p>原子指令的模型</p>
-<ul>
-<li>保证之前的 store 都写入内存（在执行原子指令时，保证所有的 store 都执行完毕）</li>
-<li>保证 load/store 不与原子指令乱序</li>
-</ul>
+<p>结论不重要，重要的是分析的过程</p>
 </blockquote>
-<p><strong>这里真的是解答了一个困惑我很长时间而且没有得到解决的疑问！</strong></p>
-<p>原子操作并不是无锁的！</p>
-<h3 id="TODO-Lock-指令的现代实现"><a href="#TODO-Lock-指令的现代实现" class="headerlink" title="// TODO Lock 指令的现代实现"></a>// TODO Lock 指令的现代实现</h3><h2 id="RISC-V-中原子操作的实现"><a href="#RISC-V-中原子操作的实现" class="headerlink" title="RISC-V 中原子操作的实现"></a>RISC-V 中原子操作的实现</h2><h2 id="自旋锁-spin-lock"><a href="#自旋锁-spin-lock" class="headerlink" title="自旋锁 (spin lock)"></a>自旋锁 (spin lock)</h2><p><a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Spinlock#:~:text=In%20software%20engineering%2C%20a%20spinlock,a%20kind%20of%20busy%20waiting.">wiki</a> 定义：a <strong>spinlock</strong> is a <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Lock_(computer_science)">lock</a> that causes a <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Thread_(computer_science)">thread</a> trying to acquire it to simply wait in a loop (“spin”) while repeatedly checking whether the lock is available. </p>
+<p>// TODO 需要画状态机执行流程分析</p>
 <blockquote>
-<p>spin 自旋，在这里就是循环等待锁被释放；GMP 模型中有一个 spining m 用来寻找可执行的 g 同样也是自旋。</p>
+<p><code>Pthread_cond_wait</code> 主要职责：将当前线程休眠<strong>并释放锁</strong>，当被唤醒的时候会尝试<strong>重新获取锁</strong>。</p>
 </blockquote>
-<p>从上述的代码也不难看出，就是通过不断的循环，load 锁的状态，直到锁被上一个持有者释放。</p>
-<p>自旋锁存在的问题：</p>
-<ul>
-<li>空转</li>
-<li>获得自旋锁的线程可能被切换</li>
-</ul>
-<p>自旋锁使用场景：</p>
-<p>操作系统内核的并发数据结构</p>
-<ul>
-<li>临界区几乎不拥堵，很快就能执行完</li>
-<li>持有自旋锁时禁止执行流切换</li>
-</ul>
-<h2 id="互斥锁"><a href="#互斥锁" class="headerlink" title="互斥锁"></a>互斥锁</h2>
+
     </div>
 
     
@@ -316,7 +288,7 @@ retry<span class="token operator">:</span>
   </li>
   <li class="post-copyright-link">
     <strong>本文链接：</strong>
-    <a href="https://bqyang.top/2022/concurrency-lock/" title="并发控制-互斥（自旋锁、互斥锁）">https://bqyang.top/2022/concurrency-lock/</a>
+    <a href="https://bqyang.top/2022/os/concurrency-cv/" title="并发控制-Condition-variables">https://bqyang.top/2022/os/concurrency-cv/</a>
   </li>
   <li class="post-copyright-license">
     <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/zh-Hans" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
@@ -333,13 +305,10 @@ retry<span class="token operator">:</span>
         
     <div class="post-nav">
       <div class="post-nav-item">
-    <a href="/2022/warning/" rel="prev" title="图片仓库被屏蔽">
-      <i class="fa fa-chevron-left"></i> 图片仓库被屏蔽
+    <a href="/2022/summary/about-0423/" rel="prev" title="跟兄弟们聊聊">
+      <i class="fa fa-chevron-left"></i> 跟兄弟们聊聊
     </a></div>
-      <div class="post-nav-item">
-    <a href="/2022/summary/about-0423/" rel="next" title="跟兄弟们聊聊">
-      跟兄弟们聊聊 <i class="fa fa-chevron-right"></i>
-    </a></div>
+      <div class="post-nav-item"></div>
     </div>
       </footer>
     
@@ -399,7 +368,6 @@ retry<span class="token operator">:</span>
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8E%9F%E5%AD%90%E6%8C%87%E4%BB%A4-Bus-Lock"><span class="nav-number">1.</span> <span class="nav-text">原子指令 Bus Lock</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#TODO-Lock-%E6%8C%87%E4%BB%A4%E7%9A%84%E7%8E%B0%E4%BB%A3%E5%AE%9E%E7%8E%B0"><span class="nav-number">1.1.</span> <span class="nav-text">&#x2F;&#x2F; TODO Lock 指令的现代实现</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#RISC-V-%E4%B8%AD%E5%8E%9F%E5%AD%90%E6%93%8D%E4%BD%9C%E7%9A%84%E5%AE%9E%E7%8E%B0"><span class="nav-number">2.</span> <span class="nav-text">RISC-V 中原子操作的实现</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%87%AA%E6%97%8B%E9%94%81-spin-lock"><span class="nav-number">3.</span> <span class="nav-text">自旋锁 (spin lock)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%92%E6%96%A5%E9%94%81"><span class="nav-number">4.</span> <span class="nav-text">互斥锁</span></a></li></ol></div>
       </div>
       <!--/noindex-->
 
@@ -413,7 +381,7 @@ retry<span class="token operator">:</span>
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">28</span>
+          <span class="site-state-item-count">29</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -531,7 +499,7 @@ NexT.utils.loadComments(document.querySelector('#gitalk-container'), () => {
       repo        : 'blog_comments',
       owner       : 'clamyang',
       admin       : ['clamyang'],
-      id          : 'fb7db24b25e2e316fde2df66d169ee70',
+      id          : '5a5fc96a98015d1e54bc6cb97f8e51ee',
         language: 'en',
       distractionFreeMode: true
     });

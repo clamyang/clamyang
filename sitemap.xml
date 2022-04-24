@@ -2,16 +2,23 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
-    <loc>https://bqyang.top/2022/summary/about-0423/</loc>
+    <loc>https://bqyang.top/2022/os/concurrency-cv/</loc>
     
-    <lastmod>2022-04-23</lastmod>
+    <lastmod>2022-04-24</lastmod>
     
   </url>
   
   <url>
-    <loc>https://bqyang.top/2022/concurrency-lock/</loc>
+    <loc>https://bqyang.top/2022/os/concurrency-lock/</loc>
     
-    <lastmod>2022-04-22</lastmod>
+    <lastmod>2022-04-24</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://bqyang.top/2022/summary/about-0423/</loc>
+    
+    <lastmod>2022-04-23</lastmod>
     
   </url>
   
@@ -214,7 +221,7 @@
 
   <url>
     <loc>https://bqyang.top/</loc>
-    <lastmod>2022-04-23</lastmod>
+    <lastmod>2022-04-24</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
