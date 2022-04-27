@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.png" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"bqyang.top","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"hide","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"gitalk","storage":true,"lazyload":false,"nav":{"gitalk":{"order":-2}},"activeClass":"gitalk"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="信号量定义信号量就是一个拥有整数值的对象，可以用多个例程操控它。  信号量的初始值决定了它的行为，在与它交互之前需要进行初始化，如下：  #include &lt;semaphore.h&gt;  # int sem_init( sem_t *sem, int pshared, unsigned int value); # sem 信号 # value 指定了信号量的初始值 # pshared 表示在线">
+<meta property="og:type" content="article">
+<meta property="og:title" content="同步原语-semaphore">
+<meta property="og:url" content="https://bqyang.top/2022/os/concurrency-sema/index.html">
+<meta property="og:site_name" content="杨宝强的技术笔记">
+<meta property="og:description" content="信号量定义信号量就是一个拥有整数值的对象，可以用多个例程操控它。  信号量的初始值决定了它的行为，在与它交互之前需要进行初始化，如下：  #include &lt;semaphore.h&gt;  # int sem_init( sem_t *sem, int pshared, unsigned int value); # sem 信号 # value 指定了信号量的初始值 # pshared 表示在线">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="c:/Users/bqYang/AppData/Roaming/Typora/typora-user-images/image-20220427140847674.png">
+<meta property="article:published_time" content="2022-04-25T02:48:51.361Z">
+<meta property="article:modified_time" content="2022-04-27T06:41:47.883Z">
+<meta property="article:author" content="杨宝强">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="c:/Users/bqYang/AppData/Roaming/Typora/typora-user-images/image-20220427140847674.png">
+
+<link rel="canonical" href="https://bqyang.top/2022/os/concurrency-sema/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>同步原语-semaphore | 杨宝强的技术笔记</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="杨宝强的技术笔记" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <h1 class="site-title" style="font-size:27px">杨宝强的技术笔记</h1>
+      <span class="logo-line-before"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">宝强的技术成长</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://bqyang.top/2022/os/concurrency-sema/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="杨宝强">
+      <meta itemprop="description" content="一物不知深以为耻">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="杨宝强的技术笔记">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          同步原语-semaphore
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2022-04-25 10:48:51" itemprop="dateCreated datePublished" datetime="2022-04-25T10:48:51+08:00">2022-04-25</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2022-04-27 14:41:47" itemprop="dateModified" datetime="2022-04-27T14:41:47+08:00">2022-04-27</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="信号量定义"><a href="#信号量定义" class="headerlink" title="信号量定义"></a>信号量定义</h2><p>信号量就是一个拥有整数值的对象，可以用多个例程操控它。</p>
+<blockquote>
+<p>信号量的初始值决定了它的行为，在与它交互之前需要进行初始化，如下：</p>
+</blockquote>
+<pre class="line-numbers language-c" data-language="c"><code class="language-c"><span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">include</span> <span class="token string">&lt;semaphore.h></span></span>
+
+<span class="token macro property"><span class="token directive-hash">#</span> <span class="token directive keyword">int</span> <span class="token expression"><span class="token function">sem_init</span><span class="token punctuation">(</span></span></span>
+<span class="token class-name">sem_t</span> <span class="token operator">*</span>sem<span class="token punctuation">,</span>
+<span class="token keyword">int</span> pshared<span class="token punctuation">,</span>
+<span class="token keyword">unsigned</span> <span class="token keyword">int</span> value<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token macro property"><span class="token directive-hash">#</span> <span class="token directive keyword">sem</span> <span class="token expression">信号</span></span>
+<span class="token macro property"><span class="token directive-hash">#</span> <span class="token directive keyword">value</span> <span class="token expression">指定了信号量的初始值</span></span>
+<span class="token macro property"><span class="token directive-hash">#</span> <span class="token directive keyword">pshared</span> <span class="token expression">表示在线程间共享，还是进程间</span></span>
+<span class="token function">sema_init</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h2 id="使用-sema-实现-lock"><a href="#使用-sema-实现-lock" class="headerlink" title="使用 sema 实现 lock"></a>使用 sema 实现 lock</h2><p>这时应将 sema 的 value 设置为几？</p>
+<p>可以想象，锁的状态其实只有<strong>上锁，未上锁</strong>两种状态，所以我们只需要使信号量满足这两种状态即可，即 value = 1，这种情况下，0，1就可以表示锁的这两种状态。</p>
+<p>想进入临界区（以下用 CS 代替），就需要获取锁，检查信号量是否被占用：</p>
+<ul>
+<li>未上锁，信号量的值减一，进入临界区</li>
+<li>上锁，信号量值减一，睡眠等待</li>
+</ul>
+<p>退出 CS，调用 <code>sema_post</code> 释放信号：</p>
+<ul>
+<li>有等待线程：信号量值加一，退出临界区，唤醒一个等待中的线程</li>
+<li>没有等待线程：信号量值加一，退出临界区，无需唤醒</li>
+</ul>
+<blockquote>
+<p>当信号量为负数时，比如说 -3，代表着有三个线程在等待这个信号被释放</p>
+</blockquote>
+<p>不难看出，当我们使用信号量来实现锁的时候，只有这两种状态（上锁，未上锁），所以这种信号通常也被称为<strong>binary semaphore</strong></p>
+<h2 id="sema-实现-CVs"><a href="#sema-实现-CVs" class="headerlink" title="sema 实现 CVs"></a>sema 实现 CVs</h2><p><code>sema_init(sema, 0, 0)</code></p>
+<p>想要父进程等待子进程执行结束的话，为什么 value 的值要设置为 0 ？</p>
+<h2 id="sema-实现-producer-consumer-模型"><a href="#sema-实现-producer-consumer-模型" class="headerlink" title="sema 实现 producer/consumer 模型"></a>sema 实现 producer/consumer 模型</h2><p>如同当初使用 CVs 实现生产者消费者模型时一样，这里也是需要两个信号量来表示何时生产者可发送，接收者可接收。</p>
+<pre class="line-numbers language-c" data-language="c"><code class="language-c"><span class="token keyword">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token keyword">int</span> argc<span class="token punctuation">,</span> <span class="token keyword">char</span> <span class="token operator">*</span>argv<span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token comment">// ...</span>
+    <span class="token function">sem_init</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>empty<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> MAX<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// MAX are empty</span>
+    <span class="token function">sem_init</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>full<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// 0 are full</span>
+    <span class="token comment">// ...</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+
+
+<p>当 MAX &gt; 1 时，会出现什么问题？（仔细观察，的确不难看出，data-race）</p>
+<pre class="line-numbers language-c" data-language="c"><code class="language-c"><span class="token keyword">int</span> buffer<span class="token punctuation">[</span>MAX<span class="token punctuation">]</span><span class="token punctuation">;</span>
+<span class="token keyword">int</span> fill <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token keyword">int</span> use <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token keyword">void</span> <span class="token function">put</span><span class="token punctuation">(</span><span class="token keyword">int</span> value<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    buffer<span class="token punctuation">[</span>fill<span class="token punctuation">]</span> <span class="token operator">=</span> value<span class="token punctuation">;</span> <span class="token comment">// Line F1</span>
+    fill <span class="token operator">=</span> <span class="token punctuation">(</span>fill <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">)</span> <span class="token operator">%</span> MAX<span class="token punctuation">;</span> <span class="token comment">// Line F2</span>
+<span class="token punctuation">&#125;</span> 
+<span class="token keyword">int</span> <span class="token function">get</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">int</span> tmp <span class="token operator">=</span> buffer<span class="token punctuation">[</span>use<span class="token punctuation">]</span><span class="token punctuation">;</span> <span class="token comment">// Line G1</span>
+    use <span class="token operator">=</span> <span class="token punctuation">(</span>use <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">)</span> <span class="token operator">%</span> MAX<span class="token punctuation">;</span> <span class="token comment">// Line G2</span>
+    <span class="token keyword">return</span> tmp<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token class-name">sem_t</span> empty<span class="token punctuation">;</span>
+<span class="token class-name">sem_t</span> full<span class="token punctuation">;</span>
+<span class="token keyword">void</span> <span class="token operator">*</span><span class="token function">producer</span><span class="token punctuation">(</span><span class="token keyword">void</span> <span class="token operator">*</span>arg<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">int</span> i<span class="token punctuation">;</span>
+    <span class="token keyword">for</span> <span class="token punctuation">(</span>i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> loops<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        <span class="token function">sem_wait</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>empty<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// Line P1</span>
+        <span class="token function">put</span><span class="token punctuation">(</span>i<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// Line P2</span>
+        <span class="token function">sem_post</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>full<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// Line P3</span>
+    <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">void</span> <span class="token operator">*</span><span class="token function">consumer</span><span class="token punctuation">(</span><span class="token keyword">void</span> <span class="token operator">*</span>arg<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">int</span> tmp <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    <span class="token keyword">while</span> <span class="token punctuation">(</span>tmp <span class="token operator">!=</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        <span class="token function">sem_wait</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>full<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// Line C1</span>
+        tmp <span class="token operator">=</span> <span class="token function">get</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// Line C2</span>
+        <span class="token function">sem_post</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>empty<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// Line C3</span>
+        <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"%d\n"</span><span class="token punctuation">,</span> tmp<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+
+
+<h2 id="哲学家吃饭"><a href="#哲学家吃饭" class="headerlink" title="哲学家吃饭.."></a>哲学家吃饭..</h2><p><img src="C:/Users/bqYang/AppData/Roaming/Typora/typora-user-images/image-20220427140847674.png" alt="image-20220427140847674"></p>
+<ul>
+<li><p><strong>如何解决相互依赖的问题</strong></p>
+</li>
+<li><p><strong>什么情况下会出现死锁</strong></p>
+</li>
+</ul>
+<h2 id="Thread-Throttling"><a href="#Thread-Throttling" class="headerlink" title="Thread Throttling"></a>Thread Throttling</h2><p>线程节流，控制线程数量。</p>
+<p>通过信号量控制进入临界区的线程数量</p>
+
+    </div>
+
+    
+    
+    
+        <div class="reward-container">
+  <div></div>
+  <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    打赏
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="/images/wechatpay.png" alt="杨宝强 微信支付">
+        <p>微信支付</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="/images/alipay.png" alt="杨宝强 支付宝">
+        <p>支付宝</p>
+      </div>
+
+  </div>
+</div>
+
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>杨宝强
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="https://bqyang.top/2022/os/concurrency-sema/" title="同步原语-semaphore">https://bqyang.top/2022/os/concurrency-sema/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/zh-Hans" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2022/os/concurrency-cv/" rel="prev" title="并发控制-Condition-variables">
+      <i class="fa fa-chevron-left"></i> 并发控制-Condition-variables
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BF%A1%E5%8F%B7%E9%87%8F%E5%AE%9A%E4%B9%89"><span class="nav-number">1.</span> <span class="nav-text">信号量定义</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8-sema-%E5%AE%9E%E7%8E%B0-lock"><span class="nav-number">2.</span> <span class="nav-text">使用 sema 实现 lock</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#sema-%E5%AE%9E%E7%8E%B0-CVs"><span class="nav-number">3.</span> <span class="nav-text">sema 实现 CVs</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#sema-%E5%AE%9E%E7%8E%B0-producer-consumer-%E6%A8%A1%E5%9E%8B"><span class="nav-number">4.</span> <span class="nav-text">sema 实现 producer&#x2F;consumer 模型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%93%B2%E5%AD%A6%E5%AE%B6%E5%90%83%E9%A5%AD"><span class="nav-number">5.</span> <span class="nav-text">哲学家吃饭..</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Thread-Throttling"><span class="nav-number">6.</span> <span class="nav-text">Thread Throttling</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">杨宝强</p>
+  <div class="site-description" itemprop="description">一物不知深以为耻</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">30</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/clamyang" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;clamyang" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/zh-Hans" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://xargin.com/" title="https:&#x2F;&#x2F;xargin.com" rel="noopener" target="_blank">Xargin</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://mytechshares.com/" title="https:&#x2F;&#x2F;mytechshares.com&#x2F;" rel="noopener" target="_blank">董泽润</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        <div class="copyright">
+  
+  &copy; 2021 – 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-car"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">杨宝强</span>
+</div>
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">京ICP备2021035561号-1 </a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.css">
+
+<script>
+NexT.utils.loadComments(document.querySelector('#gitalk-container'), () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID    : '4bcae079402e9cc4ce7b',
+      clientSecret: 'bc6b6ecab4d016f0a056df8253ad41b76b944084',
+      repo        : 'blog_comments',
+      owner       : 'clamyang',
+      admin       : ['clamyang'],
+      id          : '7aaba072f780c95b81c3308991018a65',
+        language: 'en',
+      distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>
