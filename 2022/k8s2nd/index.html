@@ -45,8 +45,10 @@
 <meta property="og:image" content="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220322215918443.png">
 <meta property="og:image" content="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220324100102363.png">
 <meta property="og:image" content="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220324143444116.png">
+<meta property="og:image" content="https://s2.loli.net/2022/04/27/wJybIj2eWUGXvx3.png">
+<meta property="og:image" content="https://s2.loli.net/2022/04/27/UOyvTbXYrnofKu8.png">
 <meta property="article:published_time" content="2022-03-02T08:20:23.003Z">
-<meta property="article:modified_time" content="2022-04-11T13:51:46.693Z">
+<meta property="article:modified_time" content="2022-04-29T07:30:51.493Z">
 <meta property="article:author" content="杨宝强">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220302162130087.png">
@@ -205,7 +207,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2022-04-11 21:51:46" itemprop="dateModified" datetime="2022-04-11T21:51:46+08:00">2022-04-11</time>
+                <time title="修改时间：2022-04-29 15:30:51" itemprop="dateModified" datetime="2022-04-29T15:30:51+08:00">2022-04-29</time>
               </span>
 
           
@@ -401,6 +403,12 @@
 <li><p>Cluster 如果说 service 选择的 node 没有我们想要的 pod 服务，那么会转发给下一个 node，需要额外的开销，下一跳，source ip 也会改成 转发 packet 的 node ip。</p>
 </li>
 </ul>
+<h3 id="Ingress"><a href="#Ingress" class="headerlink" title="Ingress"></a>Ingress</h3><p><img src="https://s2.loli.net/2022/04/27/wJybIj2eWUGXvx3.png" alt="12image002"></p>
+<p><img src="https://s2.loli.net/2022/04/27/UOyvTbXYrnofKu8.png" alt="12image003"></p>
+<p>有了 service 还要 ingress 干啥？</p>
+<p>如果说通过 service 对外提供服务，数量少还好，如果服务数量多，会需要占用很多外部IP，导致没必要的资源浪费。</p>
+<p>可以通过 ingress 对 service 进行一层封装，这就好像我们不是直接访问 pod 一样，而是通过 service 访问一样。统一通过 ingress 访问我们集群体提供的服务，而且 ingress 是 7 层的，可以提供更多功能，比如 cookie TLS 等，相比之下 service 是 4 层的负载均衡。</p>
+<p>所谓的 7，4 层负载均衡，都是在请求到达真正服务器之前做的一些处理，差别简单的说就是，在做负载均衡的时候，使用的信息不一样，在 7 层可以用 http 相关的东西，4 层可以用 TCP/UDP 相关的东西。</p>
 
     </div>
 
@@ -519,7 +527,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#Pod-%E7%9A%84%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F"><span class="nav-number">1.</span> <span class="nav-text">Pod 的生命周期</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#service"><span class="nav-number">2.</span> <span class="nav-text">service</span></a></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#Pod-%E7%9A%84%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F"><span class="nav-number">1.</span> <span class="nav-text">Pod 的生命周期</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#service"><span class="nav-number">2.</span> <span class="nav-text">service</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Ingress"><span class="nav-number">3.</span> <span class="nav-text">Ingress</span></a></li></ol></div>
       </div>
       <!--/noindex-->
 
