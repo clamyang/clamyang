@@ -35,19 +35,6 @@
   </entry>
   
   <entry>
-    <title></title>
-    <link href="https://bqyang.top/2022/summary/about-0429/"/>
-    <id>https://bqyang.top/2022/summary/about-0429/</id>
-    <published>2022-04-29T07:33:44.186Z</published>
-    <updated>2022-05-06T15:22:23.537Z</updated>
-    
-    
-    
-    
-    
-  </entry>
-  
-  <entry>
     <title>同步原语-semaphore</title>
     <link href="https://bqyang.top/2022/os/concurrency-sema/"/>
     <id>https://bqyang.top/2022/os/concurrency-sema/</id>
@@ -354,6 +341,23 @@
     
     
     <summary type="html">&lt;p&gt;学习下 linker 和 loader 中的内容，记录一下学习过程遇到的笔记以及知识点。主要的内容来自 csapp。&lt;/p&gt;</summary>
+    
+    
+    
+    
+  </entry>
+  
+  <entry>
+    <title>elf 文件格式</title>
+    <link href="https://bqyang.top/2021/elf/"/>
+    <id>https://bqyang.top/2021/elf/</id>
+    <published>2021-12-06T06:07:18.656Z</published>
+    <updated>2021-12-09T14:01:31.193Z</updated>
+    
+    <content type="html"><![CDATA[<p>简单整理下 ELF (executable and linkable format) 的几个知识点，这里跟 linker&amp;&amp;loader 中有一点重复内容。</p><span id="more"></span><h3 id="ELF的三种格式"><a href="#ELF的三种格式" class="headerlink" title="ELF的三种格式"></a>ELF的三种格式</h3><ul><li>可重定位文件<ul><li>包含二进制代码和数据，其形式可以在编译时与其他可重定位目标文件合并起来，创建一个可执行目标文件。</li></ul></li><li>可执行文件<ul><li>包含二进制代码和数据，其形式可以被直接复制到内存并执行。</li></ul></li><li>共享对象文件<ul><li>一种特殊类型的可重定位目标文件，可以在加载或运行时被动态地加载进内存并链接。</li></ul></li></ul><h4 id="可重定位目标文件"><a href="#可重定位目标文件" class="headerlink" title="可重定位目标文件"></a>可重定位目标文件</h4><img src="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/微信截图_20211209191808.png" alt="微信截图_20211209191808" style="zoom:50%;" /><h5 id="sections"><a href="#sections" class="headerlink" title="sections"></a>sections</h5><ul><li><code>.text </code> 存放编译好的二进制可执行代码</li><li><code>.rodata</code> 存放只读数据，<code>const</code> 变量等</li><li><code>.data</code> 存放已经初始化好的全局变量</li><li><a href="https://en.wikipedia.org/wiki/.bss">.bss</a>  未初始化全局变量，运行时会置 0<ul><li>比如在全局作用域下，<code>var name string</code> 这种就是分配在 <code>.bss</code> section 中</li></ul></li></ul><p>​        注意：在目标文件中这个 section 不占实际的空间，仅仅是一个占位符。目标文件对已初始化和未初始化主要是为了空间效率</p><ul><li><code>.symtab</code> 符号表，记录函数和变量</li><li><code>.strtab</code> 字符串表就是以 null 结尾的字符串序列</li></ul><p>为什么未初始化的数据称为 .bss？</p><p>书中提到它起始于 IBM704 汇编语言中 “块存储” 指令的首字母缩写，因为 .bss section 是不占用存储空间的，所以一种更好的记住 .data 和 .bss 中的区别就是把 bss 看做成 “更好的节省空间” (Better Save Space) 的缩写。</p><h5 id="三个特殊的伪节"><a href="#三个特殊的伪节" class="headerlink" title="三个特殊的伪节"></a>三个特殊的伪节</h5><p>（只有可重定位目标文件中才有，可执行中没有）</p><ul><li>ABS 代表不该被重定位的符号</li><li>UNDEF 代表未定义的符号，表示的是在本目标模块中引用，但是在其他地方定义的符号</li><li>COMMON 表示还未被分配位置的未初始化的数据目标</li></ul><h5 id="COMMON-和-bss-的区别"><a href="#COMMON-和-bss-的区别" class="headerlink" title="COMMON 和 .bss 的区别"></a>COMMON 和 .bss 的区别</h5><p>//TODO </p><h4 id="可执行文件"><a href="#可执行文件" class="headerlink" title="可执行文件"></a>可执行文件</h4><p>如下图所示：</p><img src="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20211206141434504.png" alt="image-20211206141434504" style="zoom:67%;" /><p>代码段：用来存放编译好的代码</p><p>数据段：包括已经初始化的全局变量，未初始化的全局变量</p><p><code>.text</code> 和 <code>.rodata</code> 两个 section 组成代码段 <code>segment</code>，其他也类似。</p>]]></content>
+    
+    
+    <summary type="html">&lt;p&gt;简单整理下 ELF (executable and linkable format) 的几个知识点，这里跟 linker&amp;amp;&amp;amp;loader 中有一点重复内容。&lt;/p&gt;</summary>
     
     
     
