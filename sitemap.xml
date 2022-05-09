@@ -2,9 +2,16 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://bqyang.top/2022/k8s/deployment/</loc>
+    
+    <lastmod>2022-05-09</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>https://bqyang.top/2022/os/os-start/</loc>
     
-    <lastmod>2022-05-06</lastmod>
+    <lastmod>2022-05-07</lastmod>
     
   </url>
   
@@ -235,7 +242,7 @@
 
   <url>
     <loc>https://bqyang.top/</loc>
-    <lastmod>2022-05-06</lastmod>
+    <lastmod>2022-05-09</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>

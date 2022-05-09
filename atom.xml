@@ -6,7 +6,7 @@
   <link href="https://bqyang.top/atom.xml" rel="self"/>
   
   <link href="https://bqyang.top/"/>
-  <updated>2022-05-06T15:24:47.508Z</updated>
+  <updated>2022-05-09T10:00:50.092Z</updated>
   <id>https://bqyang.top/</id>
   
   <author>
@@ -17,13 +17,30 @@
   <generator uri="https://hexo.io/">Hexo</generator>
   
   <entry>
+    <title>Deployment 更新策略</title>
+    <link href="https://bqyang.top/2022/k8s/deployment/"/>
+    <id>https://bqyang.top/2022/k8s/deployment/</id>
+    <published>2022-05-09T07:28:40.904Z</published>
+    <updated>2022-05-09T10:00:50.092Z</updated>
+    
+    <content type="html"><![CDATA[<p>将笔记进行拆分，都写在一个里边很拥挤，不方便翻阅查看。</p><span id="more"></span><h1 id="Deployment"><a href="#Deployment" class="headerlink" title="Deployment"></a>Deployment</h1><h2 id="更新策略"><a href="#更新策略" class="headerlink" title="更新策略"></a>更新策略</h2><table><thead><tr><th>更新策略</th><th>描述</th></tr></thead><tbody><tr><td>Recreate</td><td>见名知意，更新的时候就是把已存在的 Pod 删除，创建一个新的</td></tr><tr><td>RollingUpdate</td><td>滚动更新，先准备新的 Pod，就绪后再删除老的 Pod，在更新期间也可以正常提供服务。<strong>默认配置</strong>。</td></tr></tbody></table><p><img src="https://s2.loli.net/2022/05/09/uwBeEpl6Gq41WkC.png" alt="img"></p><h2 id="Recreate-如何影响应用"><a href="#Recreate-如何影响应用" class="headerlink" title="Recreate 如何影响应用"></a>Recreate 如何影响应用</h2><p>在重启期间，无法正常访问服务，正如上图中会有一段空档期。</p><h2 id="Deployment-和-Replicas-的关系"><a href="#Deployment-和-Replicas-的关系" class="headerlink" title="Deployment 和 Replicas 的关系"></a>Deployment 和 Replicas 的关系</h2><p><img src="https://s2.loli.net/2022/05/09/cmYjDQrSAguyaN3.png" alt="img"></p><p>正如我们看到的，<code>Deployment</code> 和 <code>Replica</code> 并不是总是一对一的关系，在更新操作执行后，会出现上图中的情况。</p><h2 id="RollingUpdate"><a href="#RollingUpdate" class="headerlink" title="RollingUpdate"></a>RollingUpdate</h2><p><img src="https://s2.loli.net/2022/05/09/GzleTsRbmFaNLwI.png" alt="img"></p><h3 id="Deployment-配置"><a href="#Deployment-配置" class="headerlink" title="Deployment 配置"></a>Deployment 配置</h3><pre class="line-numbers language-yaml" data-language="yaml"><code class="language-yaml"><span class="token key atrule">kind</span><span class="token punctuation">:</span> Deployment<span class="token key atrule">metadata</span><span class="token punctuation">:</span>  <span class="token key atrule">name</span><span class="token punctuation">:</span> kiada<span class="token key atrule">spec</span><span class="token punctuation">:</span>  <span class="token key atrule">strategy</span><span class="token punctuation">:</span>    <span class="token key atrule">type</span><span class="token punctuation">:</span> RollingUpdate    <span class="token key atrule">rollingUpdate</span><span class="token punctuation">:</span>      <span class="token key atrule">maxSurge</span><span class="token punctuation">:</span> <span class="token number">0</span>      <span class="token key atrule">maxUnavailable</span><span class="token punctuation">:</span> <span class="token number">1</span>  <span class="token key atrule">minReadySeconds</span><span class="token punctuation">:</span> <span class="token number">10</span>  <span class="token key atrule">replicas</span><span class="token punctuation">:</span> <span class="token number">3</span>  <span class="token key atrule">selector</span><span class="token punctuation">:</span>    <span class="token punctuation">...</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre><h3 id="配置一次替换多少个-Pod"><a href="#配置一次替换多少个-Pod" class="headerlink" title="配置一次替换多少个 Pod"></a>配置一次替换多少个 Pod</h3><p>通过 <code>maxSurge</code> 和 <code>maxUnavailable</code> 配置</p><table><thead><tr><th>属性</th><th>描述</th></tr></thead><tbody><tr><td>maxSurge</td><td>The maximum number of Pods above the desired number of replicas that the Deployment can have during the rolling update. The value can be an absolute number or a percentage of the desired number of replicas.<br /><br />在滚动更新期间 Deployment 可以超过 replica 中最大的 Pod 数量。</td></tr><tr><td>maxUnavaliable</td><td>The maximum number of Pods relative to the desired replica count that can be unavailable during the rolling update. The value can be an absolute number or a percentage of the desired number of replicas.<br /><br />最少可用的 Pod 数量为 total - maxUnavailable，最多不可用的 Pod 数量为 maxUnavailable</td></tr></tbody></table><p> <code>maxSurge</code> 和 <code>maxUnavailable</code> 会影响 Replica 中期望的 Pod 数量。</p><p><strong>maxSurge = 0, maxUnavailable = 1</strong></p><p><img src="https://s2.loli.net/2022/05/09/toFLwvXl5HuqObE.png" alt="img"></p><p><strong>maxSurge = 1, maxUnavailable = 0</strong></p><p><img src="https://s2.loli.net/2022/05/09/cE5UJVdDAa8mkrg.png" alt="img"></p><p><strong>maxSurge = 1, maxUnavailable = 1</strong></p><p><img src="https://s2.loli.net/2022/05/09/mnLPUaQyldEHxj3.png" alt="img"></p><h3 id="暂停、恢复-RollingUpdate"><a href="#暂停、恢复-RollingUpdate" class="headerlink" title="暂停、恢复 RollingUpdate"></a>暂停、恢复 RollingUpdate</h3><p><code>kubectl rollout pause deployment kiada</code> 和 <code>kubectl rollout resume deployment kiada</code></p>]]></content>
+    
+    
+    <summary type="html">&lt;p&gt;将笔记进行拆分，都写在一个里边很拥挤，不方便翻阅查看。&lt;/p&gt;</summary>
+    
+    
+    
+    
+  </entry>
+  
+  <entry>
     <title>操作系统启动</title>
     <link href="https://bqyang.top/2022/os/os-start/"/>
     <id>https://bqyang.top/2022/os/os-start/</id>
     <published>2022-05-05T11:02:26.938Z</published>
-    <updated>2022-05-06T15:24:47.508Z</updated>
+    <updated>2022-05-07T10:53:46.650Z</updated>
     
-    <content type="html"><![CDATA[<hr><p>尝试揭开操作系统的神秘面纱。</p><span id="more"></span><h1 id="QEMU"><a href="#QEMU" class="headerlink" title="QEMU"></a>QEMU</h1><h2 id="安装步骤"><a href="#安装步骤" class="headerlink" title="安装步骤"></a>安装步骤</h2><pre class="line-numbers language-none"><code class="language-none">wget https:&#x2F;&#x2F;download.qemu.org&#x2F;qemu-7.0.0.tar.xztar xvJf qemu-7.0.0.tar.xzcd qemu-7.0.0.&#x2F;configuremake&#x2F;&#x2F; make 后记得 make install<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre><blockquote><p>安装个 QEMU 真的是费死劲了，能遇到的问题基本上都遇到了，而且<strong>这个容器我挂了windows</strong>的一个目录（为了保存下来），make 花了<strong>3</strong>小时。</p></blockquote><p>遇到的具体问题如下：</p><ul><li>缺少依赖，pixman-1, gthread, glib, 我是基于 alpine 镜像构建的，很多依赖找起来很费事，不过要熟练使用 search 命令。</li></ul><p>具体解决方案省略，作为一个合格的工程师，肯定会找到办法的。</p><h1 id="CPU-Reset"><a href="#CPU-Reset" class="headerlink" title="CPU Reset"></a>CPU Reset</h1><p>程序就是状态机，操作系统也是一个 C 程序。那么问题就来了，我们的电脑在 CPU Reset 之后（获得了一个初始状态）发生了什么？</p><blockquote><p>初始状态指的是：各种寄存器的初始值是什么。</p></blockquote><p><strong>计算机中没有任何神秘的东西</strong></p><p><img src="https://s2.loli.net/2022/05/06/e6anlsRhC2BULVu.png" alt="intel-cpu-reset"></p><p>可以看到，表 9-1 列出了在通电、重置、初始化后各种寄存器的值。这些都是<strong>约定</strong>，即硬件和软件约定好，每次加电后，CPU 状态设置为这些值，CPU 就是不断地执行指令，然后一步一步的加载出操作系统代码。</p><p><img src="https://s2.loli.net/2022/05/06/9SzlH2nRchoykQL.png" alt="image-20220506202315147"></p><p>CPU Reset 后发生了什么？</p><p>PC（CS:IP）</p>]]></content>
+    <content type="html"><![CDATA[<hr><p>尝试揭开操作系统的神秘面纱。</p><span id="more"></span><h1 id="QEMU"><a href="#QEMU" class="headerlink" title="QEMU"></a>QEMU</h1><h2 id="安装步骤"><a href="#安装步骤" class="headerlink" title="安装步骤"></a>安装步骤</h2><pre class="line-numbers language-none"><code class="language-none">wget https:&#x2F;&#x2F;download.qemu.org&#x2F;qemu-7.0.0.tar.xztar xvJf qemu-7.0.0.tar.xzcd qemu-7.0.0.&#x2F;configuremake&#x2F;&#x2F; make 后记得 make install<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre><blockquote><p>安装个 QEMU 真的是费死劲了，能遇到的问题基本上都遇到了，而且<strong>这个容器我挂了windows</strong>的一个目录（为了保存下来），make 花了<strong>3</strong>小时。</p></blockquote><p>遇到的具体问题如下：</p><ul><li>缺少依赖，pixman-1, gthread, glib, 我是基于 alpine 镜像构建的，很多依赖找起来很费事，不过要熟练使用 search 命令。</li></ul><p>具体解决方案省略，作为一个合格的工程师，肯定会找到办法的。</p><h1 id="CPU-Reset"><a href="#CPU-Reset" class="headerlink" title="CPU Reset"></a>CPU Reset</h1><p>程序就是状态机，操作系统也是一个 C 程序。那么问题就来了，电脑在 CPU Reset 之后（获得了一个初始状态）发生了什么？</p><blockquote><p>初始状态指的是：各种寄存器的初始值是什么。</p></blockquote><p><strong>计算机中没有任何神秘的东西</strong></p><p><img src="https://s2.loli.net/2022/05/06/e6anlsRhC2BULVu.png" alt="intel-cpu-reset"></p><p>可以看到，表 9-1 列出了在通电、重置、初始化后各种寄存器的值。这些都是<strong>约定</strong>，即硬件和软件约定好，每次加电后，CPU 状态设置为这些值，CPU 就是不断地执行指令，然后一步一步的加载出操作系统代码。</p><p><img src="https://s2.loli.net/2022/05/06/9SzlH2nRchoykQL.png" alt="image-20220506202315147"></p><h1 id="Legacy-BIOS-约定"><a href="#Legacy-BIOS-约定" class="headerlink" title="Legacy BIOS 约定"></a>Legacy BIOS 约定</h1><p>（操作系统与BIOS之间的约定，BIOS 上哪加载操作系统代码）</p><p>BIOS （Basic I/O System），BIOS 就是我们 CPU Reset 后 PC 指向的位置，也就意味着加电后执行的第一个程序是 BIOS 代码。然后 BIOS  代码都做了什么呢？</p><p>他要做的事情都是约定好的。</p><p>MBR（Master Boot Record）主引导扇区，BIOS 要做的事情就是加载磁盘的前<strong>512字节</strong>（主引导扇区）到 <strong>0x7c00</strong>，<strong>检查这块磁盘是否可以作为启动盘</strong>。如果是，继续从磁盘中加载更多的内容到内存中，否则检查下一块磁盘的前512字节。</p><p>检查磁盘作为启动盘的标志是什么？<strong>55aa</strong></p>]]></content>
     
     
     <summary type="html">&lt;hr&gt;
@@ -341,23 +358,6 @@
     
     
     <summary type="html">&lt;p&gt;学习下 linker 和 loader 中的内容，记录一下学习过程遇到的笔记以及知识点。主要的内容来自 csapp。&lt;/p&gt;</summary>
-    
-    
-    
-    
-  </entry>
-  
-  <entry>
-    <title>elf 文件格式</title>
-    <link href="https://bqyang.top/2021/elf/"/>
-    <id>https://bqyang.top/2021/elf/</id>
-    <published>2021-12-06T06:07:18.656Z</published>
-    <updated>2021-12-09T14:01:31.193Z</updated>
-    
-    <content type="html"><![CDATA[<p>简单整理下 ELF (executable and linkable format) 的几个知识点，这里跟 linker&amp;&amp;loader 中有一点重复内容。</p><span id="more"></span><h3 id="ELF的三种格式"><a href="#ELF的三种格式" class="headerlink" title="ELF的三种格式"></a>ELF的三种格式</h3><ul><li>可重定位文件<ul><li>包含二进制代码和数据，其形式可以在编译时与其他可重定位目标文件合并起来，创建一个可执行目标文件。</li></ul></li><li>可执行文件<ul><li>包含二进制代码和数据，其形式可以被直接复制到内存并执行。</li></ul></li><li>共享对象文件<ul><li>一种特殊类型的可重定位目标文件，可以在加载或运行时被动态地加载进内存并链接。</li></ul></li></ul><h4 id="可重定位目标文件"><a href="#可重定位目标文件" class="headerlink" title="可重定位目标文件"></a>可重定位目标文件</h4><img src="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/微信截图_20211209191808.png" alt="微信截图_20211209191808" style="zoom:50%;" /><h5 id="sections"><a href="#sections" class="headerlink" title="sections"></a>sections</h5><ul><li><code>.text </code> 存放编译好的二进制可执行代码</li><li><code>.rodata</code> 存放只读数据，<code>const</code> 变量等</li><li><code>.data</code> 存放已经初始化好的全局变量</li><li><a href="https://en.wikipedia.org/wiki/.bss">.bss</a>  未初始化全局变量，运行时会置 0<ul><li>比如在全局作用域下，<code>var name string</code> 这种就是分配在 <code>.bss</code> section 中</li></ul></li></ul><p>​        注意：在目标文件中这个 section 不占实际的空间，仅仅是一个占位符。目标文件对已初始化和未初始化主要是为了空间效率</p><ul><li><code>.symtab</code> 符号表，记录函数和变量</li><li><code>.strtab</code> 字符串表就是以 null 结尾的字符串序列</li></ul><p>为什么未初始化的数据称为 .bss？</p><p>书中提到它起始于 IBM704 汇编语言中 “块存储” 指令的首字母缩写，因为 .bss section 是不占用存储空间的，所以一种更好的记住 .data 和 .bss 中的区别就是把 bss 看做成 “更好的节省空间” (Better Save Space) 的缩写。</p><h5 id="三个特殊的伪节"><a href="#三个特殊的伪节" class="headerlink" title="三个特殊的伪节"></a>三个特殊的伪节</h5><p>（只有可重定位目标文件中才有，可执行中没有）</p><ul><li>ABS 代表不该被重定位的符号</li><li>UNDEF 代表未定义的符号，表示的是在本目标模块中引用，但是在其他地方定义的符号</li><li>COMMON 表示还未被分配位置的未初始化的数据目标</li></ul><h5 id="COMMON-和-bss-的区别"><a href="#COMMON-和-bss-的区别" class="headerlink" title="COMMON 和 .bss 的区别"></a>COMMON 和 .bss 的区别</h5><p>//TODO </p><h4 id="可执行文件"><a href="#可执行文件" class="headerlink" title="可执行文件"></a>可执行文件</h4><p>如下图所示：</p><img src="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20211206141434504.png" alt="image-20211206141434504" style="zoom:67%;" /><p>代码段：用来存放编译好的代码</p><p>数据段：包括已经初始化的全局变量，未初始化的全局变量</p><p><code>.text</code> 和 <code>.rodata</code> 两个 section 组成代码段 <code>segment</code>，其他也类似。</p>]]></content>
-    
-    
-    <summary type="html">&lt;p&gt;简单整理下 ELF (executable and linkable format) 的几个知识点，这里跟 linker&amp;amp;&amp;amp;loader 中有一点重复内容。&lt;/p&gt;</summary>
     
     
     
