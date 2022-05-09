@@ -33,8 +33,10 @@
 <meta property="og:image" content="https://s2.loli.net/2022/05/09/toFLwvXl5HuqObE.png">
 <meta property="og:image" content="https://s2.loli.net/2022/05/09/cE5UJVdDAa8mkrg.png">
 <meta property="og:image" content="https://s2.loli.net/2022/05/09/mnLPUaQyldEHxj3.png">
+<meta property="og:image" content="https://s2.loli.net/2022/05/09/XWgT2rFj7blSqU9.png">
+<meta property="og:image" content="https://s2.loli.net/2022/05/09/Pu9zvCGAU4e1dZy.png">
 <meta property="article:published_time" content="2022-05-09T07:28:40.904Z">
-<meta property="article:modified_time" content="2022-05-09T10:00:50.092Z">
+<meta property="article:modified_time" content="2022-05-09T11:36:05.417Z">
 <meta property="article:author" content="杨宝强">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="https://s2.loli.net/2022/05/09/uwBeEpl6Gq41WkC.png">
@@ -187,7 +189,7 @@
               <span class="post-meta-item-text">发表于</span>
               
 
-              <time title="创建时间：2022-05-09 15:28:40 / 修改时间：18:00:50" itemprop="dateCreated datePublished" datetime="2022-05-09T15:28:40+08:00">2022-05-09</time>
+              <time title="创建时间：2022-05-09 15:28:40 / 修改时间：19:36:05" itemprop="dateCreated datePublished" datetime="2022-05-09T15:28:40+08:00">2022-05-09</time>
             </span>
 
           
@@ -264,7 +266,45 @@
 <p><strong>maxSurge = 1, maxUnavailable = 1</strong></p>
 <p><img src="https://s2.loli.net/2022/05/09/mnLPUaQyldEHxj3.png" alt="img"></p>
 <h3 id="暂停、恢复-RollingUpdate"><a href="#暂停、恢复-RollingUpdate" class="headerlink" title="暂停、恢复 RollingUpdate"></a>暂停、恢复 RollingUpdate</h3><p><code>kubectl rollout pause deployment kiada</code> 和 <code>kubectl rollout resume deployment kiada</code></p>
-
+<p>这个骚操作还是第一次听说..</p>
+<h3 id="minReadySeconds"><a href="#minReadySeconds" class="headerlink" title="minReadySeconds"></a>minReadySeconds</h3><p>在 RollingUpdate 过程中，新创建的 Pod Ready 后，<strong>还不算结束</strong>，要等待 <code>minReadySeconds</code> 这么久后， Pod 才会变为 available 状态。</p>
+<p>默认情况下是 0，Pod Ready 了就算 available.</p>
+<h3 id="检查-rollout-是否在执行"><a href="#检查-rollout-是否在执行" class="headerlink" title="检查 rollout 是否在执行"></a>检查 rollout 是否在执行</h3><p><code>kubectl describe deployment xxx</code></p>
+<h3 id="回滚-Rolling-Back"><a href="#回滚-Rolling-Back" class="headerlink" title="回滚 Rolling Back"></a>回滚 Rolling Back</h3><ul>
+<li><p>回滚到上一版本</p>
+<p><code>kubectl rollout undo deployment kiada</code></p>
+</li>
+</ul>
+<blockquote>
+<p>undo 命令也可以在 RollingUpdate 过程中使用，用来取消这个升级</p>
+</blockquote>
+<ul>
+<li><p>回滚到指定版本</p>
+<p><code>kubectl rollout undo deployment kiada --to-revision=1</code></p>
+</li>
+</ul>
+<h3 id="回滚和使用-yaml-文件恢复的区别"><a href="#回滚和使用-yaml-文件恢复的区别" class="headerlink" title="回滚和使用 yaml 文件恢复的区别"></a>回滚和使用 yaml 文件恢复的区别</h3><ul>
+<li>回滚使用 <code>kubectl rollout undo</code> 命令，只是恢复 pod-templete 内容</li>
+<li>使用 apply -f 的方式会将所有的内容进行恢复</li>
+</ul>
+<p>比如我们在 1.2 版本中修改了升级方式为 RollingUpdate，1.1 仍然为 Recreate，这时候如果我们通过，apply 的方式，会将我们改的内容进行覆盖。</p>
+<p>一般情况下，都是用 <code>kubectl rollout undo</code> 命令，之前没学到这个命令，在操作更新版本的时候，都是 edit deployment 然后修改一下 镜像的版本，出了问题也是简单粗暴的处理，直接将版本恢复回去。</p>
+<p>下次上线升级的时候，可以考虑使用这种方式，两个字，优雅。</p>
+<h3 id="显示-rollout-历史"><a href="#显示-rollout-历史" class="headerlink" title="显示 rollout 历史"></a>显示 rollout 历史</h3><p><code>kubectl rollout history deploy kiada</code></p>
+<ul>
+<li><p>查看某次升级的具体信息</p>
+<p><code>kubectl rollout history deployment kiada --revision 2</code></p>
+<p>查看 kiada 这个 Deployment 在 revision 为 2 的版本做了哪些调整。</p>
+</li>
+</ul>
+<p><img src="https://s2.loli.net/2022/05/09/XWgT2rFj7blSqU9.png" alt="img"></p>
+<ul>
+<li><code>revisionHistoryLimit</code> 用来配置保存多少个历史记录，默认是 10。</li>
+</ul>
+<h2 id="Traffic-shadowing"><a href="#Traffic-shadowing" class="headerlink" title="Traffic shadowing"></a>Traffic shadowing</h2><p>（这个应该翻译成啥呢？）</p>
+<p><img src="https://s2.loli.net/2022/05/09/Pu9zvCGAU4e1dZy.png" alt="img"></p>
+<p>利用 Ingress 进行流量复制，将请求转发一份到新的版本中，然后忽略掉响应。</p>
+<h2 id="完"><a href="#完" class="headerlink" title="完"></a>完</h2>
     </div>
 
     
@@ -379,7 +419,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Deployment"><span class="nav-number">1.</span> <span class="nav-text">Deployment</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9B%B4%E6%96%B0%E7%AD%96%E7%95%A5"><span class="nav-number">1.1.</span> <span class="nav-text">更新策略</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Recreate-%E5%A6%82%E4%BD%95%E5%BD%B1%E5%93%8D%E5%BA%94%E7%94%A8"><span class="nav-number">1.2.</span> <span class="nav-text">Recreate 如何影响应用</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Deployment-%E5%92%8C-Replicas-%E7%9A%84%E5%85%B3%E7%B3%BB"><span class="nav-number">1.3.</span> <span class="nav-text">Deployment 和 Replicas 的关系</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#RollingUpdate"><span class="nav-number">1.4.</span> <span class="nav-text">RollingUpdate</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Deployment-%E9%85%8D%E7%BD%AE"><span class="nav-number">1.4.1.</span> <span class="nav-text">Deployment 配置</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%85%8D%E7%BD%AE%E4%B8%80%E6%AC%A1%E6%9B%BF%E6%8D%A2%E5%A4%9A%E5%B0%91%E4%B8%AA-Pod"><span class="nav-number">1.4.2.</span> <span class="nav-text">配置一次替换多少个 Pod</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9A%82%E5%81%9C%E3%80%81%E6%81%A2%E5%A4%8D-RollingUpdate"><span class="nav-number">1.4.3.</span> <span class="nav-text">暂停、恢复 RollingUpdate</span></a></li></ol></li></ol></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Deployment"><span class="nav-number">1.</span> <span class="nav-text">Deployment</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9B%B4%E6%96%B0%E7%AD%96%E7%95%A5"><span class="nav-number">1.1.</span> <span class="nav-text">更新策略</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Recreate-%E5%A6%82%E4%BD%95%E5%BD%B1%E5%93%8D%E5%BA%94%E7%94%A8"><span class="nav-number">1.2.</span> <span class="nav-text">Recreate 如何影响应用</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Deployment-%E5%92%8C-Replicas-%E7%9A%84%E5%85%B3%E7%B3%BB"><span class="nav-number">1.3.</span> <span class="nav-text">Deployment 和 Replicas 的关系</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#RollingUpdate"><span class="nav-number">1.4.</span> <span class="nav-text">RollingUpdate</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Deployment-%E9%85%8D%E7%BD%AE"><span class="nav-number">1.4.1.</span> <span class="nav-text">Deployment 配置</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%85%8D%E7%BD%AE%E4%B8%80%E6%AC%A1%E6%9B%BF%E6%8D%A2%E5%A4%9A%E5%B0%91%E4%B8%AA-Pod"><span class="nav-number">1.4.2.</span> <span class="nav-text">配置一次替换多少个 Pod</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9A%82%E5%81%9C%E3%80%81%E6%81%A2%E5%A4%8D-RollingUpdate"><span class="nav-number">1.4.3.</span> <span class="nav-text">暂停、恢复 RollingUpdate</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#minReadySeconds"><span class="nav-number">1.4.4.</span> <span class="nav-text">minReadySeconds</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A3%80%E6%9F%A5-rollout-%E6%98%AF%E5%90%A6%E5%9C%A8%E6%89%A7%E8%A1%8C"><span class="nav-number">1.4.5.</span> <span class="nav-text">检查 rollout 是否在执行</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9B%9E%E6%BB%9A-Rolling-Back"><span class="nav-number">1.4.6.</span> <span class="nav-text">回滚 Rolling Back</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9B%9E%E6%BB%9A%E5%92%8C%E4%BD%BF%E7%94%A8-yaml-%E6%96%87%E4%BB%B6%E6%81%A2%E5%A4%8D%E7%9A%84%E5%8C%BA%E5%88%AB"><span class="nav-number">1.4.7.</span> <span class="nav-text">回滚和使用 yaml 文件恢复的区别</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%98%BE%E7%A4%BA-rollout-%E5%8E%86%E5%8F%B2"><span class="nav-number">1.4.8.</span> <span class="nav-text">显示 rollout 历史</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Traffic-shadowing"><span class="nav-number">1.5.</span> <span class="nav-text">Traffic shadowing</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%8C"><span class="nav-number">1.6.</span> <span class="nav-text">完</span></a></li></ol></li></ol></div>
       </div>
       <!--/noindex-->
 
