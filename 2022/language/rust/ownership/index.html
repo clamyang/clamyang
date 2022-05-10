@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.png" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"bqyang.top","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"hide","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"gitalk","storage":true,"lazyload":false,"nav":{"gitalk":{"order":-2}},"activeClass":"gitalk"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="Rust 核心概念了解 —— Ownership">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Rust-Ownership">
+<meta property="og:url" content="https://bqyang.top/2022/language/rust/ownership/index.html">
+<meta property="og:site_name" content="杨宝强的技术笔记">
+<meta property="og:description" content="Rust 核心概念了解 —— Ownership">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://doc.rust-lang.org/book/img/trpl04-02.svg">
+<meta property="og:image" content="https://doc.rust-lang.org/book/img/trpl04-03.svg">
+<meta property="article:published_time" content="2022-05-09T11:47:42.459Z">
+<meta property="article:modified_time" content="2022-05-10T05:45:43.695Z">
+<meta property="article:author" content="杨宝强">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://doc.rust-lang.org/book/img/trpl04-02.svg">
+
+<link rel="canonical" href="https://bqyang.top/2022/language/rust/ownership/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Rust-Ownership | 杨宝强的技术笔记</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="杨宝强的技术笔记" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <h1 class="site-title" style="font-size:27px">杨宝强的技术笔记</h1>
+      <span class="logo-line-before"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">宝强的技术成长</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://bqyang.top/2022/language/rust/ownership/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="杨宝强">
+      <meta itemprop="description" content="一物不知深以为耻">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="杨宝强的技术笔记">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Rust-Ownership
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2022-05-09 19:47:42" itemprop="dateCreated datePublished" datetime="2022-05-09T19:47:42+08:00">2022-05-09</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2022-05-10 13:45:43" itemprop="dateModified" datetime="2022-05-10T13:45:43+08:00">2022-05-10</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>Rust 核心概念了解 —— Ownership</p>
+<span id="more"></span>
+
+<p>Ownership 就是定义了一些规则，比如在函数中传递参数的时候是怎么处理参数的，官网的解释为<strong>Rust程序如何管理内存的一系列规则</strong>。</p>
+<p><strong>内存管理的三种方式</strong></p>
+<ul>
+<li>Go 语言这类，自动垃圾回收机制</li>
+<li>C 语言，手动垃圾回收，显示分配、释放</li>
+<li>Rust 独一档，结合<strong>编译器、ownership 定义的规则</strong>，如果说没有按照 Rust Ownership 定义的规则，那么编译就不会通过。</li>
+</ul>
+<p>第一次知道，还能有这样的内存管理方式..</p>
+<h1 id="ownership-by-example"><a href="#ownership-by-example" class="headerlink" title="ownership by example"></a>ownership by example</h1><p>（通过例子学习 ownership）</p>
+<blockquote>
+<p>The Stack and the Heap</p>
+</blockquote>
+<p><code>All data stored on the stack must have a known, fixed size. Data with an unknown size at compile time or a size that might change must be stored on the heap instead.</code></p>
+<p><code>Accessing data in the heap is slower than accessing data on the stack because you have to follow a pointer to get there. </code></p>
+<h2 id="ownership-Rules"><a href="#ownership-Rules" class="headerlink" title="ownership Rules"></a>ownership Rules</h2><ul>
+<li>Rust 中每一个值都有一个被叫做 <code>owner</code> 的变量，比如 a = 1, 1 的 owner 就是 a。</li>
+<li>同一时刻有且仅有一个 owner。</li>
+<li>当 owner 超出范围时（超出作用域），value 会被丢弃。</li>
+</ul>
+<h2 id="变量作用域"><a href="#变量作用域" class="headerlink" title="变量作用域"></a>变量作用域</h2><p>作用域大家了解的已经很多了，要是直接看 C 代码其实还是有点懵逼的。。不信你试试。。</p>
+<pre class="line-numbers language-c" data-language="c"><code class="language-c"><span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">include</span> <span class="token string">&lt;stdio.h></span></span>
+
+<span class="token keyword">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token keyword">void</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">int</span> x <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#123;</span>
+        <span class="token keyword">int</span> x <span class="token operator">=</span> <span class="token number">2</span><span class="token punctuation">;</span>
+        <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"%d\n"</span><span class="token punctuation">,</span> x<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"%d\n"</span><span class="token punctuation">,</span> x<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+
+
+<blockquote>
+<p>很显然，答案不是 2 ，2； 正确答案为：2， 1；</p>
+</blockquote>
+<p>Rust 中其实也类似，如下：</p>
+<pre class="line-numbers language-rust" data-language="rust"><code class="language-rust"><span class="token keyword">fn</span> <span class="token function-definition function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token punctuation">&#123;</span>
+        <span class="token keyword">let</span> s <span class="token operator">=</span> <span class="token string">"hello"</span><span class="token punctuation">;</span>	<span class="token comment">// 这时候变量开始有效</span>
+    <span class="token punctuation">&#125;</span> 					    <span class="token comment">// 从这时起，就无效</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+
+
+<p>两个重要的点：</p>
+<ul>
+<li>变量 s 在作用域内，有效</li>
+<li>变量 s 超出作用域，无效</li>
+</ul>
+<h2 id="内存和分配"><a href="#内存和分配" class="headerlink" title="内存和分配"></a>内存和分配</h2><p>Rust 中内存释放的方式，<strong>超出了作用域自动释放</strong>。Rust 也算是帮我们做了内存管理，虽然没有 GC，但是也不用我们手动进行 free，避免出现 double free 问题，如上述分配的 s 变量，超出了作用域就被释放掉。</p>
+<h2 id="ownership-Move"><a href="#ownership-Move" class="headerlink" title="ownership Move"></a>ownership Move</h2><p>Stack </p>
+<pre class="line-numbers language-rust" data-language="rust"><code class="language-rust"><span class="token keyword">fn</span> <span class="token function-definition function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">let</span> x <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span>
+    <span class="token keyword">let</span> y <span class="token operator">=</span> x<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>Heap</p>
+<pre class="line-numbers language-rust" data-language="rust"><code class="language-rust"><span class="token keyword">fn</span> <span class="token function-definition function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">let</span> s1 <span class="token operator">=</span> <span class="token class-name">String</span><span class="token punctuation">::</span><span class="token function">from</span><span class="token punctuation">(</span><span class="token string">"hello"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">let</span> s2 <span class="token operator">=</span> s1<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+
+
+
+<p>两段代码表达的意思相近，但是，在不同的内存空间上有着很大的差别。</p>
+<ul>
+<li><p>stack 不赘述</p>
+</li>
+<li><p>heap</p>
+<p><img src="https://doc.rust-lang.org/book/img/trpl04-02.svg" alt="s1 and s2 pointing to the same value"></p>
+</li>
+</ul>
+<p>执行完赋值操作后，有两个指向同一块内存的指针，但是这也会存在一种情况，当 s1 和 s2 都用不到时候，会进行 free，就会出现 double free 的情况。</p>
+<p>所以，为了保证内存安全，在 <code>let s2 = s1;</code> 执行完成后，Rust <strong>认为 s1 不再有效</strong>。即，将 s1 ownership move to s2.</p>
+<h2 id="ownership-Clone"><a href="#ownership-Clone" class="headerlink" title="ownership Clone"></a>ownership Clone</h2><p>(deeply copy)</p>
+<pre class="line-numbers language-rust" data-language="rust"><code class="language-rust"><span class="token keyword">fn</span> <span class="token function-definition function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">let</span> s1 <span class="token operator">=</span> <span class="token class-name">String</span><span class="token punctuation">::</span><span class="token function">from</span><span class="token punctuation">(</span><span class="token string">"hello"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">let</span> s2 <span class="token operator">=</span> s1<span class="token punctuation">.</span><span class="token class-name">Copy</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    
+    <span class="token macro property">println!</span><span class="token punctuation">(</span><span class="token string">"s1 is &#123;&#125;, s2 is &#123;&#125;"</span><span class="token punctuation">,</span> s1<span class="token punctuation">,</span> s2<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+
+
+<p><img src="https://doc.rust-lang.org/book/img/trpl04-03.svg" alt="s1 and s2 to two places"></p>
+<h2 id="Stack-Only-Data-Copy"><a href="#Stack-Only-Data-Copy" class="headerlink" title="Stack-Only Data: Copy"></a>Stack-Only Data: Copy</h2><p><code>The reason is that types such as integers that have a known size at compile time are stored entirely on the stack, so copies of the actual values are quick to make. That means there’s no reason we would want to prevent </code>x<code>from being valid after we create the variable</code>y<code>. </code></p>
+<p>总而言之，栈上的数据会进行 Copy，堆上的数据会进行 move。</p>
+<h2 id="函数之间-ownership-的改变"><a href="#函数之间-ownership-的改变" class="headerlink" title="函数之间 ownership 的改变"></a>函数之间 ownership 的改变</h2><p>将变量传递给函数的时候也可能会发生 move 或 copy，和分配差不多。</p>
+<pre class="line-numbers language-rust" data-language="rust"><code class="language-rust"><span class="token keyword">fn</span> <span class="token function-definition function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">let</span> s <span class="token operator">=</span> <span class="token class-name">String</span><span class="token punctuation">::</span><span class="token function">from</span><span class="token punctuation">(</span><span class="token string">"hello"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>  <span class="token comment">// s comes into scope</span>
+
+    <span class="token function">takes_ownership</span><span class="token punctuation">(</span>s<span class="token punctuation">)</span><span class="token punctuation">;</span>             <span class="token comment">// s's value moves into the function...</span>
+    <span class="token comment">// ... and so is no longer valid here</span>
+
+    <span class="token keyword">let</span> x <span class="token operator">=</span> <span class="token number">5</span><span class="token punctuation">;</span>                      <span class="token comment">// x comes into scope</span>
+
+    <span class="token function">makes_copy</span><span class="token punctuation">(</span>x<span class="token punctuation">)</span><span class="token punctuation">;</span>                  <span class="token comment">// x would move into the function,</span>
+    <span class="token comment">// but i32 is Copy, so it's okay to still</span>
+    <span class="token comment">// use x afterward</span>
+
+<span class="token punctuation">&#125;</span> <span class="token comment">// Here, x goes out of scope, then s. But because s's value was moved, nothing</span>
+<span class="token comment">// special happens.</span>
+
+<span class="token keyword">fn</span> <span class="token function-definition function">takes_ownership</span><span class="token punctuation">(</span>some_string<span class="token punctuation">:</span> <span class="token class-name">String</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span> <span class="token comment">// some_string comes into scope</span>
+    <span class="token macro property">println!</span><span class="token punctuation">(</span><span class="token string">"&#123;&#125;"</span><span class="token punctuation">,</span> some_string<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span> <span class="token comment">// Here, some_string goes out of scope and `drop` is called. The backing</span>
+<span class="token comment">// memory is freed.</span>
+
+<span class="token keyword">fn</span> <span class="token function-definition function">makes_copy</span><span class="token punctuation">(</span>some_integer<span class="token punctuation">:</span> <span class="token keyword">i32</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span> <span class="token comment">// some_integer comes into scope</span>
+    <span class="token macro property">println!</span><span class="token punctuation">(</span><span class="token string">"&#123;&#125;"</span><span class="token punctuation">,</span> some_integer<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span> <span class="token comment">// Here, some_integer goes out of scope. Nothing special happens.</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+
+
+<h2 id="函数返回时与-ownership"><a href="#函数返回时与-ownership" class="headerlink" title="函数返回时与 ownership"></a>函数返回时与 ownership</h2><p>返回值也会转移 ownership。</p>
+<pre class="line-numbers language-rust" data-language="rust"><code class="language-rust"><span class="token keyword">fn</span> <span class="token function-definition function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">let</span> s1 <span class="token operator">=</span> <span class="token function">gives_ownership</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>         <span class="token comment">// gives_ownership moves its return</span>
+    <span class="token comment">// value into s1</span>
+
+    <span class="token keyword">let</span> s2 <span class="token operator">=</span> <span class="token class-name">String</span><span class="token punctuation">::</span><span class="token function">from</span><span class="token punctuation">(</span><span class="token string">"hello"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>     <span class="token comment">// s2 comes into scope</span>
+
+    <span class="token keyword">let</span> s3 <span class="token operator">=</span> <span class="token function">takes_and_gives_back</span><span class="token punctuation">(</span>s2<span class="token punctuation">)</span><span class="token punctuation">;</span>  <span class="token comment">// s2 is moved into</span>
+    <span class="token comment">// takes_and_gives_back, which also</span>
+    <span class="token comment">// moves its return value into s3</span>
+<span class="token punctuation">&#125;</span> <span class="token comment">// Here, s3 goes out of scope and is dropped. s2 was moved, so nothing</span>
+<span class="token comment">// happens. s1 goes out of scope and is dropped.</span>
+
+<span class="token keyword">fn</span> <span class="token function-definition function">gives_ownership</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">-></span> <span class="token class-name">String</span> <span class="token punctuation">&#123;</span>             <span class="token comment">// gives_ownership will move its</span>
+    <span class="token comment">// return value into the function</span>
+    <span class="token comment">// that calls it</span>
+
+    <span class="token keyword">let</span> some_string <span class="token operator">=</span> <span class="token class-name">String</span><span class="token punctuation">::</span><span class="token function">from</span><span class="token punctuation">(</span><span class="token string">"yours"</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// some_string comes into scope</span>
+
+    some_string                              <span class="token comment">// some_string is returned and</span>
+    <span class="token comment">// moves out to the calling</span>
+    <span class="token comment">// function</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">// This function takes a String and returns one</span>
+<span class="token keyword">fn</span> <span class="token function-definition function">takes_and_gives_back</span><span class="token punctuation">(</span>a_string<span class="token punctuation">:</span> <span class="token class-name">String</span><span class="token punctuation">)</span> <span class="token punctuation">-></span> <span class="token class-name">String</span> <span class="token punctuation">&#123;</span> <span class="token comment">// a_string comes into</span>
+    <span class="token comment">// scope</span>
+
+    a_string  <span class="token comment">// a_string is returned and moves out to the calling function</span>
+<span class="token punctuation">&#125;</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+
+
+<p>综上所述，每次进行函数传参的时候都会发生 ownership 的转移，如果说我们给 funcA 传一个 A 参数后，仍然要使用 A 参数，应该怎么办呢？</p>
+<ul>
+<li> 可以把这个参数从 funcA 中返回</li>
+</ul>
+<pre class="line-numbers language-rust" data-language="rust"><code class="language-rust"><span class="token keyword">fn</span> <span class="token function-definition function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">let</span> s1 <span class="token operator">=</span> <span class="token class-name">String</span><span class="token punctuation">::</span><span class="token function">from</span><span class="token punctuation">(</span><span class="token string">"hello"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">let</span> <span class="token punctuation">(</span>s2<span class="token punctuation">,</span> len<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token function">calculate_length</span><span class="token punctuation">(</span>s1<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token macro property">println!</span><span class="token punctuation">(</span><span class="token string">"The length of string &#123;&#125; is &#123;&#125;"</span><span class="token punctuation">,</span> s2<span class="token punctuation">,</span> len<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">fn</span> <span class="token function-definition function">calculate_length</span><span class="token punctuation">(</span>s<span class="token punctuation">:</span> string<span class="token punctuation">)</span> <span class="token punctuation">-></span> <span class="token punctuation">(</span><span class="token class-name">String</span><span class="token punctuation">,</span> <span class="token keyword">usize</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">let</span> length <span class="token operator">=</span> s<span class="token punctuation">.</span><span class="token function">len</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">(</span>s<span class="token punctuation">,</span> length<span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<ul>
+<li>牛x的 Rust 当然还提供了另一种方式，<strong>reference</strong>。</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+        <div class="reward-container">
+  <div></div>
+  <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    打赏
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="/images/wechatpay.png" alt="杨宝强 微信支付">
+        <p>微信支付</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="/images/alipay.png" alt="杨宝强 支付宝">
+        <p>支付宝</p>
+      </div>
+
+  </div>
+</div>
+
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>杨宝强
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="https://bqyang.top/2022/language/rust/ownership/" title="Rust-Ownership">https://bqyang.top/2022/language/rust/ownership/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/zh-Hans" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2022/k8s/deployment/" rel="prev" title="Deployment 更新策略">
+      <i class="fa fa-chevron-left"></i> Deployment 更新策略
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#ownership-by-example"><span class="nav-number">1.</span> <span class="nav-text">ownership by example</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#ownership-Rules"><span class="nav-number">1.1.</span> <span class="nav-text">ownership Rules</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%98%E9%87%8F%E4%BD%9C%E7%94%A8%E5%9F%9F"><span class="nav-number">1.2.</span> <span class="nav-text">变量作用域</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%86%85%E5%AD%98%E5%92%8C%E5%88%86%E9%85%8D"><span class="nav-number">1.3.</span> <span class="nav-text">内存和分配</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ownership-Move"><span class="nav-number">1.4.</span> <span class="nav-text">ownership Move</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ownership-Clone"><span class="nav-number">1.5.</span> <span class="nav-text">ownership Clone</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Stack-Only-Data-Copy"><span class="nav-number">1.6.</span> <span class="nav-text">Stack-Only Data: Copy</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%87%BD%E6%95%B0%E4%B9%8B%E9%97%B4-ownership-%E7%9A%84%E6%94%B9%E5%8F%98"><span class="nav-number">1.7.</span> <span class="nav-text">函数之间 ownership 的改变</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%87%BD%E6%95%B0%E8%BF%94%E5%9B%9E%E6%97%B6%E4%B8%8E-ownership"><span class="nav-number">1.8.</span> <span class="nav-text">函数返回时与 ownership</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">杨宝强</p>
+  <div class="site-description" itemprop="description">一物不知深以为耻</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">33</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/clamyang" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;clamyang" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/zh-Hans" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://xargin.com/" title="https:&#x2F;&#x2F;xargin.com" rel="noopener" target="_blank">Xargin</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://mytechshares.com/" title="https:&#x2F;&#x2F;mytechshares.com&#x2F;" rel="noopener" target="_blank">董泽润</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        <div class="copyright">
+  
+  &copy; 2021 – 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-car"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">杨宝强</span>
+</div>
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">京ICP备2021035561号-1 </a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.css">
+
+<script>
+NexT.utils.loadComments(document.querySelector('#gitalk-container'), () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID    : '4bcae079402e9cc4ce7b',
+      clientSecret: 'bc6b6ecab4d016f0a056df8253ad41b76b944084',
+      repo        : 'blog_comments',
+      owner       : 'clamyang',
+      admin       : ['clamyang'],
+      id          : 'b0fb6136901d4a908e34d05553313784',
+        language: 'en',
+      distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>
