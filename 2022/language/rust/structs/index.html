@@ -20,21 +20,19 @@
     var CONFIG = {"hostname":"bqyang.top","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"hide","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"gitalk","storage":true,"lazyload":false,"nav":{"gitalk":{"order":-2}},"activeClass":"gitalk"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
   </script>
 
-  <meta name="description" content="并发控制算法之-Peterson">
+  <meta name="description" content="rust 中的结构体和方法（method）。">
 <meta property="og:type" content="article">
-<meta property="og:title" content="perterson 算法学习">
-<meta property="og:url" content="https://bqyang.top/2022/peterson/index.html">
+<meta property="og:title" content="Rust-Structs">
+<meta property="og:url" content="https://bqyang.top/2022/language/rust/structs/index.html">
 <meta property="og:site_name" content="杨宝强的技术笔记">
-<meta property="og:description" content="并发控制算法之-Peterson">
+<meta property="og:description" content="rust 中的结构体和方法（method）。">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://s2.loli.net/2022/04/19/l4dy1wmXIgMuUCx.png">
-<meta property="article:published_time" content="2022-04-18T06:31:47.361Z">
-<meta property="article:modified_time" content="2022-04-19T12:17:15.034Z">
+<meta property="article:published_time" content="2022-05-10T07:26:34.826Z">
+<meta property="article:modified_time" content="2022-05-11T02:54:20.456Z">
 <meta property="article:author" content="杨宝强">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://s2.loli.net/2022/04/19/l4dy1wmXIgMuUCx.png">
 
-<link rel="canonical" href="https://bqyang.top/2022/peterson/">
+<link rel="canonical" href="https://bqyang.top/2022/language/rust/structs/">
 
 
 <script id="page-configurations">
@@ -47,7 +45,7 @@
   };
 </script>
 
-  <title>perterson 算法学习 | 杨宝强的技术笔记</title>
+  <title>Rust-Structs | 杨宝强的技术笔记</title>
   
 
 
@@ -158,7 +156,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://bqyang.top/2022/peterson/">
+    <link itemprop="mainEntityOfPage" href="https://bqyang.top/2022/language/rust/structs/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.gif">
@@ -171,7 +169,7 @@
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          perterson 算法学习
+          Rust-Structs
         </h1>
 
         <div class="post-meta">
@@ -181,14 +179,14 @@
               </span>
               <span class="post-meta-item-text">发表于</span>
 
-              <time title="创建时间：2022-04-18 14:31:47" itemprop="dateCreated datePublished" datetime="2022-04-18T14:31:47+08:00">2022-04-18</time>
+              <time title="创建时间：2022-05-10 15:26:34" itemprop="dateCreated datePublished" datetime="2022-05-10T15:26:34+08:00">2022-05-10</time>
             </span>
               <span class="post-meta-item">
                 <span class="post-meta-item-icon">
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2022-04-19 20:17:15" itemprop="dateModified" datetime="2022-04-19T20:17:15+08:00">2022-04-19</time>
+                <time title="修改时间：2022-05-11 10:54:20" itemprop="dateModified" datetime="2022-05-11T10:54:20+08:00">2022-05-11</time>
               </span>
 
           
@@ -202,55 +200,70 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <p>并发控制算法之-Peterson</p>
+        <p>rust 中的结构体和方法（method）。</p>
 <span id="more"></span>
 
-<h3 id="Peterson-算法解决了什么问题"><a href="#Peterson-算法解决了什么问题" class="headerlink" title="Peterson 算法解决了什么问题"></a>Peterson 算法解决了什么问题</h3><ul>
-<li>peterson 算法解决的是双线程访问共享变量导致的 data-race 问题。</li>
-</ul>
+<h1 id="struct"><a href="#struct" class="headerlink" title="struct"></a>struct</h1><p>其实各种语言对 Struct 的实例化都差不多，主要就是关注下 Rust 里关于 struct 的语法。</p>
+<pre class="line-numbers language-c" data-language="c"><code class="language-c"><span class="token comment">// struct from C</span>
+<span class="token keyword">struct</span> <span class="token class-name">foo</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">int</span> age<span class="token punctuation">;</span>
+    <span class="token keyword">char</span> <span class="token operator">*</span>name<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+
+
+<pre class="line-numbers language-rust" data-language="rust"><code class="language-rust"><span class="token comment">// struct from Rust</span>
+<span class="token keyword">struct</span> <span class="token type-definition class-name">bar</span> <span class="token punctuation">&#123;</span>
+    active<span class="token punctuation">:</span> <span class="token keyword">bool</span><span class="token punctuation">,</span>
+    username<span class="token punctuation">:</span> <span class="token class-name">String</span><span class="token punctuation">,</span>
+    email<span class="token punctuation">:</span> <span class="token class-name">String</span><span class="token punctuation">,</span>
+    sign_in_count<span class="token punctuation">:</span> <span class="token keyword">u64</span><span class="token punctuation">,</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+
+
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// struct from Go</span>
+<span class="token keyword">type</span> foobar <span class="token keyword">struct</span> <span class="token punctuation">&#123;</span>
+    name <span class="token builtin">string</span>
+    age <span class="token builtin">int</span>
+    email <span class="token builtin">string</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+
+
+<p>都差不多..</p>
+<h2 id="打印结构体"><a href="#打印结构体" class="headerlink" title="打印结构体"></a>打印结构体</h2><p>没想到 rust 里边打印一个结构体这么麻烦，如果说打印某个字段直接用 <code>println!(&quot;&#123;&#125;&quot;, xx.xx);</code> 就行，但是要是打印整个结构体中的内容，还得给结构体定义前加上 <code>#[derive(Debug)] </code>..这样才能打印出调试信息。</p>
+<pre class="line-numbers language-rust" data-language="rust"><code class="language-rust"><span class="token attribute attr-name">#[derive(Debug)]</span>
+<span class="token keyword">struct</span> <span class="token type-definition class-name">User</span> <span class="token punctuation">&#123;</span>
+    name<span class="token punctuation">:</span> <span class="token class-name">String</span><span class="token punctuation">,</span>
+    age<span class="token punctuation">:</span> <span class="token keyword">u32</span><span class="token punctuation">,</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+
+
 <blockquote>
-<p>这里确实是双线程，但是该算法在多线程场景下也适用。</p>
+<p>输出完整结构体算是调试功能，但是我们需要手动添加相关内容让某个结构体使用这个功能。</p>
 </blockquote>
-<h3 id="Peterson-算法描述"><a href="#Peterson-算法描述" class="headerlink" title="Peterson 算法描述"></a>Peterson 算法描述</h3><p>抽象的代码描述，内容来自 <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Peterson%27s_algorithm">wiki</a>：</p>
-<pre class="line-numbers language-c" data-language="c"><code class="language-c">bool flag<span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token punctuation">&#123;</span>false<span class="token punctuation">,</span> false<span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
-<span class="token keyword">int</span> turn<span class="token punctuation">;</span>
-
-<span class="token comment">/*pc 1*/</span>P0<span class="token operator">:</span>      flag<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">=</span> true<span class="token punctuation">;</span>
-<span class="token comment">/*pc 2*/</span>P0_gate<span class="token operator">:</span> turn <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span>
-<span class="token comment">/*pc 3*/</span>         <span class="token keyword">while</span> <span class="token punctuation">(</span>flag<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span> <span class="token operator">==</span> true <span class="token operator">&amp;&amp;</span> turn <span class="token operator">==</span> <span class="token number">1</span><span class="token punctuation">)</span>
-                 <span class="token punctuation">&#123;</span>
-                     <span class="token comment">// busy wait</span>
-                 <span class="token punctuation">&#125;</span>
-                 <span class="token comment">// critical section</span>
-                 <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
-                 <span class="token comment">// end of critical section</span>
-<span class="token comment">/*pc 4*/</span>         flag<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">=</span> false<span class="token punctuation">;</span>
+<p>添加完以后才能输出完整的结构体：</p>
+<pre class="line-numbers language-rust" data-language="rust"><code class="language-rust"><span class="token comment">// pretty print</span>
+<span class="token macro property">println!</span><span class="token punctuation">(</span><span class="token string">"&#123;:#?&#125;"</span><span class="token punctuation">,</span> xx<span class="token punctuation">)</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
 
 
-<span class="token comment">/* pc 1*/</span>P1<span class="token operator">:</span>      flag<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span> <span class="token operator">=</span> true<span class="token punctuation">;</span>
-<span class="token comment">/* pc 2*/</span>P1_gate<span class="token operator">:</span> turn <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
-<span class="token comment">/* pc 3*/</span>         <span class="token keyword">while</span> <span class="token punctuation">(</span>flag<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">==</span> true <span class="token operator">&amp;&amp;</span> turn <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span>
-                 <span class="token punctuation">&#123;</span>
-                     <span class="token comment">// busy wait</span>
-                 <span class="token punctuation">&#125;</span>
-                 <span class="token comment">// critical section</span>
-                 <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
-                 <span class="token comment">// end of critical section</span>
-<span class="token comment">/* pc 4*/</span>        flag<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span> <span class="token operator">=</span> false<span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
-<p>代码解释：</p>
-<ul>
-<li>flag 用于标识哪个线程想要进入临界区</li>
-<li>turn 用于辅助flag表示，也是用来判断是否可以进入临界区</li>
-</ul>
-<p>规定如下：</p>
-<blockquote>
-<p>如果对方的 flag 为真且 turn 不是自己的名字，需要等待，否则（上述两条件任意一个为假）进入临界区。</p>
-</blockquote>
-<p>这时候我们启动 P1,P2 两个线程，模拟两个线程交替执行，然后将涉及到的状态变化画出来，正如图中所表示的一样。</p>
-<p><img src="https://s2.loli.net/2022/04/19/l4dy1wmXIgMuUCx.png" alt="peterson"></p>
-<p>综上所述，Peterson 算法，巧妙地运用了 flag, turn 标识达到了互斥访问的目的。</p>
-<h3 id="表面上的谦让"><a href="#表面上的谦让" class="headerlink" title="表面上的谦让"></a>表面上的谦让</h3><p>这里我们可以看到，如果说 P1 先将 P2 的名字放到了 turn 上，假惺惺的说，你先进吧。但是 P2 执行的时候会覆盖掉 turn，让 P1 进，所以就出现了先修改 turn 变量的线程先进入，后修改的等待。</p>
+<h2 id="dbg"><a href="#dbg" class="headerlink" title="dbg!"></a>dbg!</h2><p>可以用来输出调试信息，<code>dbg!(xx);</code></p>
+<h1 id="method"><a href="#method" class="headerlink" title="method"></a>method</h1><p>method 的第一个参数永远是 self。    </p>
+<pre class="line-numbers language-rust" data-language="rust"><code class="language-rust"><span class="token keyword">struct</span> <span class="token type-definition class-name">User</span> <span class="token punctuation">&#123;</span>
+    name<span class="token punctuation">:</span> <span class="token class-name">String</span><span class="token punctuation">,</span>
+    age<span class="token punctuation">:</span> <span class="token keyword">u32</span><span class="token punctuation">,</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">impl</span> <span class="token class-name">User</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">fn</span> <span class="token function-definition function">print_name</span><span class="token punctuation">(</span><span class="token operator">&amp;</span><span class="token keyword">self</span><span class="token punctuation">)</span> <span class="token punctuation">-></span> <span class="token operator">&amp;</span><span class="token class-name">String</span> <span class="token punctuation">&#123;</span>
+        <span class="token operator">&amp;</span><span class="token keyword">self</span><span class="token punctuation">.</span>name
+    <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
 
     </div>
 
@@ -286,7 +299,7 @@
   </li>
   <li class="post-copyright-link">
     <strong>本文链接：</strong>
-    <a href="https://bqyang.top/2022/peterson/" title="perterson 算法学习">https://bqyang.top/2022/peterson/</a>
+    <a href="https://bqyang.top/2022/language/rust/structs/" title="Rust-Structs">https://bqyang.top/2022/language/rust/structs/</a>
   </li>
   <li class="post-copyright-license">
     <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/zh-Hans" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
@@ -303,12 +316,12 @@
         
     <div class="post-nav">
       <div class="post-nav-item">
-    <a href="/2022/RMO/" rel="prev" title="宽松内存模型">
-      <i class="fa fa-chevron-left"></i> 宽松内存模型
+    <a href="/2022/language/rust/ownership/" rel="prev" title="Rust-Ownership">
+      <i class="fa fa-chevron-left"></i> Rust-Ownership
     </a></div>
       <div class="post-nav-item">
-    <a href="/2022/warning/" rel="next" title="图片仓库被屏蔽">
-      图片仓库被屏蔽 <i class="fa fa-chevron-right"></i>
+    <a href="/2022/language/rust/index/" rel="next" title="">
+       <i class="fa fa-chevron-right"></i>
     </a></div>
     </div>
       </footer>
@@ -369,7 +382,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#Peterson-%E7%AE%97%E6%B3%95%E8%A7%A3%E5%86%B3%E4%BA%86%E4%BB%80%E4%B9%88%E9%97%AE%E9%A2%98"><span class="nav-number">1.</span> <span class="nav-text">Peterson 算法解决了什么问题</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Peterson-%E7%AE%97%E6%B3%95%E6%8F%8F%E8%BF%B0"><span class="nav-number">2.</span> <span class="nav-text">Peterson 算法描述</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%A1%A8%E9%9D%A2%E4%B8%8A%E7%9A%84%E8%B0%A6%E8%AE%A9"><span class="nav-number">3.</span> <span class="nav-text">表面上的谦让</span></a></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#struct"><span class="nav-number">1.</span> <span class="nav-text">struct</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%89%93%E5%8D%B0%E7%BB%93%E6%9E%84%E4%BD%93"><span class="nav-number">1.1.</span> <span class="nav-text">打印结构体</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#dbg"><span class="nav-number">1.2.</span> <span class="nav-text">dbg!</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#method"><span class="nav-number">2.</span> <span class="nav-text">method</span></a></li></ol></div>
       </div>
       <!--/noindex-->
 
@@ -501,7 +514,7 @@ NexT.utils.loadComments(document.querySelector('#gitalk-container'), () => {
       repo        : 'blog_comments',
       owner       : 'clamyang',
       admin       : ['clamyang'],
-      id          : '11a738957205a447780e755b6caaa6c1',
+      id          : 'e7015924c4f5931289f07780fa6e5513',
         language: 'en',
       distractionFreeMode: true
     });
