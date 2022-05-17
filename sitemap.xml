@@ -2,6 +2,13 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://bqyang.top/about/index.html</loc>
+    
+    <lastmod>2022-05-17</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>https://bqyang.top/2022/language/c/print/</loc>
     
     <lastmod>2022-05-17</lastmod>
@@ -94,13 +101,6 @@
   
   <url>
     <loc>https://bqyang.top/2022/peterson/</loc>
-    
-    <lastmod>2022-04-19</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://bqyang.top/about/index.html</loc>
     
     <lastmod>2022-04-19</lastmod>
     
