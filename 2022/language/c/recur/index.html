@@ -20,17 +20,19 @@
     var CONFIG = {"hostname":"bqyang.top","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"hide","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"gitalk","storage":true,"lazyload":false,"nav":{"gitalk":{"order":-2}},"activeClass":"gitalk"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
   </script>
 
-  <meta name="description" content="一物不知深以为耻">
-<meta property="og:type" content="website">
-<meta property="og:title" content="杨宝强的技术笔记">
-<meta property="og:url" content="https://bqyang.top/archives/2022/05/index.html">
+  <meta name="description" content="逃不过的汉诺塔…">
+<meta property="og:type" content="article">
+<meta property="og:title" content="再学递归（两个有意思的递归练习）">
+<meta property="og:url" content="https://bqyang.top/2022/language/c/recur/index.html">
 <meta property="og:site_name" content="杨宝强的技术笔记">
-<meta property="og:description" content="一物不知深以为耻">
+<meta property="og:description" content="逃不过的汉诺塔…">
 <meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2022-05-24T14:08:21.157Z">
+<meta property="article:modified_time" content="2022-05-24T14:14:42.001Z">
 <meta property="article:author" content="杨宝强">
 <meta name="twitter:card" content="summary">
 
-<link rel="canonical" href="https://bqyang.top/archives/2022/05/">
+<link rel="canonical" href="https://bqyang.top/2022/language/c/recur/">
 
 
 <script id="page-configurations">
@@ -38,12 +40,12 @@
   CONFIG.page = {
     sidebar: "",
     isHome : false,
-    isPost : false,
+    isPost : true,
     lang   : 'zh-CN'
   };
 </script>
 
-  <title>归档 | 杨宝强的技术笔记</title>
+  <title>再学递归（两个有意思的递归练习） | 杨宝强的技术笔记</title>
   
 
 
@@ -147,193 +149,132 @@
         <div class="content-wrap">
           
 
-          <div class="content archive">
+          <div class="content post posts-expand">
             
 
+    
   
   
-  
-  <div class="post-block">
-    <div class="posts-collapse">
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://bqyang.top/2022/language/c/recur/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="杨宝强">
+      <meta itemprop="description" content="一物不知深以为耻">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="杨宝强的技术笔记">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          再学递归（两个有意思的递归练习）
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2022-05-24 22:08:21 / 修改时间：22:14:42" itemprop="dateCreated datePublished" datetime="2022-05-24T22:08:21+08:00">2022-05-24</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
 
       
-    <div class="collection-year">
-      <span class="collection-header">2022</span>
-    </div>
+        <p>逃不过的汉诺塔…</p>
+<span id="more"></span>
 
-  <article itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
-
-      <div class="post-meta">
-        <time itemprop="dateCreated"
-              datetime="2022-05-24T22:08:21+08:00"
-              content="2022-05-24">
-          05-24
-        </time>
-      </div>
-
-      <div class="post-title">
-          <a class="post-title-link" href="/2022/language/c/recur/" itemprop="url">
-            <span itemprop="name">再学递归（两个有意思的递归练习）</span>
-          </a>
-      </div>
-
-    </header>
-  </article>
-
-  <article itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
-
-      <div class="post-meta">
-        <time itemprop="dateCreated"
-              datetime="2022-05-17T14:31:17+08:00"
-              content="2022-05-17">
-          05-17
-        </time>
-      </div>
-
-      <div class="post-title">
-          <a class="post-title-link" href="/2022/language/c/print/" itemprop="url">
-            <span itemprop="name">打印字符</span>
-          </a>
-      </div>
-
-    </header>
-  </article>
-
-  <article itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
-
-      <div class="post-meta">
-        <time itemprop="dateCreated"
-              datetime="2022-05-11T18:47:31+08:00"
-              content="2022-05-11">
-          05-11
-        </time>
-      </div>
-
-      <div class="post-title">
-          <a class="post-title-link" href="/2022/language/c/string/" itemprop="url">
-            <span itemprop="name">C-String</span>
-          </a>
-      </div>
-
-    </header>
-  </article>
-
-  <article itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
-
-      <div class="post-meta">
-        <time itemprop="dateCreated"
-              datetime="2022-05-10T15:53:07+08:00"
-              content="2022-05-10">
-          05-10
-        </time>
-      </div>
-
-      <div class="post-title">
-          <a class="post-title-link" href="/2022/language/rust/enum/" itemprop="url">
-            <span itemprop="name">Rust-Enums</span>
-          </a>
-      </div>
-
-    </header>
-  </article>
-
-  <article itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
-
-      <div class="post-meta">
-        <time itemprop="dateCreated"
-              datetime="2022-05-10T15:26:34+08:00"
-              content="2022-05-10">
-          05-10
-        </time>
-      </div>
-
-      <div class="post-title">
-          <a class="post-title-link" href="/2022/language/rust/structs/" itemprop="url">
-            <span itemprop="name">Rust-Structs</span>
-          </a>
-      </div>
-
-    </header>
-  </article>
-
-  <article itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
-
-      <div class="post-meta">
-        <time itemprop="dateCreated"
-              datetime="2022-05-09T19:47:42+08:00"
-              content="2022-05-09">
-          05-09
-        </time>
-      </div>
-
-      <div class="post-title">
-          <a class="post-title-link" href="/2022/language/rust/ownership/" itemprop="url">
-            <span itemprop="name">Rust-Ownership</span>
-          </a>
-      </div>
-
-    </header>
-  </article>
-
-  <article itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
-
-      <div class="post-meta">
-        <time itemprop="dateCreated"
-              datetime="2022-05-09T15:28:40+08:00"
-              content="2022-05-09">
-          05-09
-        </time>
-      </div>
-
-      <div class="post-title">
-          <a class="post-title-link" href="/2022/k8s/deployment/" itemprop="url">
-            <span itemprop="name">Deployment 更新策略</span>
-          </a>
-      </div>
-
-    </header>
-  </article>
-
-  <article itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
-
-      <div class="post-meta">
-        <time itemprop="dateCreated"
-              datetime="2022-05-05T19:02:26+08:00"
-              content="2022-05-05">
-          05-05
-        </time>
-      </div>
-
-      <div class="post-title">
-          <a class="post-title-link" href="/2022/os/os-start/" itemprop="url">
-            <span itemprop="name">操作系统启动</span>
-          </a>
-      </div>
-
-    </header>
-  </article>
-
+<p>由间到难：</p>
+<ul>
+<li>给定一个整数，如 1234，使用递归的方式打印出，4321。</li>
+<li>给定一个整数，如 9，使用递归的方式打印出该数的二进制形式，输入 9，输出 1001。</li>
+</ul>
+<p>这两个数以同一种类型，做出来一个另一个也迎刃而解，如果没什么思路的话，也不建议直接去查答案，肯定可以，我这么笨的都能琢磨出来，多花点时间。</p>
+<ul>
+<li>汉诺塔..只要是认认真真学过一门语言肯定会接触到这个例子，具体描述请见百科。</li>
+</ul>
 
     </div>
+
+    
+    
+    
+        <div class="reward-container">
+  <div></div>
+  <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    打赏
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="/images/wechatpay.png" alt="杨宝强 微信支付">
+        <p>微信支付</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="/images/alipay.png" alt="杨宝强 支付宝">
+        <p>支付宝</p>
+      </div>
+
   </div>
-  
-  
-  
+</div>
 
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>杨宝强
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="https://bqyang.top/2022/language/c/recur/" title="再学递归（两个有意思的递归练习）">https://bqyang.top/2022/language/c/recur/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/zh-Hans" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2022/language/c/print/" rel="prev" title="打印字符">
+      <i class="fa fa-chevron-left"></i> 打印字符
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
   
 
 
 
           </div>
           
+    <div class="comments" id="gitalk-container"></div>
 
 <script>
   window.addEventListener('tabs:register', () => {
@@ -500,6 +441,25 @@
 
   
 
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.css">
+
+<script>
+NexT.utils.loadComments(document.querySelector('#gitalk-container'), () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID    : '4bcae079402e9cc4ce7b',
+      clientSecret: 'bc6b6ecab4d016f0a056df8253ad41b76b944084',
+      repo        : 'blog_comments',
+      owner       : 'clamyang',
+      admin       : ['clamyang'],
+      id          : '816c80707ceaa1f4fdb8d478accd6af3',
+        language: 'en',
+      distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
 
 </body>
 </html>
