@@ -1,0 +1,172 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="一物不知深以为耻"><title>一个 web 框架的那些事 | 杨宝强的技术笔记</title><link rel="stylesheet" type="text/css" href="/css/style.css?v=1.0.0"><link rel="stylesheet" type="text/css" href="//lib.baomitu.com/normalize/latest/normalize.min.css"><link rel="stylesheet" type="text/css" href="//lib.baomitu.com/pure/latest/pure-min.min.css"><link rel="stylesheet" type="text/css" href="//lib.baomitu.com/pure/latest/grids-responsive-min.min.css"><link rel="stylesheet" href="//lib.baomitu.com/font-awesome/4.7.0/css/font-awesome.min.css"><script type="text/javascript" src="//lib.baomitu.com/jquery/latest/jquery.min.js"></script><link rel="icon" mask="" sizes="any" href="/favicon.ico"><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="apple-touch-icon-precomposed" href="/apple-touch-icon.png"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><script type="text/javascript" src="//lib.baomitu.com/clipboard.js/latest/clipboard.min.js"></script><script type="text/javascript" src="//lib.baomitu.com/toastr.js/latest/toastr.min.js"></script><link rel="stylesheet" href="//lib.baomitu.com/toastr.js/latest/toastr.min.css"><div class="darkmode-toggle">🌓</div><script>var prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)');
+var toggle = document.querySelector('.darkmode-toggle');
+var html = document.querySelector('html');
+
+html.dataset.dark = localStorage.dark || prefersDarkMode.matches;
+
+toggle.addEventListener('click', () => {
+localStorage.dark = !(html.dataset.dark == 'true');
+html.dataset.dark = localStorage.dark;
+});</script><meta name="generator" content="Hexo 5.4.0"></head><body><div class="body_container"><div id="header"><div class="site-name"><h1 class="hidden">一个 web 框架的那些事</h1><a id="logo" href="/.">杨宝强的技术笔记</a><p class="description"></p></div><div id="nav-menu"><a class="current" href="/."><i class="fa fa-home"> 首页</i></a><a href="/archives/"><i class="fa fa-archive"> 归档</i></a><a href="/about/"><i class="fa fa-user"> 关于</i></a><a href="/atom.xml"><i class="fa fa-rss"> 订阅</i></a></div></div><div class="pure-g" id="layout"><div class="pure-u-1 pure-u-md-3-4"><div class="content_container"><div class="post"><h1 class="post-title">一个 web 框架的那些事</h1><div class="post-meta">2022-02-18</div><div class="post-content"><p>项目上用了一套开源的云管理代码，他们框架中的路由的相关功能都是自研的，学习学习人家是怎么实现的。</p>
+<span id="more"></span>
+
+<p>大致分成以下几个部分：</p>
+<ul>
+<li>使用什么数据结构存储</li>
+<li>路由的查找过程</li>
+<li>关于正则的路由是怎么实现的</li>
+</ul>
+<p><strong>实现路由的数据结构</strong></p>
+<p>这里巧妙的运用了 Go 原生 map 的特性，结合 map 高效的查询，构建了一颗<strong>基数树</strong>。</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">type</span> RadixNode <span class="token keyword">struct</span> <span class="token punctuation">&#123;</span>
+	data        <span class="token keyword">interface</span><span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span>
+	stringNodes <span class="token keyword">map</span><span class="token punctuation">[</span><span class="token builtin">string</span><span class="token punctuation">]</span><span class="token operator">*</span>RadixNode
+	regexpNodes <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token operator">*</span>RegexpNode
+	segNames    <span class="token keyword">map</span><span class="token punctuation">[</span><span class="token builtin">int</span><span class="token punctuation">]</span><span class="token builtin">string</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">type</span> RegexpNode <span class="token keyword">struct</span> <span class="token punctuation">&#123;</span>
+	node   <span class="token operator">*</span>RadixNode
+	regStr <span class="token builtin">string</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>光看声明方式或许有些抽象，把图画出来就好多了。（回头补上）</p>
+<p><strong>路由注册过程</strong></p>
+<p>核心的代码就这么多，对于我这种菜鸟来说，阅读起来还行，不是那么费劲，但是要想写出来这种代码，得有几年功底哈哈。</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// segments 就是将 path 通过 "/" 进行分割，得到的结果</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>r <span class="token operator">*</span>RadixNode<span class="token punctuation">)</span> <span class="token function">add</span><span class="token punctuation">(</span>segments <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">string</span><span class="token punctuation">,</span> data <span class="token keyword">interface</span><span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span><span class="token punctuation">,</span> depth <span class="token builtin">int</span><span class="token punctuation">,</span> segNames <span class="token keyword">map</span><span class="token punctuation">[</span><span class="token builtin">int</span><span class="token punctuation">]</span><span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token builtin">error</span> <span class="token punctuation">&#123;</span>
+    <span class="token comment">// 递归的终止条件</span>
+    <span class="token keyword">if</span> <span class="token function">len</span><span class="token punctuation">(</span>segments<span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token number">0</span> <span class="token punctuation">&#123;</span>
+        <span class="token comment">// 这里的 data 就是 handler 的信息，最后要通过 path 最终找到handler</span>
+        <span class="token keyword">if</span> r<span class="token punctuation">.</span>data <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
+            <span class="token comment">// 添加了重复路由，会报这个错误</span>
+            <span class="token keyword">return</span> fmt<span class="token punctuation">.</span><span class="token function">Errorf</span><span class="token punctuation">(</span><span class="token string">"Duplicate data for node"</span><span class="token punctuation">)</span>
+        <span class="token punctuation">&#125;</span> <span class="token keyword">else</span> <span class="token punctuation">&#123;</span>
+            r<span class="token punctuation">.</span>data <span class="token operator">=</span> data
+            r<span class="token punctuation">.</span>segNames <span class="token operator">=</span> segNames
+            <span class="token keyword">return</span> <span class="token boolean">nil</span>
+        <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">&#125;</span> <span class="token keyword">else</span> <span class="token punctuation">&#123;</span>
+        <span class="token keyword">var</span> nextNode <span class="token operator">*</span>RadixNode
+        <span class="token comment">// 判断是否为正则匹配的 path （为了方便理解可以先看下边 else 的部分）</span>
+        <span class="token keyword">if</span> <span class="token function">isRegexSegment</span><span class="token punctuation">(</span>segments<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+            <span class="token keyword">var</span> <span class="token punctuation">(</span>
+                <span class="token comment">// 正则字符串</span>
+                regStr     <span class="token builtin">string</span>
+                segName    <span class="token builtin">string</span>
+                <span class="token comment">// 把 "&lt; >" 去掉</span>
+                segStr     <span class="token operator">=</span> segments<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">[</span><span class="token number">1</span> <span class="token punctuation">:</span> <span class="token function">len</span><span class="token punctuation">(</span>segments<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">]</span>
+                <span class="token comment">// 后续判断是否为 paramName:reg 的这种形式</span>
+                splitIndex <span class="token operator">=</span> strings<span class="token punctuation">.</span><span class="token function">IndexByte</span><span class="token punctuation">(</span>segStr<span class="token punctuation">,</span> <span class="token string">':'</span><span class="token punctuation">)</span>
+            <span class="token punctuation">)</span>
+
+            <span class="token keyword">if</span> splitIndex <span class="token operator">&lt;</span> <span class="token number">0</span> <span class="token punctuation">&#123;</span>
+                regStr <span class="token operator">=</span> <span class="token string">".*"</span> <span class="token comment">// match anything</span>
+                segName <span class="token operator">=</span> <span class="token string">"&lt;"</span> <span class="token operator">+</span> segStr <span class="token operator">+</span> <span class="token string">">"</span>
+            <span class="token punctuation">&#125;</span> <span class="token keyword">else</span> <span class="token punctuation">&#123;</span>
+                <span class="token comment">// &lt;phone_number:^1[0-9-]&#123;10&#125;$></span>
+                <span class="token comment">// 结合上边这个表达式，一下就清晰明了了</span>
+                regStr <span class="token operator">=</span> segStr<span class="token punctuation">[</span>splitIndex<span class="token operator">+</span><span class="token number">1</span><span class="token punctuation">:</span><span class="token punctuation">]</span>
+                segName <span class="token operator">=</span> <span class="token string">"&lt;"</span> <span class="token operator">+</span> segStr<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">:</span>splitIndex<span class="token punctuation">]</span> <span class="token operator">+</span> <span class="token string">">"</span>
+            <span class="token punctuation">&#125;</span>
+			
+            <span class="token comment">// TODO 暂时没看出来这个 segNames 和 depth 的关系</span>
+            <span class="token keyword">if</span> segNames <span class="token operator">==</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
+                segNames <span class="token operator">=</span> <span class="token function">make</span><span class="token punctuation">(</span><span class="token keyword">map</span><span class="token punctuation">[</span><span class="token builtin">int</span><span class="token punctuation">]</span><span class="token builtin">string</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span>
+            <span class="token punctuation">&#125;</span>
+            segNames<span class="token punctuation">[</span>depth<span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">]</span> <span class="token operator">=</span> segName
+			<span class="token comment">// 这里的逻辑就和下边的一样了，不再赘述</span>
+            <span class="token keyword">if</span> node<span class="token punctuation">,</span> ok <span class="token operator">:=</span> <span class="token function">isRegstrInRegexpNodes</span><span class="token punctuation">(</span>r<span class="token punctuation">.</span>regexpNodes<span class="token punctuation">,</span> regStr<span class="token punctuation">)</span><span class="token punctuation">;</span> ok <span class="token punctuation">&#123;</span>
+                nextNode <span class="token operator">=</span> node
+            <span class="token punctuation">&#125;</span> <span class="token keyword">else</span> <span class="token punctuation">&#123;</span>
+                nextNode <span class="token operator">=</span> <span class="token function">NewRadix</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+                regNode <span class="token operator">:=</span> <span class="token function">NewRegexpNode</span><span class="token punctuation">(</span>nextNode<span class="token punctuation">,</span> regStr<span class="token punctuation">)</span>
+                <span class="token comment">// 这里采用的是 array 存储，所以在查找的时候有一种可能</span>
+                <span class="token comment">// 就是一个node下挂着多个正则匹配，并且秉着先进来的优先级高的方式</span>
+                r<span class="token punctuation">.</span>regexpNodes <span class="token operator">=</span> <span class="token function">append</span><span class="token punctuation">(</span>r<span class="token punctuation">.</span>regexpNodes<span class="token punctuation">,</span> regNode<span class="token punctuation">)</span>
+            <span class="token punctuation">&#125;</span>
+        <span class="token punctuation">&#125;</span> <span class="token keyword">else</span> <span class="token punctuation">&#123;</span>
+            <span class="token comment">// 这里的 stringNodes 存储结构见下图，其实很简单，一个 node 代表的就是path中的一部分</span>
+            <span class="token comment">// 如果说两个 path 有重合的部分，那么他们之间就可以共用这些 node，这也是基数树的一个特征</span>
+            <span class="token comment">// ** 正如这里的判断，其实就是验证是否可以有公共的部分 **</span>
+            <span class="token keyword">if</span> node<span class="token punctuation">,</span> ok <span class="token operator">:=</span> r<span class="token punctuation">.</span>stringNodes<span class="token punctuation">[</span>segments<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">;</span> ok <span class="token punctuation">&#123;</span>
+                nextNode <span class="token operator">=</span> node
+            <span class="token punctuation">&#125;</span> <span class="token keyword">else</span> <span class="token punctuation">&#123;</span>
+                <span class="token comment">// 走到这里说明，这个 seg 不存在，也就是没有公共部分，需要新建</span>
+                nextNode <span class="token operator">=</span> <span class="token function">NewRadix</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+                r<span class="token punctuation">.</span>stringNodes<span class="token punctuation">[</span>segments<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">]</span> <span class="token operator">=</span> nextNode
+            <span class="token punctuation">&#125;</span>
+        <span class="token punctuation">&#125;</span>
+        <span class="token comment">// 递归调用</span>
+        <span class="token keyword">return</span> nextNode<span class="token punctuation">.</span><span class="token function">add</span><span class="token punctuation">(</span>segments<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">:</span><span class="token punctuation">]</span><span class="token punctuation">,</span> data<span class="token punctuation">,</span> depth<span class="token operator">+</span><span class="token number">1</span><span class="token punctuation">,</span> segNames<span class="token punctuation">)</span>
+    <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p><img src="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220218174102417.png" alt="image-20220218174102417"></p>
+<p>这里我想了下，不用递归行不行，答案肯定是可以的，所有的递归都是可以通过 for 循环来完成的。但是细想了下，毕竟只有在项目启动中执行一次，也没必要，这样看起来更清晰，代码更简洁。</p>
+<p><strong>路由查找过程</strong></p>
+<p>先简单看看正则匹配的过程。比如我们定义了一个路由 <code>/user/&lt;^1[0-9-]&#123;10&#125;$&gt;</code> (按照人家框架的约束条件声明)</p>
+<p>那么只要是匹配到该规则的路径，都是相同的 handler 进行处理。</p>
+<p>如果上述路由注册的过程看明白了的话，我想你心里已经可以构建出一颗基数树，没有也没关系，我给你画出来，请见下图。</p>
+<p><img src="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220220154418325.png" alt="image-20220220154418325"></p>
+<p>画的比较简陋，不过大概意思就是这样。</p>
+<p><strong>代码实现</strong></p>
+<p>我们可以尝试使用下面的函数，加上上面的图作为辅助，查找一下 <code>/student/Peter</code></p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// 可以先看下返回结果</span>
+<span class="token comment">// bool 表示是否找到</span>
+<span class="token comment">// RadixNode 则表示具体的 node，也可以理解为最终的 handler</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>r <span class="token operator">*</span>RadixNode<span class="token punctuation">)</span> <span class="token function">match</span><span class="token punctuation">(</span>segments <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token punctuation">(</span><span class="token operator">*</span>RadixNode<span class="token punctuation">,</span> <span class="token builtin">bool</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">if</span> <span class="token function">len</span><span class="token punctuation">(</span>segments<span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token number">0</span> <span class="token punctuation">&#123;</span>
+        <span class="token keyword">return</span> r<span class="token punctuation">,</span> <span class="token boolean">true</span>
+    <span class="token punctuation">&#125;</span> <span class="token keyword">else</span> <span class="token keyword">if</span> <span class="token function">len</span><span class="token punctuation">(</span>r<span class="token punctuation">.</span>stringNodes<span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token number">0</span> <span class="token operator">&amp;&amp;</span> <span class="token function">len</span><span class="token punctuation">(</span>r<span class="token punctuation">.</span>regexpNodes<span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token number">0</span> <span class="token punctuation">&#123;</span>
+        <span class="token keyword">return</span> r<span class="token punctuation">,</span> <span class="token boolean">false</span>
+    <span class="token punctuation">&#125;</span>
+	
+    <span class="token comment">// 不难看出，这里仍然采用的是递归调用的方式</span>
+    <span class="token keyword">if</span> node<span class="token punctuation">,</span> ok <span class="token operator">:=</span> r<span class="token punctuation">.</span>stringNodes<span class="token punctuation">[</span>segments<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">;</span> ok <span class="token punctuation">&#123;</span>
+        <span class="token keyword">if</span> rnode<span class="token punctuation">,</span> <span class="token boolean">_</span> <span class="token operator">:=</span> node<span class="token punctuation">.</span><span class="token function">match</span><span class="token punctuation">(</span>segments<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">:</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span> rnode <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token operator">&amp;&amp;</span> rnode<span class="token punctuation">.</span>data <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
+            <span class="token keyword">return</span> rnode<span class="token punctuation">,</span> <span class="token boolean">true</span>
+        <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">&#125;</span>
+
+    <span class="token keyword">var</span> nodeTmp <span class="token operator">*</span>RadixNode
+    <span class="token keyword">for</span> <span class="token boolean">_</span><span class="token punctuation">,</span> regNode <span class="token operator">:=</span> <span class="token keyword">range</span> r<span class="token punctuation">.</span>regexpNodes <span class="token punctuation">&#123;</span>
+        <span class="token keyword">if</span> regexp<span class="token punctuation">.</span><span class="token function">MustCompile</span><span class="token punctuation">(</span>regNode<span class="token punctuation">.</span>regStr<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">MatchString</span><span class="token punctuation">(</span>segments<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+            <span class="token keyword">if</span> rnode<span class="token punctuation">,</span> fullMatch <span class="token operator">:=</span> regNode<span class="token punctuation">.</span>node<span class="token punctuation">.</span><span class="token function">match</span><span class="token punctuation">(</span>segments<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">:</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span> rnode <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token operator">&amp;&amp;</span> rnode<span class="token punctuation">.</span>data <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
+                <span class="token keyword">if</span> fullMatch <span class="token punctuation">&#123;</span>
+                    <span class="token keyword">return</span> rnode<span class="token punctuation">,</span> fullMatch
+                <span class="token punctuation">&#125;</span> <span class="token keyword">else</span> <span class="token punctuation">&#123;</span>
+                    <span class="token keyword">if</span> nodeTmp <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
+                        log<span class="token punctuation">.</span><span class="token function">Errorf</span><span class="token punctuation">(</span><span class="token string">"segments %v match mutil node"</span><span class="token punctuation">,</span> segments<span class="token punctuation">)</span>
+                        <span class="token keyword">continue</span>
+                    <span class="token punctuation">&#125;</span>
+                    nodeTmp <span class="token operator">=</span> rnode
+                <span class="token punctuation">&#125;</span>
+            <span class="token punctuation">&#125;</span>
+        <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">&#125;</span>
+
+    <span class="token keyword">if</span> nodeTmp <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
+        <span class="token keyword">return</span> nodeTmp<span class="token punctuation">,</span> <span class="token boolean">false</span>
+    <span class="token punctuation">&#125;</span> <span class="token keyword">else</span> <span class="token punctuation">&#123;</span>
+        <span class="token keyword">return</span> r<span class="token punctuation">,</span> <span class="token boolean">false</span>
+    <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+
+
+<blockquote>
+<p>从上述代码可以看出，路由匹配过程中，优先级最高的是名称相同，其次才是正则匹配。</p>
+</blockquote>
+</div><div id="donate"><link rel="stylesheet" type="text/css" href="/css/donate.css?v=1.0.0"><script type="text/javascript" src="/js/donate.js?v=1.0.0" successtext="复制成功!"></script><a class="pos-f tr3" id="github" href="https://github.com/Kaiyuan/donate-page" target="_blank" title="Github"></a><div id="DonateText">Donate</div><ul class="list pos-f" id="donateBox"><li id="ps">没有开启任何Donate选项!</li></ul><div class="pos-f left-100" id="QRBox"><div id="MainBox"></div></div></div><div class="post-copyright"><script type="text/javascript" src="/js/copyright.js?v=1.0.0" successtext="复制成功!"></script><link rel="stylesheet" type="text/css" href="/css/copyright.css?v=1.0.0"><p><span>本文标题：</span>一个 web 框架的那些事</p><p><span>文章作者：</span>bqyang</p><p><span>发布时间：</span>2022-02-18</p><p><span>最后更新：</span>2022-02-20</p><p><span>原始链接：</span><a href="/2022/webFrame/">https://bqyang.top/2022/webFrame/</a><span class="copy-path"><i class="fa fa-clipboard" data-clipboard-text="https://bqyang.top/2022/webFrame/"></i></span></p><p><span>版权声明：</span>The author owns the copyright, please indicate the source reproduced.</p></div><br><div class="tags"></div><div class="post-nav"><a class="pre" href="/2022/chi/">chi 框架路由分析</a><a class="next" href="/2022/VariableEscape/">真的遇到了变量逃逸</a></div><div id="container"></div><link rel="stylesheet" type="text/css" href="//unpkg.com/gitalk/dist/gitalk.css"><script type="text/javascript" src="//cdn.bootcss.com/blueimp-md5/2.10.0/js/md5.js"></script><script type="text/javascript" src="//unpkg.com/gitalk/dist/gitalk.min.js"></script><script>var gitalk = new Gitalk({
+  clientID: '4bcae079402e9cc4ce7b',
+  clientSecret: 'bc6b6ecab4d016f0a056df8253ad41b76b944084',
+  repo: 'blog_comments',
+  owner: 'clamyang',
+  admin: ['clamyang'],
+  id: md5(location.pathname),
+  distractionFreeMode: false
+})
+gitalk.render('container')
+</script></div></div></div><div class="pure-u-1-4 hidden_mid_and_down"><div id="sidebar"><div class="widget"><form class="search-form" action="//www.google.com/search" method="get" accept-charset="utf-8" target="_blank"><input type="text" name="q" maxlength="20" placeholder="Search"/><input type="hidden" name="sitesearch" value="https://bqyang.top"/></form></div><div class="widget"><div class="widget-title"><i class="fa fa-folder-o"> 分类</i></div></div><div class="widget"><div class="widget-title"><i class="fa fa-star-o"> 标签</i></div><div class="tagcloud"></div></div><div class="widget"><div class="widget-title"><i class="fa fa-file-o"> 最近文章</i></div><ul class="post-list"><li class="post-list-item"><a class="post-list-link" href="/2022/leetcode/array/easy/">数组-简单题</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/language/c/recur/">再学递归（几个有意思的递归练习）</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/language/c/print/">打印字符</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/language/c/string/">C-String</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/language/rust/enum/">Rust-Enums</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/language/rust/structs/">Rust-Structs</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/language/rust/ownership/">Rust-Ownership</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/k8s/deployment/">Deployment 更新策略</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/os/os-start/">操作系统启动</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/os/concurrency-sema/">同步原语-semaphore</a></li></ul></div><div class="widget"><div class="widget-title"><i class="fa fa-external-link"> 友情链接</i></div><ul></ul><a href="http://www.xargin.com/" title="Xargin" target="_blank">Xargin</a></div></div></div><div class="pure-u-1 pure-u-md-3-4"><div id="footer">Copyright © 2022 <a href="/." rel="nofollow">杨宝强的技术笔记.</a> Powered by<a rel="nofollow" target="_blank" href="https://hexo.io"> Hexo.</a><a rel="nofollow" target="_blank" href="https://github.com/tufu9441/maupassant-hexo"> Theme</a> by<a rel="nofollow" target="_blank" href="https://github.com/pagecho"> Cho.</a></div></div></div><a class="show" id="rocket" href="#top"></a><script type="text/javascript" src="/js/totop.js?v=1.0.0" async></script><script type="text/javascript" src="//lib.baomitu.com/fancybox/latest/jquery.fancybox.min.js" async></script><script type="text/javascript" src="/js/fancybox.js?v=1.0.0" async></script><link rel="stylesheet" type="text/css" href="//lib.baomitu.com/fancybox/latest/jquery.fancybox.min.css"><script type="text/javascript" src="/js/copycode.js?v=1.0.0" successtext="复制成功!"></script><link rel="stylesheet" type="text/css" href="/css/copycode.css?v=1.0.0"><script type="text/javascript" src="/js/codeblock-resizer.js?v=1.0.0"></script><script type="text/javascript" src="/js/smartresize.js?v=1.0.0"></script></div></body></html>

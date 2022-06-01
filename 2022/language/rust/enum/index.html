@@ -1,0 +1,92 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="一物不知深以为耻"><title>Rust-Enums | 杨宝强的技术笔记</title><link rel="stylesheet" type="text/css" href="/css/style.css?v=1.0.0"><link rel="stylesheet" type="text/css" href="//lib.baomitu.com/normalize/latest/normalize.min.css"><link rel="stylesheet" type="text/css" href="//lib.baomitu.com/pure/latest/pure-min.min.css"><link rel="stylesheet" type="text/css" href="//lib.baomitu.com/pure/latest/grids-responsive-min.min.css"><link rel="stylesheet" href="//lib.baomitu.com/font-awesome/4.7.0/css/font-awesome.min.css"><script type="text/javascript" src="//lib.baomitu.com/jquery/latest/jquery.min.js"></script><link rel="icon" mask="" sizes="any" href="/favicon.ico"><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="apple-touch-icon-precomposed" href="/apple-touch-icon.png"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><script type="text/javascript" src="//lib.baomitu.com/clipboard.js/latest/clipboard.min.js"></script><script type="text/javascript" src="//lib.baomitu.com/toastr.js/latest/toastr.min.js"></script><link rel="stylesheet" href="//lib.baomitu.com/toastr.js/latest/toastr.min.css"><div class="darkmode-toggle">🌓</div><script>var prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)');
+var toggle = document.querySelector('.darkmode-toggle');
+var html = document.querySelector('html');
+
+html.dataset.dark = localStorage.dark || prefersDarkMode.matches;
+
+toggle.addEventListener('click', () => {
+localStorage.dark = !(html.dataset.dark == 'true');
+html.dataset.dark = localStorage.dark;
+});</script><meta name="generator" content="Hexo 5.4.0"></head><body><div class="body_container"><div id="header"><div class="site-name"><h1 class="hidden">Rust-Enums</h1><a id="logo" href="/.">杨宝强的技术笔记</a><p class="description"></p></div><div id="nav-menu"><a class="current" href="/."><i class="fa fa-home"> 首页</i></a><a href="/archives/"><i class="fa fa-archive"> 归档</i></a><a href="/about/"><i class="fa fa-user"> 关于</i></a><a href="/atom.xml"><i class="fa fa-rss"> 订阅</i></a></div></div><div class="pure-g" id="layout"><div class="pure-u-1 pure-u-md-3-4"><div class="content_container"><div class="post"><h1 class="post-title">Rust-Enums</h1><div class="post-meta">2022-05-10</div><div class="post-content"><p>Rust 枚举</p>
+<span id="more"></span>
+
+<p><strong>定义、声明</strong></p>
+<pre class="line-numbers language-rust" data-language="rust"><code class="language-rust">enmu <span class="token class-name">IpAddrKind</span> <span class="token punctuation">&#123;</span>
+    <span class="token constant">V4</span><span class="token punctuation">,</span>
+    <span class="token constant">V6</span><span class="token punctuation">,</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+
+
+
+<p>定义了一个枚举数据类型，IpAddrKind，枚举中有两个变量，V4，V6。但是这样存在一个问题，实际的 IP 地址应该存储在哪里，这只是定义了两种 Ip 类型。</p>
+<p>如何使用 enum 存储值？</p>
+<p>方法一，使用 struct：</p>
+<pre class="line-numbers language-rust" data-language="rust"><code class="language-rust"><span class="token keyword">struct</span> <span class="token type-definition class-name">IpAddr</span> <span class="token punctuation">&#123;</span>
+    kind<span class="token punctuation">:</span> <span class="token class-name">IpAddrKind</span><span class="token punctuation">,</span>
+    address<span class="token punctuation">:</span> <span class="token class-name">String</span><span class="token punctuation">,</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">let</span> home <span class="token operator">=</span> <span class="token class-name">IpAddr</span> <span class="token punctuation">&#123;</span>
+    kind<span class="token punctuation">:</span> <span class="token class-name">IpAddrKind</span><span class="token punctuation">::</span><span class="token constant">V4</span><span class="token punctuation">,</span>
+    address<span class="token punctuation">:</span> <span class="token class-name">String</span><span class="token punctuation">::</span><span class="token function">from</span><span class="token punctuation">(</span><span class="token string">"127.0.0.1"</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+
+<span class="token keyword">let</span> loopback <span class="token operator">=</span> <span class="token class-name">IpAddr</span> <span class="token punctuation">&#123;</span>
+    kind<span class="token punctuation">:</span> <span class="token class-name">IpAddrKind</span><span class="token punctuation">::</span><span class="token constant">V6</span><span class="token punctuation">,</span>
+    address<span class="token punctuation">:</span> <span class="token class-name">String</span><span class="token punctuation">::</span><span class="token function">from</span><span class="token punctuation">(</span><span class="token string">"::1"</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+
+
+<p>方法二，使用 enum 存储：</p>
+<p>直接使用 enum 存储值，这个有点意思..</p>
+<pre class="line-numbers language-rust" data-language="rust"><code class="language-rust"><span class="token keyword">enum</span> <span class="token type-definition class-name">IpAddr</span> <span class="token punctuation">&#123;</span>
+    <span class="token constant">V4</span><span class="token punctuation">(</span><span class="token class-name">String</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token constant">V6</span><span class="token punctuation">(</span><span class="token class-name">String</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">let</span> home <span class="token operator">=</span> <span class="token class-name">IpAddr</span><span class="token punctuation">::</span><span class="token constant">V4</span><span class="token punctuation">(</span><span class="token class-name">String</span><span class="token punctuation">::</span><span class="token function">from</span><span class="token punctuation">(</span><span class="token string">"127.0.0.1"</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token keyword">let</span> loopback <span class="token operator">=</span> <span class="token class-name">IpAddr</span><span class="token punctuation">::</span><span class="token constant">V6</span><span class="token punctuation">(</span><span class="token class-name">String</span><span class="token punctuation">::</span><span class="token function">from</span><span class="token punctuation">(</span><span class="token string">"::1"</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+
+
+<p>标准库中如何定义 IpAddr 的：</p>
+<pre class="line-numbers language-rust" data-language="rust"><code class="language-rust">
+<span class="token keyword">struct</span> <span class="token type-definition class-name">Ipv4Addr</span> <span class="token punctuation">&#123;</span>
+    <span class="token comment">// --snip--</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">struct</span> <span class="token type-definition class-name">Ipv6Addr</span> <span class="token punctuation">&#123;</span>
+    <span class="token comment">// --snip--</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">enum</span> <span class="token type-definition class-name">IpAddr</span> <span class="token punctuation">&#123;</span>
+    <span class="token constant">V4</span><span class="token punctuation">(</span><span class="token class-name">Ipv4Addr</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token constant">V6</span><span class="token punctuation">(</span><span class="token class-name">Ipv6Addr</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+<span class="token punctuation">&#125;</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+
+
+<p>**可以给 enum 添加 method..**这里其实 Go 也可以实现：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// 类似这样的代码</span>
+<span class="token keyword">type</span> Strings <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">int</span>
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span>s Strings<span class="token punctuation">)</span> <span class="token function">Less</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token builtin">bool</span> <span class="token punctuation">&#123;</span><span class="token keyword">return</span> <span class="token boolean">true</span><span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+
+
+
+<p><strong>The <code>Option</code> Enum</strong></p>
+</div><div id="donate"><link rel="stylesheet" type="text/css" href="/css/donate.css?v=1.0.0"><script type="text/javascript" src="/js/donate.js?v=1.0.0" successtext="复制成功!"></script><a class="pos-f tr3" id="github" href="https://github.com/Kaiyuan/donate-page" target="_blank" title="Github"></a><div id="DonateText">Donate</div><ul class="list pos-f" id="donateBox"><li id="ps">没有开启任何Donate选项!</li></ul><div class="pos-f left-100" id="QRBox"><div id="MainBox"></div></div></div><div class="post-copyright"><script type="text/javascript" src="/js/copyright.js?v=1.0.0" successtext="复制成功!"></script><link rel="stylesheet" type="text/css" href="/css/copyright.css?v=1.0.0"><p><span>本文标题：</span>Rust-Enums</p><p><span>文章作者：</span>bqyang</p><p><span>发布时间：</span>2022-05-10</p><p><span>最后更新：</span>2022-05-11</p><p><span>原始链接：</span><a href="/2022/language/rust/enum/">https://bqyang.top/2022/language/rust/enum/</a><span class="copy-path"><i class="fa fa-clipboard" data-clipboard-text="https://bqyang.top/2022/language/rust/enum/"></i></span></p><p><span>版权声明：</span>The author owns the copyright, please indicate the source reproduced.</p></div><br><div class="tags"></div><div class="post-nav"><a class="pre" href="/2022/language/c/string/">C-String</a><a class="next" href="/2022/language/rust/structs/">Rust-Structs</a></div><div id="container"></div><link rel="stylesheet" type="text/css" href="//unpkg.com/gitalk/dist/gitalk.css"><script type="text/javascript" src="//cdn.bootcss.com/blueimp-md5/2.10.0/js/md5.js"></script><script type="text/javascript" src="//unpkg.com/gitalk/dist/gitalk.min.js"></script><script>var gitalk = new Gitalk({
+  clientID: '4bcae079402e9cc4ce7b',
+  clientSecret: 'bc6b6ecab4d016f0a056df8253ad41b76b944084',
+  repo: 'blog_comments',
+  owner: 'clamyang',
+  admin: ['clamyang'],
+  id: md5(location.pathname),
+  distractionFreeMode: false
+})
+gitalk.render('container')
+</script></div></div></div><div class="pure-u-1-4 hidden_mid_and_down"><div id="sidebar"><div class="widget"><form class="search-form" action="//www.google.com/search" method="get" accept-charset="utf-8" target="_blank"><input type="text" name="q" maxlength="20" placeholder="Search"/><input type="hidden" name="sitesearch" value="https://bqyang.top"/></form></div><div class="widget"><div class="widget-title"><i class="fa fa-folder-o"> 分类</i></div></div><div class="widget"><div class="widget-title"><i class="fa fa-star-o"> 标签</i></div><div class="tagcloud"></div></div><div class="widget"><div class="widget-title"><i class="fa fa-file-o"> 最近文章</i></div><ul class="post-list"><li class="post-list-item"><a class="post-list-link" href="/2022/leetcode/array/easy/">数组-简单题</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/language/c/recur/">再学递归（几个有意思的递归练习）</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/language/c/print/">打印字符</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/language/c/string/">C-String</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/language/rust/enum/">Rust-Enums</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/language/rust/structs/">Rust-Structs</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/language/rust/ownership/">Rust-Ownership</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/k8s/deployment/">Deployment 更新策略</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/os/os-start/">操作系统启动</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/os/concurrency-sema/">同步原语-semaphore</a></li></ul></div><div class="widget"><div class="widget-title"><i class="fa fa-external-link"> 友情链接</i></div><ul></ul><a href="http://www.xargin.com/" title="Xargin" target="_blank">Xargin</a></div></div></div><div class="pure-u-1 pure-u-md-3-4"><div id="footer">Copyright © 2022 <a href="/." rel="nofollow">杨宝强的技术笔记.</a> Powered by<a rel="nofollow" target="_blank" href="https://hexo.io"> Hexo.</a><a rel="nofollow" target="_blank" href="https://github.com/tufu9441/maupassant-hexo"> Theme</a> by<a rel="nofollow" target="_blank" href="https://github.com/pagecho"> Cho.</a></div></div></div><a class="show" id="rocket" href="#top"></a><script type="text/javascript" src="/js/totop.js?v=1.0.0" async></script><script type="text/javascript" src="//lib.baomitu.com/fancybox/latest/jquery.fancybox.min.js" async></script><script type="text/javascript" src="/js/fancybox.js?v=1.0.0" async></script><link rel="stylesheet" type="text/css" href="//lib.baomitu.com/fancybox/latest/jquery.fancybox.min.css"><script type="text/javascript" src="/js/copycode.js?v=1.0.0" successtext="复制成功!"></script><link rel="stylesheet" type="text/css" href="/css/copycode.css?v=1.0.0"><script type="text/javascript" src="/js/codeblock-resizer.js?v=1.0.0"></script><script type="text/javascript" src="/js/smartresize.js?v=1.0.0"></script></div></body></html>

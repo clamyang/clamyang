@@ -1,0 +1,70 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="一物不知深以为耻"><title>操作系统启动 | 杨宝强的技术笔记</title><link rel="stylesheet" type="text/css" href="/css/style.css?v=1.0.0"><link rel="stylesheet" type="text/css" href="//lib.baomitu.com/normalize/latest/normalize.min.css"><link rel="stylesheet" type="text/css" href="//lib.baomitu.com/pure/latest/pure-min.min.css"><link rel="stylesheet" type="text/css" href="//lib.baomitu.com/pure/latest/grids-responsive-min.min.css"><link rel="stylesheet" href="//lib.baomitu.com/font-awesome/4.7.0/css/font-awesome.min.css"><script type="text/javascript" src="//lib.baomitu.com/jquery/latest/jquery.min.js"></script><link rel="icon" mask="" sizes="any" href="/favicon.ico"><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="apple-touch-icon-precomposed" href="/apple-touch-icon.png"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><script type="text/javascript" src="//lib.baomitu.com/clipboard.js/latest/clipboard.min.js"></script><script type="text/javascript" src="//lib.baomitu.com/toastr.js/latest/toastr.min.js"></script><link rel="stylesheet" href="//lib.baomitu.com/toastr.js/latest/toastr.min.css"><div class="darkmode-toggle">🌓</div><script>var prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)');
+var toggle = document.querySelector('.darkmode-toggle');
+var html = document.querySelector('html');
+
+html.dataset.dark = localStorage.dark || prefersDarkMode.matches;
+
+toggle.addEventListener('click', () => {
+localStorage.dark = !(html.dataset.dark == 'true');
+html.dataset.dark = localStorage.dark;
+});</script><meta name="generator" content="Hexo 5.4.0"></head><body><div class="body_container"><div id="header"><div class="site-name"><h1 class="hidden">操作系统启动</h1><a id="logo" href="/.">杨宝强的技术笔记</a><p class="description"></p></div><div id="nav-menu"><a class="current" href="/."><i class="fa fa-home"> 首页</i></a><a href="/archives/"><i class="fa fa-archive"> 归档</i></a><a href="/about/"><i class="fa fa-user"> 关于</i></a><a href="/atom.xml"><i class="fa fa-rss"> 订阅</i></a></div></div><div class="pure-g" id="layout"><div class="pure-u-1 pure-u-md-3-4"><div class="content_container"><div class="post"><h1 class="post-title">操作系统启动</h1><div class="post-meta">2022-05-05</div><div class="post-content"><hr>
+<p>尝试揭开操作系统的神秘面纱。</p>
+<span id="more"></span>
+
+<h1 id="QEMU"><a href="#QEMU" class="headerlink" title="QEMU"></a>QEMU</h1><h2 id="安装步骤"><a href="#安装步骤" class="headerlink" title="安装步骤"></a>安装步骤</h2><pre class="line-numbers language-none"><code class="language-none">wget https:&#x2F;&#x2F;download.qemu.org&#x2F;qemu-7.0.0.tar.xz
+tar xvJf qemu-7.0.0.tar.xz
+cd qemu-7.0.0
+.&#x2F;configure
+make
+&#x2F;&#x2F; make 后记得 make install<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<blockquote>
+<p>安装个 QEMU 真的是费死劲了，能遇到的问题基本上都遇到了，而且<strong>这个容器我挂了windows</strong>的一个目录（为了保存下来），make 花了<strong>3</strong>小时。</p>
+</blockquote>
+<p>遇到的具体问题如下：</p>
+<ul>
+<li>缺少依赖，pixman-1, gthread, glib, 我是基于 alpine 镜像构建的，很多依赖找起来很费事，不过要熟练使用 search 命令。</li>
+</ul>
+<p>具体解决方案省略，作为一个合格的工程师，肯定会找到办法的。</p>
+<h1 id="CPU-Reset"><a href="#CPU-Reset" class="headerlink" title="CPU Reset"></a>CPU Reset</h1><p>程序就是状态机，操作系统也是一个 C 程序。那么问题就来了，电脑在 CPU Reset 之后（获得了一个初始状态）发生了什么？</p>
+<blockquote>
+<p>初始状态指的是：各种寄存器的初始值是什么。</p>
+</blockquote>
+<p><strong>计算机中没有任何神秘的东西</strong></p>
+<p><img src="https://s2.loli.net/2022/05/06/e6anlsRhC2BULVu.png" alt="intel-cpu-reset"></p>
+<p>可以看到，表 9-1 列出了在通电、重置、初始化后各种寄存器的值。这些都是<strong>约定</strong>，即硬件和软件约定好，每次加电后，CPU 状态设置为这些值，CPU 就是不断地执行指令，然后一步一步的加载出操作系统代码。</p>
+<p><img src="https://s2.loli.net/2022/05/06/9SzlH2nRchoykQL.png" alt="image-20220506202315147"></p>
+<h1 id="Legacy-BIOS-约定"><a href="#Legacy-BIOS-约定" class="headerlink" title="Legacy BIOS 约定"></a>Legacy BIOS 约定</h1><p>（操作系统与BIOS之间的约定，BIOS 上哪加载操作系统代码）</p>
+<p>BIOS （Basic I/O System），BIOS 就是我们 CPU Reset 后 PC 指向的位置，也就意味着加电后执行的第一个程序是 BIOS 代码。然后 BIOS  代码都做了什么呢？他要做的事情都是约定好的。</p>
+<p>MBR（Master Boot Record）主引导扇区，BIOS 要做的事情就是加载磁盘的前<strong>512字节</strong>（主引导扇区）到 <strong>0x7c00</strong>，<strong>检查这块磁盘是否可以作为启动盘</strong>。如果是，可以从磁盘中加载更多的内容到内存中，否则检查下一块磁盘的前512字节。</p>
+<p>检查磁盘作为启动盘的标志是什么？<strong>55aa</strong></p>
+<blockquote>
+<p>怎么查看呢？有没有什么命令能查？</p>
+<p>还真就是只有想不到的，没有做不到的。</p>
+</blockquote>
+<p>**hexdump ** 可以 <code>hexdump --help</code> 看一下具体细节，这里就是 <code>hexdump -n 512 /dev/sda    </code></p>
+<p>补上一张 MBR 的图片</p>
+<p><img src="https://s2.loli.net/2022/05/13/K9cL6sJ2etyP4QR.png" alt="o_mbr_anatomy"></p>
+<p>是哪条指令将 MBR 中的内容加载到内存中的？</p>
+<pre class="line-numbers language-assembly" data-language="assembly"><code class="language-assembly"># 就是下面这条指令
+0xfa759:     rep insl (%dx),%es:(%di)
+# ...<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+
+<blockquote>
+<p>如何查看上述的指令？x/i ($cs * 16 + $rip)</p>
+</blockquote>
+<p>cs （code segment register） 代码段寄存器</p>
+<p>ds （data segment register） 数据段寄存器</p>
+<p>为什么要按照这个算式进行查询呢？<code>($cs * 16 + $rip)</code> 早期的 IBM PC 机器，总线是 20 位，但是寄存器中都是 16 位的数据，所以怎么凑够这个 20 位的总线，代码段地址左移 4 位，然后加上偏移量，就是我们要执行的下一条指令地址。</p>
+<h1 id="为什么叫做-x86-架构"><a href="#为什么叫做-x86-架构" class="headerlink" title="为什么叫做 x86 架构"></a>为什么叫做 x86 架构</h1><p>一般这种都是历史原因… 早期的 IBM PC 机器使用 Intel 8086 处理器，后来就把这个 8086 CPU 的架构叫做 x86。更详细的内容可以 Google 上看下，其实就连这个 <code>0x7c00  </code>都有一部分历史原因。</p>
+</div><div id="donate"><link rel="stylesheet" type="text/css" href="/css/donate.css?v=1.0.0"><script type="text/javascript" src="/js/donate.js?v=1.0.0" successtext="复制成功!"></script><a class="pos-f tr3" id="github" href="https://github.com/Kaiyuan/donate-page" target="_blank" title="Github"></a><div id="DonateText">Donate</div><ul class="list pos-f" id="donateBox"><li id="ps">没有开启任何Donate选项!</li></ul><div class="pos-f left-100" id="QRBox"><div id="MainBox"></div></div></div><div class="post-copyright"><script type="text/javascript" src="/js/copyright.js?v=1.0.0" successtext="复制成功!"></script><link rel="stylesheet" type="text/css" href="/css/copyright.css?v=1.0.0"><p><span>本文标题：</span>操作系统启动</p><p><span>文章作者：</span>bqyang</p><p><span>发布时间：</span>2022-05-05</p><p><span>最后更新：</span>2022-05-13</p><p><span>原始链接：</span><a href="/2022/os/os-start/">https://bqyang.top/2022/os/os-start/</a><span class="copy-path"><i class="fa fa-clipboard" data-clipboard-text="https://bqyang.top/2022/os/os-start/"></i></span></p><p><span>版权声明：</span>The author owns the copyright, please indicate the source reproduced.</p></div><br><div class="tags"></div><div class="post-nav"><a class="pre" href="/2022/k8s/deployment/">Deployment 更新策略</a><a class="next" href="/2022/os/concurrency-sema/">同步原语-semaphore</a></div><div id="container"></div><link rel="stylesheet" type="text/css" href="//unpkg.com/gitalk/dist/gitalk.css"><script type="text/javascript" src="//cdn.bootcss.com/blueimp-md5/2.10.0/js/md5.js"></script><script type="text/javascript" src="//unpkg.com/gitalk/dist/gitalk.min.js"></script><script>var gitalk = new Gitalk({
+  clientID: '4bcae079402e9cc4ce7b',
+  clientSecret: 'bc6b6ecab4d016f0a056df8253ad41b76b944084',
+  repo: 'blog_comments',
+  owner: 'clamyang',
+  admin: ['clamyang'],
+  id: md5(location.pathname),
+  distractionFreeMode: false
+})
+gitalk.render('container')
+</script></div></div></div><div class="pure-u-1-4 hidden_mid_and_down"><div id="sidebar"><div class="widget"><form class="search-form" action="//www.google.com/search" method="get" accept-charset="utf-8" target="_blank"><input type="text" name="q" maxlength="20" placeholder="Search"/><input type="hidden" name="sitesearch" value="https://bqyang.top"/></form></div><div class="widget"><div class="widget-title"><i class="fa fa-folder-o"> 分类</i></div></div><div class="widget"><div class="widget-title"><i class="fa fa-star-o"> 标签</i></div><div class="tagcloud"></div></div><div class="widget"><div class="widget-title"><i class="fa fa-file-o"> 最近文章</i></div><ul class="post-list"><li class="post-list-item"><a class="post-list-link" href="/2022/leetcode/array/easy/">数组-简单题</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/language/c/recur/">再学递归（几个有意思的递归练习）</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/language/c/print/">打印字符</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/language/c/string/">C-String</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/language/rust/enum/">Rust-Enums</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/language/rust/structs/">Rust-Structs</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/language/rust/ownership/">Rust-Ownership</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/k8s/deployment/">Deployment 更新策略</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/os/os-start/">操作系统启动</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/os/concurrency-sema/">同步原语-semaphore</a></li></ul></div><div class="widget"><div class="widget-title"><i class="fa fa-external-link"> 友情链接</i></div><ul></ul><a href="http://www.xargin.com/" title="Xargin" target="_blank">Xargin</a></div></div></div><div class="pure-u-1 pure-u-md-3-4"><div id="footer">Copyright © 2022 <a href="/." rel="nofollow">杨宝强的技术笔记.</a> Powered by<a rel="nofollow" target="_blank" href="https://hexo.io"> Hexo.</a><a rel="nofollow" target="_blank" href="https://github.com/tufu9441/maupassant-hexo"> Theme</a> by<a rel="nofollow" target="_blank" href="https://github.com/pagecho"> Cho.</a></div></div></div><a class="show" id="rocket" href="#top"></a><script type="text/javascript" src="/js/totop.js?v=1.0.0" async></script><script type="text/javascript" src="//lib.baomitu.com/fancybox/latest/jquery.fancybox.min.js" async></script><script type="text/javascript" src="/js/fancybox.js?v=1.0.0" async></script><link rel="stylesheet" type="text/css" href="//lib.baomitu.com/fancybox/latest/jquery.fancybox.min.css"><script type="text/javascript" src="/js/copycode.js?v=1.0.0" successtext="复制成功!"></script><link rel="stylesheet" type="text/css" href="/css/copycode.css?v=1.0.0"><script type="text/javascript" src="/js/codeblock-resizer.js?v=1.0.0"></script><script type="text/javascript" src="/js/smartresize.js?v=1.0.0"></script></div></body></html>

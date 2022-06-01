@@ -1,0 +1,448 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="一物不知深以为耻"><title>timer 源码分析 | 杨宝强的技术笔记</title><link rel="stylesheet" type="text/css" href="/css/style.css?v=1.0.0"><link rel="stylesheet" type="text/css" href="//lib.baomitu.com/normalize/latest/normalize.min.css"><link rel="stylesheet" type="text/css" href="//lib.baomitu.com/pure/latest/pure-min.min.css"><link rel="stylesheet" type="text/css" href="//lib.baomitu.com/pure/latest/grids-responsive-min.min.css"><link rel="stylesheet" href="//lib.baomitu.com/font-awesome/4.7.0/css/font-awesome.min.css"><script type="text/javascript" src="//lib.baomitu.com/jquery/latest/jquery.min.js"></script><link rel="icon" mask="" sizes="any" href="/favicon.ico"><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="apple-touch-icon-precomposed" href="/apple-touch-icon.png"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><script type="text/javascript" src="//lib.baomitu.com/clipboard.js/latest/clipboard.min.js"></script><script type="text/javascript" src="//lib.baomitu.com/toastr.js/latest/toastr.min.js"></script><link rel="stylesheet" href="//lib.baomitu.com/toastr.js/latest/toastr.min.css"><div class="darkmode-toggle">🌓</div><script>var prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)');
+var toggle = document.querySelector('.darkmode-toggle');
+var html = document.querySelector('html');
+
+html.dataset.dark = localStorage.dark || prefersDarkMode.matches;
+
+toggle.addEventListener('click', () => {
+localStorage.dark = !(html.dataset.dark == 'true');
+html.dataset.dark = localStorage.dark;
+});</script><meta name="generator" content="Hexo 5.4.0"></head><body><div class="body_container"><div id="header"><div class="site-name"><h1 class="hidden">timer 源码分析</h1><a id="logo" href="/.">杨宝强的技术笔记</a><p class="description"></p></div><div id="nav-menu"><a class="current" href="/."><i class="fa fa-home"> 首页</i></a><a href="/archives/"><i class="fa fa-archive"> 归档</i></a><a href="/about/"><i class="fa fa-user"> 关于</i></a><a href="/atom.xml"><i class="fa fa-rss"> 订阅</i></a></div></div><div class="pure-g" id="layout"><div class="pure-u-1 pure-u-md-3-4"><div class="content_container"><div class="post"><h1 class="post-title">timer 源码分析</h1><div class="post-meta">2021-11-14</div><div class="post-content"><p>golang timer 的优化过程以及底层实现。</p>
+<span id="more"></span>
+
+<h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><p>buzhidaoxieshenme</p>
+<h3 id="环境信息"><a href="#环境信息" class="headerlink" title="环境信息"></a>环境信息</h3><ul>
+<li>go version：go1.8</li>
+<li>compute: linux, centos7</li>
+</ul>
+<h3 id="带着问题出发"><a href="#带着问题出发" class="headerlink" title="带着问题出发"></a>带着问题出发</h3><p>1.数据结构-堆，有什么特征？<br>2.timer 在执行用户函数的时候是否新建了 goroutine？<br>3.当 timer 需要阻塞时，g 被谁接管了？<br>4.timer 中有两种不同的挂起方式分别是？</p>
+<h3 id="timer-中的“增删改查”"><a href="#timer-中的“增删改查”" class="headerlink" title="timer 中的“增删改查”"></a>timer 中的“增删改查”</h3><h4 id="timer-的创建"><a href="#timer-的创建" class="headerlink" title="timer 的创建"></a>timer 的创建</h4><pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// 可以理解为 timer 的入口</span>
+<span class="token keyword">func</span> <span class="token function">startTimer</span><span class="token punctuation">(</span>t <span class="token operator">*</span>timer<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">if</span> raceenabled <span class="token punctuation">&#123;</span>
+        <span class="token function">racerelease</span><span class="token punctuation">(</span>unsafe<span class="token punctuation">.</span><span class="token function">Pointer</span><span class="token punctuation">(</span>t<span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token comment">// 将新的 timer 加入到全局的 timers 中</span>
+    <span class="token function">addtimer</span><span class="token punctuation">(</span>t<span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h4 id="addtimer"><a href="#addtimer" class="headerlink" title="addtimer"></a>addtimer</h4><p>了解添加 timer 的过程：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">/*
+    再次说明版本!! go1.8 !!
+*/</span>
+
+<span class="token comment">// 向全局 timers 中添加 timer</span>
+<span class="token keyword">func</span> <span class="token function">addtimer</span><span class="token punctuation">(</span>t <span class="token operator">*</span>timer<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token comment">// 要访问全局的 timers 加锁</span>
+    <span class="token function">lock</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>timers<span class="token punctuation">.</span>lock<span class="token punctuation">)</span>
+    <span class="token comment">// 将 t 加入到 timers 中</span>
+    <span class="token function">addtimerLocked</span><span class="token punctuation">(</span>t<span class="token punctuation">)</span>
+    <span class="token comment">// 添加完成，释放锁</span>
+    <span class="token function">unlock</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>timers<span class="token punctuation">.</span>lock<span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">func</span> <span class="token function">addtimerLocked</span><span class="token punctuation">(</span>t <span class="token operator">*</span>timer<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token comment">// when must never be negative; otherwise timerproc will overflow</span>
+    <span class="token comment">// during its delta calculation and never expire other runtime timers.</span>
+    <span class="token keyword">if</span> t<span class="token punctuation">.</span>when <span class="token operator">&lt;</span> <span class="token number">0</span> <span class="token punctuation">&#123;</span>
+        t<span class="token punctuation">.</span>when <span class="token operator">=</span> <span class="token number">1</span><span class="token operator">&lt;&lt;</span><span class="token number">63</span> <span class="token operator">-</span> <span class="token number">1</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token comment">// 计算 t 在 timers 中的索引</span>
+    t<span class="token punctuation">.</span>i <span class="token operator">=</span> <span class="token function">len</span><span class="token punctuation">(</span>timers<span class="token punctuation">.</span>t<span class="token punctuation">)</span>
+    timers<span class="token punctuation">.</span>t <span class="token operator">=</span> <span class="token function">append</span><span class="token punctuation">(</span>timers<span class="token punctuation">.</span>t<span class="token punctuation">,</span> t<span class="token punctuation">)</span>
+    <span class="token comment">// 对小顶堆重新排列</span>
+    <span class="token function">siftupTimer</span><span class="token punctuation">(</span>t<span class="token punctuation">.</span>i<span class="token punctuation">)</span>
+    <span class="token comment">// 如果说 t.i == 0，意味着在所有等待执行的 timer 中，这个 timer 的值最小，排在了堆顶</span>
+    <span class="token keyword">if</span> t<span class="token punctuation">.</span>i <span class="token operator">==</span> <span class="token number">0</span> <span class="token punctuation">&#123;</span>
+        <span class="token comment">// siftup moved to top: new earliest deadline.</span>
+        <span class="token comment">// 如果 timers 处于 sleeping 状态，则通过 notewakeup 进行唤醒</span>
+        <span class="token keyword">if</span> timers<span class="token punctuation">.</span>sleeping <span class="token punctuation">&#123;</span>
+            timers<span class="token punctuation">.</span>sleeping <span class="token operator">=</span> <span class="token boolean">false</span>
+            <span class="token function">notewakeup</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>timers<span class="token punctuation">.</span>waitnote<span class="token punctuation">)</span>
+        <span class="token punctuation">&#125;</span>
+        <span class="token comment">// 如果 timers 处于 rescheduling 状态，则通过 goready 进行唤醒</span>
+        <span class="token keyword">if</span> timers<span class="token punctuation">.</span>rescheduling <span class="token punctuation">&#123;</span>
+            timers<span class="token punctuation">.</span>rescheduling <span class="token operator">=</span> <span class="token boolean">false</span>
+            <span class="token function">goready</span><span class="token punctuation">(</span>timers<span class="token punctuation">.</span>gp<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span>
+        <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token comment">// 检查全局唯一的 timerproc 是否已经创建，没有则启动</span>
+    <span class="token keyword">if</span> <span class="token operator">!</span>timers<span class="token punctuation">.</span>created <span class="token punctuation">&#123;</span>
+        timers<span class="token punctuation">.</span>created <span class="token operator">=</span> <span class="token boolean">true</span>
+        <span class="token keyword">go</span> <span class="token function">timerproc</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>我们暂时可以不用理解为什么有 sleeping, rescheduling 两种状态，先掌握整体的执行过程，再深入的去看细节。<br>​</p>
+<h4 id="timer-的删除"><a href="#timer-的删除" class="headerlink" title="timer 的删除"></a>timer 的删除</h4><pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// Delete timer t from the heap.</span>
+<span class="token comment">// Do not need to update the timerproc: if it wakes up early, no big deal.</span>
+<span class="token keyword">func</span> <span class="token function">deltimer</span><span class="token punctuation">(</span>t <span class="token operator">*</span>timer<span class="token punctuation">)</span> <span class="token builtin">bool</span> <span class="token punctuation">&#123;</span>
+    <span class="token comment">// Dereference t so that any panic happens before the lock is held.</span>
+    <span class="token comment">// Discard result, because t might be moving in the heap.</span>
+    <span class="token boolean">_</span> <span class="token operator">=</span> t<span class="token punctuation">.</span>i
+
+    <span class="token function">lock</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>timers<span class="token punctuation">.</span>lock<span class="token punctuation">)</span>
+    <span class="token comment">// t may not be registered anymore and may have</span>
+    <span class="token comment">// a bogus i (typically 0, if generated by Go).</span>
+    <span class="token comment">// Verify it before proceeding.</span>
+    i <span class="token operator">:=</span> t<span class="token punctuation">.</span>i
+    last <span class="token operator">:=</span> <span class="token function">len</span><span class="token punctuation">(</span>timers<span class="token punctuation">.</span>t<span class="token punctuation">)</span> <span class="token operator">-</span> <span class="token number">1</span>
+    <span class="token keyword">if</span> i <span class="token operator">&lt;</span> <span class="token number">0</span> <span class="token operator">||</span> i <span class="token operator">></span> last <span class="token operator">||</span> timers<span class="token punctuation">.</span>t<span class="token punctuation">[</span>i<span class="token punctuation">]</span> <span class="token operator">!=</span> t <span class="token punctuation">&#123;</span> <span class="token comment">// 边界检查，校验 timer 是否有效</span>
+        <span class="token function">unlock</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>timers<span class="token punctuation">.</span>lock<span class="token punctuation">)</span>
+        <span class="token keyword">return</span> <span class="token boolean">false</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token keyword">if</span> i <span class="token operator">!=</span> last <span class="token punctuation">&#123;</span>    <span class="token comment">// 如果要删除的 timer 不是堆中的 最后一个 timer</span>
+        timers<span class="token punctuation">.</span>t<span class="token punctuation">[</span>i<span class="token punctuation">]</span> <span class="token operator">=</span> timers<span class="token punctuation">.</span>t<span class="token punctuation">[</span>last<span class="token punctuation">]</span>    <span class="token comment">// 堆顶元素与堆尾元素进行互换</span>
+        timers<span class="token punctuation">.</span>t<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">.</span>i <span class="token operator">=</span> i
+    <span class="token punctuation">&#125;</span>
+    timers<span class="token punctuation">.</span>t<span class="token punctuation">[</span>last<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token boolean">nil</span>        <span class="token comment">// 上述操作已经将要删除的元素放到堆的末尾，直接通过置为 nil 的方式进行删除</span>
+    timers<span class="token punctuation">.</span>t <span class="token operator">=</span> timers<span class="token punctuation">.</span>t<span class="token punctuation">[</span><span class="token punctuation">:</span>last<span class="token punctuation">]</span>
+    <span class="token keyword">if</span> i <span class="token operator">!=</span> last <span class="token punctuation">&#123;</span>              <span class="token comment">// 重新对堆进行排列</span>
+        <span class="token function">siftupTimer</span><span class="token punctuation">(</span>i<span class="token punctuation">)</span>
+        <span class="token function">siftdownTimer</span><span class="token punctuation">(</span>i<span class="token punctuation">)</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token function">unlock</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>timers<span class="token punctuation">.</span>lock<span class="token punctuation">)</span>        <span class="token comment">// 删除并重排序完成，释放掉timer的全局锁</span>
+    <span class="token keyword">return</span> <span class="token boolean">true</span>
+<span class="token punctuation">&#125;</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+
+<h4 id="timerproc"><a href="#timerproc" class="headerlink" title="timerproc"></a>timerproc</h4><p>addtimer 是生产者的话，我们可以把 timerproc 理解为消费者。</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token function">timerproc</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token comment">// 注意这里！将执行timerproc的 goroutine 赋值给了 timers 中的 gp 字段。</span>
+    timers<span class="token punctuation">.</span>gp <span class="token operator">=</span> <span class="token function">getg</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token keyword">for</span> <span class="token punctuation">&#123;</span>
+        <span class="token function">lock</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>timers<span class="token punctuation">.</span>lock<span class="token punctuation">)</span> 		
+        <span class="token comment">// 当前执行 timerproc 所以不再是 sleeping 状态，置为 false</span>
+        timers<span class="token punctuation">.</span>sleeping <span class="token operator">=</span> <span class="token boolean">false</span>
+        now <span class="token operator">:=</span> <span class="token function">nanotime</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+        <span class="token comment">// delta 表示 timer 要执行的时间与当前时间的差值，</span>
+        <span class="token comment">// 如果 delta > 0 说明还没有到 timer 的执行时间</span>
+        delta <span class="token operator">:=</span> <span class="token function">int64</span><span class="token punctuation">(</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">)</span>
+        <span class="token keyword">for</span> <span class="token punctuation">&#123;</span>
+            <span class="token comment">// 判断 timers 中是否有要执行的 timer</span>
+            <span class="token keyword">if</span> <span class="token function">len</span><span class="token punctuation">(</span>timers<span class="token punctuation">.</span>t<span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token number">0</span> <span class="token punctuation">&#123;</span>
+                delta <span class="token operator">=</span> <span class="token operator">-</span><span class="token number">1</span>
+                <span class="token keyword">break</span>
+            <span class="token punctuation">&#125;</span>
+            <span class="token comment">// 有要执行的，直接获取堆顶元素，小顶堆嘛，堆顶的肯定是最小的</span>
+            t <span class="token operator">:=</span> timers<span class="token punctuation">.</span>t<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span>
+            <span class="token comment">// 计算 delta 差值</span>
+            delta <span class="token operator">=</span> t<span class="token punctuation">.</span>when <span class="token operator">-</span> now
+            <span class="token keyword">if</span> delta <span class="token operator">></span> <span class="token number">0</span> <span class="token punctuation">&#123;</span>
+                <span class="token keyword">break</span>
+            <span class="token punctuation">&#125;</span>
+            <span class="token comment">// 如果是一个要周期执行的 timer，计算下次执行时间，并重新排列堆</span>
+            <span class="token keyword">if</span> t<span class="token punctuation">.</span>period <span class="token operator">></span> <span class="token number">0</span> <span class="token punctuation">&#123;</span>
+                <span class="token comment">// leave in heap but adjust next time to fire</span>
+                t<span class="token punctuation">.</span>when <span class="token operator">+=</span> t<span class="token punctuation">.</span>period <span class="token operator">*</span> <span class="token punctuation">(</span><span class="token number">1</span> <span class="token operator">+</span> <span class="token operator">-</span>delta<span class="token operator">/</span>t<span class="token punctuation">.</span>period<span class="token punctuation">)</span>
+                <span class="token function">siftdownTimer</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span>
+            <span class="token punctuation">&#125;</span> <span class="token keyword">else</span> <span class="token punctuation">&#123;</span>
+                <span class="token comment">// remove from heap</span>
+                last <span class="token operator">:=</span> <span class="token function">len</span><span class="token punctuation">(</span>timers<span class="token punctuation">.</span>t<span class="token punctuation">)</span> <span class="token operator">-</span> <span class="token number">1</span>
+                <span class="token keyword">if</span> last <span class="token operator">></span> <span class="token number">0</span> <span class="token punctuation">&#123;</span>
+                    timers<span class="token punctuation">.</span>t<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">=</span> timers<span class="token punctuation">.</span>t<span class="token punctuation">[</span>last<span class="token punctuation">]</span>
+                    timers<span class="token punctuation">.</span>t<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">.</span>i <span class="token operator">=</span> <span class="token number">0</span>
+                <span class="token punctuation">&#125;</span>
+                timers<span class="token punctuation">.</span>t<span class="token punctuation">[</span>last<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token boolean">nil</span>
+                timers<span class="token punctuation">.</span>t <span class="token operator">=</span> timers<span class="token punctuation">.</span>t<span class="token punctuation">[</span><span class="token punctuation">:</span>last<span class="token punctuation">]</span>
+                <span class="token keyword">if</span> last <span class="token operator">></span> <span class="token number">0</span> <span class="token punctuation">&#123;</span>
+                    <span class="token function">siftdownTimer</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span>
+                <span class="token punctuation">&#125;</span>
+                t<span class="token punctuation">.</span>i <span class="token operator">=</span> <span class="token operator">-</span><span class="token number">1</span> <span class="token comment">// mark as removed</span>
+            <span class="token punctuation">&#125;</span>
+            <span class="token comment">// 获取该 timer 中的函数</span>
+            f <span class="token operator">:=</span> t<span class="token punctuation">.</span>f
+            arg <span class="token operator">:=</span> t<span class="token punctuation">.</span>arg
+            seq <span class="token operator">:=</span> t<span class="token punctuation">.</span>seq
+            <span class="token comment">// 因为执行用户的代码并不需要加锁，所以在此处对锁进行释放，防止其他获取锁的g阻塞太久时间</span>
+            <span class="token function">unlock</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>timers<span class="token punctuation">.</span>lock<span class="token punctuation">)</span>
+            <span class="token keyword">if</span> raceenabled <span class="token punctuation">&#123;</span>
+                <span class="token function">raceacquire</span><span class="token punctuation">(</span>unsafe<span class="token punctuation">.</span><span class="token function">Pointer</span><span class="token punctuation">(</span>t<span class="token punctuation">)</span><span class="token punctuation">)</span>
+            <span class="token punctuation">&#125;</span>
+            <span class="token comment">// 执行用户函数</span>
+            <span class="token function">f</span><span class="token punctuation">(</span>arg<span class="token punctuation">,</span> seq<span class="token punctuation">)</span>
+            <span class="token function">lock</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>timers<span class="token punctuation">.</span>lock<span class="token punctuation">)</span>
+        <span class="token punctuation">&#125;</span>
+        <span class="token keyword">if</span> delta <span class="token operator">&lt;</span> <span class="token number">0</span> <span class="token operator">||</span> faketime <span class="token operator">></span> <span class="token number">0</span> <span class="token punctuation">&#123;</span>	
+            <span class="token comment">// No timers left - put goroutine to sleep.</span>
+            <span class="token comment">// 这种情况意味着 timers 中没有任何可以执行的 timer，gopark挂起，后面goready唤醒</span>
+            timers<span class="token punctuation">.</span>rescheduling <span class="token operator">=</span> <span class="token boolean">true</span>
+            <span class="token function">goparkunlock</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>timers<span class="token punctuation">.</span>lock<span class="token punctuation">,</span> <span class="token string">"timer goroutine (idle)"</span><span class="token punctuation">,</span> traceEvGoBlock<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span>
+            <span class="token comment">// 恢复回来回到头部执行</span>
+            <span class="token keyword">continue</span>
+        <span class="token punctuation">&#125;</span>
+        <span class="token comment">// At least one timer pending. Sleep until then. timers 中至少有一个可以执行的 timer</span>
+        <span class="token comment">// 设置为 sleeping 我们不使用 gopark 挂起是因为，可能某个timer要执行了，但是你 goready 后重新调度后，会导致这个timer超时</span>
+        timers<span class="token punctuation">.</span>sleeping <span class="token operator">=</span> <span class="token boolean">true</span>
+        <span class="token function">noteclear</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>timers<span class="token punctuation">.</span>waitnote<span class="token punctuation">)</span>
+        <span class="token function">unlock</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>timers<span class="token punctuation">.</span>lock<span class="token punctuation">)</span>
+        <span class="token comment">// 通过 futex 系统调用，让这个 timerproc 睡一会，醒来之后继续干活</span>
+        <span class="token comment">// 该过程涉及到 handoffp，文章末尾做了简要总结</span>
+        <span class="token function">notetsleepg</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>timers<span class="token punctuation">.</span>waitnote<span class="token punctuation">,</span> delta<span class="token punctuation">)</span>
+    <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+
+<p>至此我们已经解答了文章开头的一部分问题。<br>​</p>
+<ul>
+<li>1.在堆的小节去了解</li>
+<li>2.创建 timer 的时<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">type</span> runtimeTimer <span class="token keyword">struct</span> <span class="token punctuation">&#123;</span>
+    i      <span class="token builtin">int</span>			    <span class="token comment">// 在堆中的位置</span>
+    when   <span class="token builtin">int64</span>			<span class="token comment">// 某个时间点</span>
+    period <span class="token builtin">int64</span>			<span class="token comment">// 周期</span>
+    f      <span class="token keyword">func</span><span class="token punctuation">(</span><span class="token keyword">interface</span><span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span><span class="token punctuation">,</span> <span class="token builtin">uintptr</span><span class="token punctuation">)</span> <span class="token comment">// NOTE: must not be closure go的封装的一些函数</span>
+    arg    <span class="token keyword">interface</span><span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span>		<span class="token comment">// 这个才是我们自己的函数</span>
+    seq    <span class="token builtin">uintptr</span>			<span class="token comment">// 这个好像是没用到</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token function">goFunc</span><span class="token punctuation">(</span>arg <span class="token keyword">interface</span><span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span><span class="token punctuation">,</span> seq <span class="token builtin">uintptr</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">go</span> arg<span class="token punctuation">.</span><span class="token punctuation">(</span><span class="token keyword">func</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+我们如果写了一个死循环并不会影响timerproc的执行，底层为我们新建了一个 goroutine 去执行。<br>​</li>
+</ul>
+<ul>
+<li>3.g 被谁接管了？我在一开始看的时候也有点迷惑，要是能被接管肯定是放在某个地方了，看的时候就是没找到，后来再梳理的时候发现，在 timerproc 函数开始的第一行代码就是 把 g 放入了 timer.gp 字段。</li>
+<li>4.timer中的两种挂起方式，这个在代码中注释的已经很详细了</li>
+</ul>
+<p>1&gt; futex syscall<br>2&gt; gopark</p>
+<p>我们已经看完了整个 创建 timer 的过程，并且知道了 timerproc 就是用来真正执行 timer 的函数。总结一下现在的 timer 有什么问题：<br>​</p>
+<p><strong>全局只有一把锁，只要对四叉堆修改，必须要加锁，所以怎么做优化才能降低锁的竞争，与此同时，一个非常隐蔽的，也是至关重要的问题正在发生。当我们 timers 中有待执行的对象时，在 timerproc 中通过 syscall 使当前 M 进入阻塞，调度模型中的 handoffp 会将 M 从当前 P 上剥离，然后找一个空闲的 M 或 新建一个 M 执行本地队列中的 g。当进入阻塞的 syscall 调用完成了的时候，需要把 timerproc 重新放回队列进行调度。这种频繁的上下文切换白白浪费了资源。</strong>（在 1.14 版本中去掉了 timerproc 把执行 timer 的逻辑嵌入到调度循环，sysmon等函数中）</p>
+<h3 id="实际开发中的-timer"><a href="#实际开发中的-timer" class="headerlink" title="实际开发中的 timer"></a>实际开发中的 timer</h3><h4 id="time-Sleep-后发生了什么？"><a href="#time-Sleep-后发生了什么？" class="headerlink" title="time.Sleep() 后发生了什么？"></a>time.Sleep() 后发生了什么？</h4><p>日常的开发工作中，或者是写 demo 的时候，经常会用到 time.Sleep()，会让当前的 goroutine 睡一会，等到满足某个 condition 的时候再醒来继续工作。<br>废话不多说，直接上源码。</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// timeSleep puts the current goroutine to sleep for at least ns nanoseconds.</span>
+<span class="token comment">//go:linkname timeSleep time.Sleep 可以看到当我们使用 time.Sleep 的时候实际上底层调用的是 timeSleep() 这个函数</span>
+<span class="token keyword">func</span> <span class="token function">timeSleep</span><span class="token punctuation">(</span>ns <span class="token builtin">int64</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">if</span> ns <span class="token operator">&lt;=</span> <span class="token number">0</span> <span class="token punctuation">&#123;</span>
+        <span class="token keyword">return</span>
+    <span class="token punctuation">&#125;</span>
+
+    <span class="token comment">// 新建一个 timer 对象</span>
+    t <span class="token operator">:=</span> <span class="token function">new</span><span class="token punctuation">(</span>timer<span class="token punctuation">)</span>
+    <span class="token comment">// 计算要让这个 goroutine 休眠的时间</span>
+    t<span class="token punctuation">.</span>when <span class="token operator">=</span> <span class="token function">nanotime</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">+</span> ns
+    <span class="token comment">// t.f 前文中有提到过，是到时后要执行的那个 function</span>
+    t<span class="token punctuation">.</span>f <span class="token operator">=</span> goroutineReady
+    <span class="token comment">// 上述 function 的 arg，把执行 timeSleep 的 goroutine 存储到 t.arg 中</span>
+    t<span class="token punctuation">.</span>arg <span class="token operator">=</span> <span class="token function">getg</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token comment">// 新的 timer 封装好了，要把新 timer 加入到 堆中，保证并发安全，上锁！</span>
+    <span class="token function">lock</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>timers<span class="token punctuation">.</span>lock<span class="token punctuation">)</span>
+    <span class="token function">addtimerLocked</span><span class="token punctuation">(</span>t<span class="token punctuation">)</span>			
+    <span class="token comment">// 挂起当前的 goroutine</span>
+    <span class="token function">goparkunlock</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>timers<span class="token punctuation">.</span>lock<span class="token punctuation">,</span> <span class="token string">"sleep"</span><span class="token punctuation">,</span> traceEvGoSleep<span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h4 id="time-AfterFunc-后发生了什么？"><a href="#time-AfterFunc-后发生了什么？" class="headerlink" title="time.AfterFunc() 后发生了什么？"></a>time.AfterFunc() 后发生了什么？</h4><p>经过上述的分析是不是已经很简单了，不过我们还是来看一下源码。</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// AfterFunc waits for the duration to elapse and then calls f</span>
+<span class="token comment">// in its own goroutine. It returns a Timer that can</span>
+<span class="token comment">// be used to cancel the call using its Stop method.</span>
+<span class="token keyword">func</span> <span class="token function">AfterFunc</span><span class="token punctuation">(</span>d Duration<span class="token punctuation">,</span> f <span class="token keyword">func</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token operator">*</span>Timer <span class="token punctuation">&#123;</span>
+    t <span class="token operator">:=</span> <span class="token operator">&amp;</span>Timer<span class="token punctuation">&#123;</span>    <span class="token comment">// 封装 timer</span>
+        r<span class="token punctuation">:</span> runtimeTimer<span class="token punctuation">&#123;</span>
+            when<span class="token punctuation">:</span> <span class="token function">when</span><span class="token punctuation">(</span>d<span class="token punctuation">)</span><span class="token punctuation">,</span>
+            f<span class="token punctuation">:</span>    goFunc<span class="token punctuation">,</span>
+            arg<span class="token punctuation">:</span>  f<span class="token punctuation">,</span>
+        <span class="token punctuation">&#125;</span><span class="token punctuation">,</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token comment">// startTimer 前文中提到过，内部就是将新的timer加入到堆中，其中逻辑前文都覆盖到了</span>
+    <span class="token function">startTimer</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>t<span class="token punctuation">.</span>r<span class="token punctuation">)</span>
+    <span class="token keyword">return</span> t
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+
+<h3 id="堆的简单了解"><a href="#堆的简单了解" class="headerlink" title="堆的简单了解"></a>堆的简单了解</h3><p>go1.8 版本的 timers 结构如下图所示，全局共享一个四叉堆，那么当访问这个数据结构的时候，为了保证并发的安全性，一定是要获取到锁的。<br>也正是因此锁成了 go1.8 中 timer 主要的性能瓶颈。<br><img src="https://gitee.com/yangbaoqiang/images/raw/f4fa80bedef662b0abaf2a695cefcc0658c83439/blogpics/1635754910137-44029b08-6db8-4417-a709-0ff8b7b38a24.png" alt="image.png"></p>
+<p>我们简单说一下堆这个数据结构，二叉树大家都很了解，那怎么把一颗二叉树转换成一个二叉堆呢？go 中存储 timer 的数据结构就是一个切片，那什么样的树结构能够使用数组进行存储呢？<br>​</p>
+<p>这里先给出结论：<br>1.完全二叉树可以使用数组来存储。<br>2.当一颗二叉树满足完全二叉树的性质，并且满足每个结点的值都小于或等于其左右孩子结点的值，称为小顶堆，大顶堆概念相反。</p>
+<p>如上图所示，四叉堆，各个元素存储在数组中，如果想得到子节点的父节点，设子节点索引为 i，那么父节点 p = (i - 1) / 4 (图上的n画错了应该是 i，懒得改了）。<br>​</p>
+<h4 id="timer-四叉堆排序算法"><a href="#timer-四叉堆排序算法" class="headerlink" title="timer 四叉堆排序算法"></a>timer 四叉堆排序算法</h4><pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// Heap maintenance algorithms.</span>
+<span class="token comment">// 由下向上</span>
+<span class="token comment">// 主要的算法思想是：用索引为 i 的timer，不断地找到该 timer 的 parent，并比较两者的 when 进行交换</span>
+<span class="token keyword">func</span> <span class="token function">siftupTimer</span><span class="token punctuation">(</span>i <span class="token builtin">int</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    t <span class="token operator">:=</span> timers<span class="token punctuation">.</span>t
+    when <span class="token operator">:=</span> t<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">.</span>when					
+    tmp <span class="token operator">:=</span> t<span class="token punctuation">[</span>i<span class="token punctuation">]</span>
+    <span class="token keyword">for</span> i <span class="token operator">></span> <span class="token number">0</span> <span class="token punctuation">&#123;</span>
+        p <span class="token operator">:=</span> <span class="token punctuation">(</span>i <span class="token operator">-</span> <span class="token number">1</span><span class="token punctuation">)</span> <span class="token operator">/</span> <span class="token number">4</span> <span class="token comment">// parent</span>
+        <span class="token keyword">if</span> when <span class="token operator">>=</span> t<span class="token punctuation">[</span>p<span class="token punctuation">]</span><span class="token punctuation">.</span>when <span class="token punctuation">&#123;</span>
+            <span class="token keyword">break</span>
+        <span class="token punctuation">&#125;</span>
+        t<span class="token punctuation">[</span>i<span class="token punctuation">]</span> <span class="token operator">=</span> t<span class="token punctuation">[</span>p<span class="token punctuation">]</span>
+        t<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">.</span>i <span class="token operator">=</span> i
+        t<span class="token punctuation">[</span>p<span class="token punctuation">]</span> <span class="token operator">=</span> tmp
+        t<span class="token punctuation">[</span>p<span class="token punctuation">]</span><span class="token punctuation">.</span>i <span class="token operator">=</span> p
+        i <span class="token operator">=</span> p
+    <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">// 由上向下</span>
+<span class="token keyword">func</span> <span class="token function">siftdownTimer</span><span class="token punctuation">(</span>i <span class="token builtin">int</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    t <span class="token operator">:=</span> timers<span class="token punctuation">.</span>t
+    n <span class="token operator">:=</span> <span class="token function">len</span><span class="token punctuation">(</span>t<span class="token punctuation">)</span>    <span class="token comment">// 堆中总的元素数量</span>
+    when <span class="token operator">:=</span> t<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">.</span>when
+    tmp <span class="token operator">:=</span> t<span class="token punctuation">[</span>i<span class="token punctuation">]</span>
+    <span class="token keyword">for</span> <span class="token punctuation">&#123;</span>
+        c <span class="token operator">:=</span> i<span class="token operator">*</span><span class="token number">4</span> <span class="token operator">+</span> <span class="token number">1</span> <span class="token comment">// left child</span>
+        c3 <span class="token operator">:=</span> c <span class="token operator">+</span> <span class="token number">2</span>  <span class="token comment">// mid child</span>
+        <span class="token keyword">if</span> c <span class="token operator">>=</span> n <span class="token punctuation">&#123;</span>	<span class="token comment">// 判断 i 的四个子节点中的第一个是否超过了总节点个数</span>
+            <span class="token keyword">break</span>
+        <span class="token punctuation">&#125;</span>
+        w <span class="token operator">:=</span> t<span class="token punctuation">[</span>c<span class="token punctuation">]</span><span class="token punctuation">.</span>when 
+        <span class="token keyword">if</span> c<span class="token operator">+</span><span class="token number">1</span> <span class="token operator">&lt;</span> n <span class="token operator">&amp;&amp;</span> t<span class="token punctuation">[</span>c<span class="token operator">+</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">.</span>when <span class="token operator">&lt;</span> w <span class="token punctuation">&#123;</span> <span class="token comment">// 找到前两个子节点中最小的</span>
+            w <span class="token operator">=</span> t<span class="token punctuation">[</span>c<span class="token operator">+</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">.</span>when
+            c<span class="token operator">++</span>
+        <span class="token punctuation">&#125;</span>
+        <span class="token keyword">if</span> c3 <span class="token operator">&lt;</span> n <span class="token punctuation">&#123;</span>
+            w3 <span class="token operator">:=</span> t<span class="token punctuation">[</span>c3<span class="token punctuation">]</span><span class="token punctuation">.</span>when
+            <span class="token keyword">if</span> c3<span class="token operator">+</span><span class="token number">1</span> <span class="token operator">&lt;</span> n <span class="token operator">&amp;&amp;</span> t<span class="token punctuation">[</span>c3<span class="token operator">+</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">.</span>when <span class="token operator">&lt;</span> w3 <span class="token punctuation">&#123;</span>	<span class="token comment">// 找到后两个子节点中最小的</span>
+                w3 <span class="token operator">=</span> t<span class="token punctuation">[</span>c3<span class="token operator">+</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">.</span>when
+                c3<span class="token operator">++</span>
+            <span class="token punctuation">&#125;</span>
+            <span class="token keyword">if</span> w3 <span class="token operator">&lt;</span> w <span class="token punctuation">&#123;</span> <span class="token comment">// 找到这两组子结点中最小的</span>
+                w <span class="token operator">=</span> w3
+                c <span class="token operator">=</span> c3
+            <span class="token punctuation">&#125;</span>
+        <span class="token punctuation">&#125;</span>
+        <span class="token keyword">if</span> w <span class="token operator">>=</span> when <span class="token punctuation">&#123;</span>	<span class="token comment">// 判断子节点中的值是否大于父节点，是就不需要交换</span>
+            <span class="token keyword">break</span>
+        <span class="token punctuation">&#125;</span>
+        <span class="token comment">// 由此开始，是把子节点与父节点进行互换</span>
+        t<span class="token punctuation">[</span>i<span class="token punctuation">]</span> <span class="token operator">=</span> t<span class="token punctuation">[</span>c<span class="token punctuation">]</span>
+        t<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">.</span>i <span class="token operator">=</span> i
+        t<span class="token punctuation">[</span>c<span class="token punctuation">]</span> <span class="token operator">=</span> tmp
+        t<span class="token punctuation">[</span>c<span class="token punctuation">]</span><span class="token punctuation">.</span>i <span class="token operator">=</span> c
+        i <span class="token operator">=</span> c
+    <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h4 id="扩展"><a href="#扩展" class="headerlink" title="扩展"></a>扩展</h4><p>如果完全二叉树，采用数组进行存储，索引从 0 开始存储和索引从 1 开始存储有什么区别？可以动手画一下。</p>
+<h3 id="timer-中的上下文切换"><a href="#timer-中的上下文切换" class="headerlink" title="timer 中的上下文切换"></a>timer 中的上下文切换</h3><h4 id="notesleepg"><a href="#notesleepg" class="headerlink" title="notesleepg"></a>notesleepg</h4><p>在 timers 中没有任何将要执行的 timer 时，会通过 futex 这个系统调用将当前这个 M 挂起，看看代码中是怎么做的。</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token function">notetsleepg</span><span class="token punctuation">(</span>n <span class="token operator">*</span>note<span class="token punctuation">,</span> ns <span class="token builtin">int64</span><span class="token punctuation">)</span> <span class="token builtin">bool</span> <span class="token punctuation">&#123;</span>
+    gp <span class="token operator">:=</span> <span class="token function">getg</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token keyword">if</span> gp <span class="token operator">==</span> gp<span class="token punctuation">.</span>m<span class="token punctuation">.</span>g0 <span class="token punctuation">&#123;</span>
+        <span class="token function">throw</span><span class="token punctuation">(</span><span class="token string">"notetsleepg on g0"</span><span class="token punctuation">)</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token comment">// 进入系统调用</span>
+    <span class="token function">entersyscallblock</span><span class="token punctuation">(</span><span class="token punctuation">)</span>	
+    <span class="token comment">// 阻塞当前线程</span>
+    ok <span class="token operator">:=</span> <span class="token function">notetsleep_internal</span><span class="token punctuation">(</span>n<span class="token punctuation">,</span> ns<span class="token punctuation">)</span>
+    <span class="token comment">// 退出系统调用</span>
+    <span class="token function">exitsyscall</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token keyword">return</span> ok
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token function">entersyscallblock</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token punctuation">(</span><span class="token operator">...</span><span class="token punctuation">)</span> <span class="token comment">// 省略了一些处理 g 状态的代码</span>
+
+    <span class="token comment">// 切换到 g0 栈，执行 handoff 操作</span>
+    <span class="token function">systemstack</span><span class="token punctuation">(</span>entersyscallblock_handoff<span class="token punctuation">)</span>
+
+    <span class="token punctuation">(</span><span class="token operator">...</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token function">entersyscallblock_handoff</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token punctuation">(</span><span class="token operator">...</span><span class="token punctuation">)</span> <span class="token comment">// 省略 trace</span>
+    <span class="token comment">// releasep 中解绑了 M 与 P 的关系</span>
+    <span class="token comment">// handoffp 中会获取线程</span>
+    <span class="token function">handoffp</span><span class="token punctuation">(</span><span class="token function">releasep</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// 上述函数将 M 与 P 解绑之后，M 通过 futex 系统调用休眠 ns </span>
+<span class="token keyword">func</span> <span class="token function">notetsleep_internal</span><span class="token punctuation">(</span>n <span class="token operator">*</span>note<span class="token punctuation">,</span> ns <span class="token builtin">int64</span><span class="token punctuation">)</span> <span class="token builtin">bool</span> <span class="token punctuation">&#123;</span>
+    gp <span class="token operator">:=</span> <span class="token function">getg</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+    <span class="token keyword">if</span> ns <span class="token operator">&lt;</span> <span class="token number">0</span> <span class="token punctuation">&#123;</span>
+        <span class="token keyword">if</span> <span class="token operator">*</span>cgo_yield <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
+            <span class="token comment">// Sleep for an arbitrary-but-moderate interval to poll libc interceptors.</span>
+            ns <span class="token operator">=</span> <span class="token number">10e6</span>
+        <span class="token punctuation">&#125;</span>
+        <span class="token keyword">for</span> atomic<span class="token punctuation">.</span><span class="token function">Load</span><span class="token punctuation">(</span><span class="token function">key32</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>n<span class="token punctuation">.</span>key<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token number">0</span> <span class="token punctuation">&#123;</span>
+            gp<span class="token punctuation">.</span>m<span class="token punctuation">.</span>blocked <span class="token operator">=</span> <span class="token boolean">true</span>
+            <span class="token function">futexsleep</span><span class="token punctuation">(</span><span class="token function">key32</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>n<span class="token punctuation">.</span>key<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> ns<span class="token punctuation">)</span>
+            <span class="token keyword">if</span> <span class="token operator">*</span>cgo_yield <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
+                <span class="token function">asmcgocall</span><span class="token punctuation">(</span><span class="token operator">*</span>cgo_yield<span class="token punctuation">,</span> <span class="token boolean">nil</span><span class="token punctuation">)</span>
+            <span class="token punctuation">&#125;</span>
+            gp<span class="token punctuation">.</span>m<span class="token punctuation">.</span>blocked <span class="token operator">=</span> <span class="token boolean">false</span>
+        <span class="token punctuation">&#125;</span>
+        <span class="token keyword">return</span> <span class="token boolean">true</span>
+    <span class="token punctuation">&#125;</span>
+
+    <span class="token keyword">if</span> atomic<span class="token punctuation">.</span><span class="token function">Load</span><span class="token punctuation">(</span><span class="token function">key32</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>n<span class="token punctuation">.</span>key<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token operator">!=</span> <span class="token number">0</span> <span class="token punctuation">&#123;</span>
+        <span class="token keyword">return</span> <span class="token boolean">true</span>
+    <span class="token punctuation">&#125;</span>
+
+    deadline <span class="token operator">:=</span> <span class="token function">nanotime</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">+</span> ns
+    <span class="token keyword">for</span> <span class="token punctuation">&#123;</span>
+        <span class="token keyword">if</span> <span class="token operator">*</span>cgo_yield <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token operator">&amp;&amp;</span> ns <span class="token operator">></span> <span class="token number">10e6</span> <span class="token punctuation">&#123;</span>
+            ns <span class="token operator">=</span> <span class="token number">10e6</span>
+        <span class="token punctuation">&#125;</span>
+        gp<span class="token punctuation">.</span>m<span class="token punctuation">.</span>blocked <span class="token operator">=</span> <span class="token boolean">true</span>		<span class="token comment">// 表示当前 M 正在阻塞</span>
+        <span class="token function">futexsleep</span><span class="token punctuation">(</span><span class="token function">key32</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>n<span class="token punctuation">.</span>key<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> ns<span class="token punctuation">)</span>	<span class="token comment">// 让 M 睡一会</span>
+        <span class="token keyword">if</span> <span class="token operator">*</span>cgo_yield <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
+            <span class="token function">asmcgocall</span><span class="token punctuation">(</span><span class="token operator">*</span>cgo_yield<span class="token punctuation">,</span> <span class="token boolean">nil</span><span class="token punctuation">)</span>
+        <span class="token punctuation">&#125;</span>
+        gp<span class="token punctuation">.</span>m<span class="token punctuation">.</span>blocked <span class="token operator">=</span> <span class="token boolean">false</span>	<span class="token comment">// 休眠完成，修改回 M 的阻塞状态</span>
+        <span class="token keyword">if</span> atomic<span class="token punctuation">.</span><span class="token function">Load</span><span class="token punctuation">(</span><span class="token function">key32</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>n<span class="token punctuation">.</span>key<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token operator">!=</span> <span class="token number">0</span> <span class="token punctuation">&#123;</span>
+            <span class="token keyword">break</span>
+        <span class="token punctuation">&#125;</span>
+        now <span class="token operator">:=</span> <span class="token function">nanotime</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+        <span class="token keyword">if</span> now <span class="token operator">>=</span> deadline <span class="token punctuation">&#123;</span>
+            <span class="token keyword">break</span>
+        <span class="token punctuation">&#125;</span>
+        ns <span class="token operator">=</span> deadline <span class="token operator">-</span> now
+    <span class="token punctuation">&#125;</span>
+    <span class="token keyword">return</span> atomic<span class="token punctuation">.</span><span class="token function">Load</span><span class="token punctuation">(</span><span class="token function">key32</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>n<span class="token punctuation">.</span>key<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token operator">!=</span> <span class="token number">0</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>M 从系统调用中恢复过来，在缺少 P 的情况下是怎么个执行过程</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token function">exitsyscall</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token punctuation">(</span><span class="token operator">...</span><span class="token punctuation">)</span>
+
+    oldp <span class="token operator">:=</span> _g_<span class="token punctuation">.</span>m<span class="token punctuation">.</span>oldp<span class="token punctuation">.</span><span class="token function">ptr</span><span class="token punctuation">(</span><span class="token punctuation">)</span>    <span class="token comment">// 获取之前执行这个 M 的 P</span>
+    _g_<span class="token punctuation">.</span>m<span class="token punctuation">.</span>oldp <span class="token operator">=</span> <span class="token number">0</span>
+    <span class="token comment">// fast path，如果能获取到之前的 P 还是放在原来的 P 上进行调度，否则看看有没有空闲的 P</span>
+    <span class="token keyword">if</span> <span class="token function">exitsyscallfast</span><span class="token punctuation">(</span>oldp<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        <span class="token keyword">if</span> _g_<span class="token punctuation">.</span>m<span class="token punctuation">.</span>mcache <span class="token operator">==</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
+            <span class="token function">throw</span><span class="token punctuation">(</span><span class="token string">"lost mcache"</span><span class="token punctuation">)</span>
+        <span class="token punctuation">&#125;</span>
+        <span class="token keyword">if</span> trace<span class="token punctuation">.</span>enabled <span class="token punctuation">&#123;</span>
+            <span class="token keyword">if</span> oldp <span class="token operator">!=</span> _g_<span class="token punctuation">.</span>m<span class="token punctuation">.</span>p<span class="token punctuation">.</span><span class="token function">ptr</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">||</span> _g_<span class="token punctuation">.</span>m<span class="token punctuation">.</span>syscalltick <span class="token operator">!=</span> _g_<span class="token punctuation">.</span>m<span class="token punctuation">.</span>p<span class="token punctuation">.</span><span class="token function">ptr</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>syscalltick <span class="token punctuation">&#123;</span>
+                <span class="token function">systemstack</span><span class="token punctuation">(</span>traceGoStart<span class="token punctuation">)</span>
+            <span class="token punctuation">&#125;</span>
+        <span class="token punctuation">&#125;</span>
+        <span class="token comment">// There's a cpu for us, so we can run.</span>
+        _g_<span class="token punctuation">.</span>m<span class="token punctuation">.</span>p<span class="token punctuation">.</span><span class="token function">ptr</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>syscalltick<span class="token operator">++</span>
+        <span class="token comment">// We need to cas the status and scan before resuming...</span>
+        <span class="token function">casgstatus</span><span class="token punctuation">(</span>_g_<span class="token punctuation">,</span> _Gsyscall<span class="token punctuation">,</span> _Grunning<span class="token punctuation">)</span>
+
+        <span class="token comment">// Garbage collector isn't running (since we are),</span>
+        <span class="token comment">// so okay to clear syscallsp.</span>
+        _g_<span class="token punctuation">.</span>syscallsp <span class="token operator">=</span> <span class="token number">0</span>
+        _g_<span class="token punctuation">.</span>m<span class="token punctuation">.</span>locks<span class="token operator">--</span>
+        <span class="token keyword">if</span> _g_<span class="token punctuation">.</span>preempt <span class="token punctuation">&#123;</span>
+            <span class="token comment">// restore the preemption request in case we've cleared it in newstack</span>
+            _g_<span class="token punctuation">.</span>stackguard0 <span class="token operator">=</span> stackPreempt
+        <span class="token punctuation">&#125;</span> <span class="token keyword">else</span> <span class="token punctuation">&#123;</span>
+            <span class="token comment">// otherwise restore the real _StackGuard, we've spoiled it in entersyscall/entersyscallblock</span>
+            _g_<span class="token punctuation">.</span>stackguard0 <span class="token operator">=</span> _g_<span class="token punctuation">.</span>stack<span class="token punctuation">.</span>lo <span class="token operator">+</span> _StackGuard
+        <span class="token punctuation">&#125;</span>
+        _g_<span class="token punctuation">.</span>throwsplit <span class="token operator">=</span> <span class="token boolean">false</span>
+
+        <span class="token keyword">if</span> sched<span class="token punctuation">.</span>disable<span class="token punctuation">.</span>user <span class="token operator">&amp;&amp;</span> <span class="token operator">!</span><span class="token function">schedEnabled</span><span class="token punctuation">(</span>_g_<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+            <span class="token comment">// Scheduling of this goroutine is disabled.</span>
+            <span class="token function">Gosched</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+        <span class="token punctuation">&#125;</span>
+
+        <span class="token keyword">return</span>
+    <span class="token punctuation">&#125;</span>
+
+    <span class="token punctuation">(</span><span class="token operator">...</span><span class="token punctuation">)</span>
+
+    <span class="token comment">// Call the scheduler.</span>
+    <span class="token function">mcall</span><span class="token punctuation">(</span>exitsyscall0<span class="token punctuation">)</span> <span class="token comment">// slow path put g to globalrunq</span>
+    <span class="token punctuation">(</span><span class="token operator">...</span><span class="token punctuation">)</span>
+
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+
+<p>感谢你能够看完，笔者能力有限，有问题的地方欢迎大家指出，共同探讨，一起学习、进步！</p>
+</div><div id="donate"><link rel="stylesheet" type="text/css" href="/css/donate.css?v=1.0.0"><script type="text/javascript" src="/js/donate.js?v=1.0.0" successtext="复制成功!"></script><a class="pos-f tr3" id="github" href="https://github.com/Kaiyuan/donate-page" target="_blank" title="Github"></a><div id="DonateText">Donate</div><ul class="list pos-f" id="donateBox"><li id="ps">没有开启任何Donate选项!</li></ul><div class="pos-f left-100" id="QRBox"><div id="MainBox"></div></div></div><div class="post-copyright"><script type="text/javascript" src="/js/copyright.js?v=1.0.0" successtext="复制成功!"></script><link rel="stylesheet" type="text/css" href="/css/copyright.css?v=1.0.0"><p><span>本文标题：</span>timer 源码分析</p><p><span>文章作者：</span>bqyang</p><p><span>发布时间：</span>2021-11-14</p><p><span>最后更新：</span>2021-12-05</p><p><span>原始链接：</span><a href="/2021/timer 浅析/">https://bqyang.top/2021/timer%20%E6%B5%85%E6%9E%90/</a><span class="copy-path"><i class="fa fa-clipboard" data-clipboard-text="https://bqyang.top/2021/timer%20%E6%B5%85%E6%9E%90/"></i></span></p><p><span>版权声明：</span>The author owns the copyright, please indicate the source reproduced.</p></div><br><div class="tags"></div><div class="post-nav"><a class="pre" href="/2021/timer%20%E4%BC%98%E5%8C%96/">timer 优化</a><a class="next" href="/2021/hello-world/">Hello World</a></div><div id="container"></div><link rel="stylesheet" type="text/css" href="//unpkg.com/gitalk/dist/gitalk.css"><script type="text/javascript" src="//cdn.bootcss.com/blueimp-md5/2.10.0/js/md5.js"></script><script type="text/javascript" src="//unpkg.com/gitalk/dist/gitalk.min.js"></script><script>var gitalk = new Gitalk({
+  clientID: '4bcae079402e9cc4ce7b',
+  clientSecret: 'bc6b6ecab4d016f0a056df8253ad41b76b944084',
+  repo: 'blog_comments',
+  owner: 'clamyang',
+  admin: ['clamyang'],
+  id: md5(location.pathname),
+  distractionFreeMode: false
+})
+gitalk.render('container')
+</script></div></div></div><div class="pure-u-1-4 hidden_mid_and_down"><div id="sidebar"><div class="widget"><form class="search-form" action="//www.google.com/search" method="get" accept-charset="utf-8" target="_blank"><input type="text" name="q" maxlength="20" placeholder="Search"/><input type="hidden" name="sitesearch" value="https://bqyang.top"/></form></div><div class="widget"><div class="widget-title"><i class="fa fa-folder-o"> 分类</i></div></div><div class="widget"><div class="widget-title"><i class="fa fa-star-o"> 标签</i></div><div class="tagcloud"></div></div><div class="widget"><div class="widget-title"><i class="fa fa-file-o"> 最近文章</i></div><ul class="post-list"><li class="post-list-item"><a class="post-list-link" href="/2022/leetcode/array/easy/">数组-简单题</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/language/c/recur/">再学递归（几个有意思的递归练习）</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/language/c/print/">打印字符</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/language/c/string/">C-String</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/language/rust/enum/">Rust-Enums</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/language/rust/structs/">Rust-Structs</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/language/rust/ownership/">Rust-Ownership</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/k8s/deployment/">Deployment 更新策略</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/os/os-start/">操作系统启动</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/os/concurrency-sema/">同步原语-semaphore</a></li></ul></div><div class="widget"><div class="widget-title"><i class="fa fa-external-link"> 友情链接</i></div><ul></ul><a href="http://www.xargin.com/" title="Xargin" target="_blank">Xargin</a></div></div></div><div class="pure-u-1 pure-u-md-3-4"><div id="footer">Copyright © 2022 <a href="/." rel="nofollow">杨宝强的技术笔记.</a> Powered by<a rel="nofollow" target="_blank" href="https://hexo.io"> Hexo.</a><a rel="nofollow" target="_blank" href="https://github.com/tufu9441/maupassant-hexo"> Theme</a> by<a rel="nofollow" target="_blank" href="https://github.com/pagecho"> Cho.</a></div></div></div><a class="show" id="rocket" href="#top"></a><script type="text/javascript" src="/js/totop.js?v=1.0.0" async></script><script type="text/javascript" src="//lib.baomitu.com/fancybox/latest/jquery.fancybox.min.js" async></script><script type="text/javascript" src="/js/fancybox.js?v=1.0.0" async></script><link rel="stylesheet" type="text/css" href="//lib.baomitu.com/fancybox/latest/jquery.fancybox.min.css"><script type="text/javascript" src="/js/copycode.js?v=1.0.0" successtext="复制成功!"></script><link rel="stylesheet" type="text/css" href="/css/copycode.css?v=1.0.0"><script type="text/javascript" src="/js/codeblock-resizer.js?v=1.0.0"></script><script type="text/javascript" src="/js/smartresize.js?v=1.0.0"></script></div></body></html>

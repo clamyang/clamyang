@@ -1,0 +1,112 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="一物不知深以为耻"><title>同步原语-semaphore | 杨宝强的技术笔记</title><link rel="stylesheet" type="text/css" href="/css/style.css?v=1.0.0"><link rel="stylesheet" type="text/css" href="//lib.baomitu.com/normalize/latest/normalize.min.css"><link rel="stylesheet" type="text/css" href="//lib.baomitu.com/pure/latest/pure-min.min.css"><link rel="stylesheet" type="text/css" href="//lib.baomitu.com/pure/latest/grids-responsive-min.min.css"><link rel="stylesheet" href="//lib.baomitu.com/font-awesome/4.7.0/css/font-awesome.min.css"><script type="text/javascript" src="//lib.baomitu.com/jquery/latest/jquery.min.js"></script><link rel="icon" mask="" sizes="any" href="/favicon.ico"><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="apple-touch-icon-precomposed" href="/apple-touch-icon.png"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><script type="text/javascript" src="//lib.baomitu.com/clipboard.js/latest/clipboard.min.js"></script><script type="text/javascript" src="//lib.baomitu.com/toastr.js/latest/toastr.min.js"></script><link rel="stylesheet" href="//lib.baomitu.com/toastr.js/latest/toastr.min.css"><div class="darkmode-toggle">🌓</div><script>var prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)');
+var toggle = document.querySelector('.darkmode-toggle');
+var html = document.querySelector('html');
+
+html.dataset.dark = localStorage.dark || prefersDarkMode.matches;
+
+toggle.addEventListener('click', () => {
+localStorage.dark = !(html.dataset.dark == 'true');
+html.dataset.dark = localStorage.dark;
+});</script><meta name="generator" content="Hexo 5.4.0"></head><body><div class="body_container"><div id="header"><div class="site-name"><h1 class="hidden">同步原语-semaphore</h1><a id="logo" href="/.">杨宝强的技术笔记</a><p class="description"></p></div><div id="nav-menu"><a class="current" href="/."><i class="fa fa-home"> 首页</i></a><a href="/archives/"><i class="fa fa-archive"> 归档</i></a><a href="/about/"><i class="fa fa-user"> 关于</i></a><a href="/atom.xml"><i class="fa fa-rss"> 订阅</i></a></div></div><div class="pure-g" id="layout"><div class="pure-u-1 pure-u-md-3-4"><div class="content_container"><div class="post"><h1 class="post-title">同步原语-semaphore</h1><div class="post-meta">2022-04-25</div><div class="post-content"><p>同步原语–信号量学习</p>
+<span id="more"></span>
+
+<h2 id="信号量定义"><a href="#信号量定义" class="headerlink" title="信号量定义"></a>信号量定义</h2><p>信号量就是一个拥有整数值的对象，可以用多个例程操控它。</p>
+<blockquote>
+<p>信号量的初始值决定了它的行为，在与它交互之前需要进行初始化，如下：</p>
+</blockquote>
+<pre class="line-numbers language-c" data-language="c"><code class="language-c"><span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">include</span> <span class="token string">&lt;semaphore.h></span></span>
+
+<span class="token macro property"><span class="token directive-hash">#</span> <span class="token directive keyword">int</span> <span class="token expression"><span class="token function">sem_init</span><span class="token punctuation">(</span></span></span>
+<span class="token class-name">sem_t</span> <span class="token operator">*</span>sem<span class="token punctuation">,</span>
+<span class="token keyword">int</span> pshared<span class="token punctuation">,</span>
+<span class="token keyword">unsigned</span> <span class="token keyword">int</span> value<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token macro property"><span class="token directive-hash">#</span> <span class="token directive keyword">sem</span> <span class="token expression">信号</span></span>
+<span class="token macro property"><span class="token directive-hash">#</span> <span class="token directive keyword">value</span> <span class="token expression">指定了信号量的初始值</span></span>
+<span class="token macro property"><span class="token directive-hash">#</span> <span class="token directive keyword">pshared</span> <span class="token expression">表示在线程间共享，还是进程间</span></span>
+<span class="token function">sema_init</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h2 id="使用-sema-实现-lock"><a href="#使用-sema-实现-lock" class="headerlink" title="使用 sema 实现 lock"></a>使用 sema 实现 lock</h2><p>这时应将 sema 的 value 设置为几？</p>
+<p>可以想象，锁的状态其实只有<strong>上锁，未上锁</strong>两种状态，所以我们只需要使信号量满足这两种状态即可，即 value = 1，这种情况下，0，1就可以表示锁的这两种状态。</p>
+<p>想进入临界区（以下用 CS 代替），就需要获取锁，检查信号量是否被占用：</p>
+<ul>
+<li>未上锁，信号量的值减一，进入临界区</li>
+<li>上锁，信号量值减一，睡眠等待</li>
+</ul>
+<p>退出 CS，调用 <code>sema_post</code> 释放信号：</p>
+<ul>
+<li>有等待线程：信号量值加一，退出临界区，唤醒一个等待中的线程</li>
+<li>没有等待线程：信号量值加一，退出临界区，无需唤醒</li>
+</ul>
+<blockquote>
+<p>当信号量为负数时，比如说 -3，代表着有三个线程在等待这个信号被释放</p>
+</blockquote>
+<p>不难看出，当我们使用信号量来实现锁的时候，只有这两种状态（上锁，未上锁），所以这种信号通常也被称为<strong>binary semaphore</strong></p>
+<h2 id="sema-实现-CVs"><a href="#sema-实现-CVs" class="headerlink" title="sema 实现 CVs"></a>sema 实现 CVs</h2><p><code>sema_init(sema, 0, 0)</code></p>
+<p>想要父进程等待子进程执行结束的话，为什么 value 的值要设置为 0 ？</p>
+<h2 id="sema-实现-producer-consumer-模型"><a href="#sema-实现-producer-consumer-模型" class="headerlink" title="sema 实现 producer/consumer 模型"></a>sema 实现 producer/consumer 模型</h2><p>如同当初使用 CVs 实现生产者消费者模型时一样，这里也是需要两个信号量来表示何时生产者可发送，接收者可接收。</p>
+<pre class="line-numbers language-c" data-language="c"><code class="language-c"><span class="token keyword">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token keyword">int</span> argc<span class="token punctuation">,</span> <span class="token keyword">char</span> <span class="token operator">*</span>argv<span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token comment">// ...</span>
+    <span class="token function">sem_init</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>empty<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> MAX<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// MAX are empty</span>
+    <span class="token function">sem_init</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>full<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// 0 are full</span>
+    <span class="token comment">// ...</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+
+
+<p>当 MAX &gt; 1 时，会出现什么问题？（仔细观察，的确不难看出，data-race）</p>
+<pre class="line-numbers language-c" data-language="c"><code class="language-c"><span class="token keyword">int</span> buffer<span class="token punctuation">[</span>MAX<span class="token punctuation">]</span><span class="token punctuation">;</span>
+<span class="token keyword">int</span> fill <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token keyword">int</span> use <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token keyword">void</span> <span class="token function">put</span><span class="token punctuation">(</span><span class="token keyword">int</span> value<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    buffer<span class="token punctuation">[</span>fill<span class="token punctuation">]</span> <span class="token operator">=</span> value<span class="token punctuation">;</span> <span class="token comment">// Line F1</span>
+    fill <span class="token operator">=</span> <span class="token punctuation">(</span>fill <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">)</span> <span class="token operator">%</span> MAX<span class="token punctuation">;</span> <span class="token comment">// Line F2</span>
+<span class="token punctuation">&#125;</span> 
+<span class="token keyword">int</span> <span class="token function">get</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">int</span> tmp <span class="token operator">=</span> buffer<span class="token punctuation">[</span>use<span class="token punctuation">]</span><span class="token punctuation">;</span> <span class="token comment">// Line G1</span>
+    use <span class="token operator">=</span> <span class="token punctuation">(</span>use <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">)</span> <span class="token operator">%</span> MAX<span class="token punctuation">;</span> <span class="token comment">// Line G2</span>
+    <span class="token keyword">return</span> tmp<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token class-name">sem_t</span> empty<span class="token punctuation">;</span>
+<span class="token class-name">sem_t</span> full<span class="token punctuation">;</span>
+<span class="token keyword">void</span> <span class="token operator">*</span><span class="token function">producer</span><span class="token punctuation">(</span><span class="token keyword">void</span> <span class="token operator">*</span>arg<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">int</span> i<span class="token punctuation">;</span>
+    <span class="token keyword">for</span> <span class="token punctuation">(</span>i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> loops<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        <span class="token function">sem_wait</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>empty<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// Line P1</span>
+        <span class="token function">put</span><span class="token punctuation">(</span>i<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// Line P2</span>
+        <span class="token function">sem_post</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>full<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// Line P3</span>
+    <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">void</span> <span class="token operator">*</span><span class="token function">consumer</span><span class="token punctuation">(</span><span class="token keyword">void</span> <span class="token operator">*</span>arg<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">int</span> tmp <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    <span class="token keyword">while</span> <span class="token punctuation">(</span>tmp <span class="token operator">!=</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        <span class="token function">sem_wait</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>full<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// Line C1</span>
+        tmp <span class="token operator">=</span> <span class="token function">get</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// Line C2</span>
+        <span class="token function">sem_post</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>empty<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// Line C3</span>
+        <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"%d\n"</span><span class="token punctuation">,</span> tmp<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+
+
+<h2 id="哲学家吃饭"><a href="#哲学家吃饭" class="headerlink" title="哲学家吃饭.."></a>哲学家吃饭..</h2><p><img src="https://s2.loli.net/2022/04/27/wYIi1fhCQog2XVP.png" alt="image-20220427140847674"></p>
+<ul>
+<li><p><strong>如何解决相互依赖的问题</strong></p>
+</li>
+<li><p><strong>什么情况下会出现死锁</strong></p>
+</li>
+</ul>
+<h2 id="Thread-Throttling"><a href="#Thread-Throttling" class="headerlink" title="Thread Throttling"></a>Thread Throttling</h2><p>线程节流，控制线程数量。</p>
+<p>通过信号量控制进入临界区的线程数量</p>
+</div><div id="donate"><link rel="stylesheet" type="text/css" href="/css/donate.css?v=1.0.0"><script type="text/javascript" src="/js/donate.js?v=1.0.0" successtext="复制成功!"></script><a class="pos-f tr3" id="github" href="https://github.com/Kaiyuan/donate-page" target="_blank" title="Github"></a><div id="DonateText">Donate</div><ul class="list pos-f" id="donateBox"><li id="ps">没有开启任何Donate选项!</li></ul><div class="pos-f left-100" id="QRBox"><div id="MainBox"></div></div></div><div class="post-copyright"><script type="text/javascript" src="/js/copyright.js?v=1.0.0" successtext="复制成功!"></script><link rel="stylesheet" type="text/css" href="/css/copyright.css?v=1.0.0"><p><span>本文标题：</span>同步原语-semaphore</p><p><span>文章作者：</span>bqyang</p><p><span>发布时间：</span>2022-04-25</p><p><span>最后更新：</span>2022-04-27</p><p><span>原始链接：</span><a href="/2022/os/concurrency-sema/">https://bqyang.top/2022/os/concurrency-sema/</a><span class="copy-path"><i class="fa fa-clipboard" data-clipboard-text="https://bqyang.top/2022/os/concurrency-sema/"></i></span></p><p><span>版权声明：</span>The author owns the copyright, please indicate the source reproduced.</p></div><br><div class="tags"></div><div class="post-nav"><a class="pre" href="/2022/os/os-start/">操作系统启动</a><a class="next" href="/2022/os/concurrency-cv/">并发控制-Condition-variables</a></div><div id="container"></div><link rel="stylesheet" type="text/css" href="//unpkg.com/gitalk/dist/gitalk.css"><script type="text/javascript" src="//cdn.bootcss.com/blueimp-md5/2.10.0/js/md5.js"></script><script type="text/javascript" src="//unpkg.com/gitalk/dist/gitalk.min.js"></script><script>var gitalk = new Gitalk({
+  clientID: '4bcae079402e9cc4ce7b',
+  clientSecret: 'bc6b6ecab4d016f0a056df8253ad41b76b944084',
+  repo: 'blog_comments',
+  owner: 'clamyang',
+  admin: ['clamyang'],
+  id: md5(location.pathname),
+  distractionFreeMode: false
+})
+gitalk.render('container')
+</script></div></div></div><div class="pure-u-1-4 hidden_mid_and_down"><div id="sidebar"><div class="widget"><form class="search-form" action="//www.google.com/search" method="get" accept-charset="utf-8" target="_blank"><input type="text" name="q" maxlength="20" placeholder="Search"/><input type="hidden" name="sitesearch" value="https://bqyang.top"/></form></div><div class="widget"><div class="widget-title"><i class="fa fa-folder-o"> 分类</i></div></div><div class="widget"><div class="widget-title"><i class="fa fa-star-o"> 标签</i></div><div class="tagcloud"></div></div><div class="widget"><div class="widget-title"><i class="fa fa-file-o"> 最近文章</i></div><ul class="post-list"><li class="post-list-item"><a class="post-list-link" href="/2022/leetcode/array/easy/">数组-简单题</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/language/c/recur/">再学递归（几个有意思的递归练习）</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/language/c/print/">打印字符</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/language/c/string/">C-String</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/language/rust/enum/">Rust-Enums</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/language/rust/structs/">Rust-Structs</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/language/rust/ownership/">Rust-Ownership</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/k8s/deployment/">Deployment 更新策略</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/os/os-start/">操作系统启动</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/os/concurrency-sema/">同步原语-semaphore</a></li></ul></div><div class="widget"><div class="widget-title"><i class="fa fa-external-link"> 友情链接</i></div><ul></ul><a href="http://www.xargin.com/" title="Xargin" target="_blank">Xargin</a></div></div></div><div class="pure-u-1 pure-u-md-3-4"><div id="footer">Copyright © 2022 <a href="/." rel="nofollow">杨宝强的技术笔记.</a> Powered by<a rel="nofollow" target="_blank" href="https://hexo.io"> Hexo.</a><a rel="nofollow" target="_blank" href="https://github.com/tufu9441/maupassant-hexo"> Theme</a> by<a rel="nofollow" target="_blank" href="https://github.com/pagecho"> Cho.</a></div></div></div><a class="show" id="rocket" href="#top"></a><script type="text/javascript" src="/js/totop.js?v=1.0.0" async></script><script type="text/javascript" src="//lib.baomitu.com/fancybox/latest/jquery.fancybox.min.js" async></script><script type="text/javascript" src="/js/fancybox.js?v=1.0.0" async></script><link rel="stylesheet" type="text/css" href="//lib.baomitu.com/fancybox/latest/jquery.fancybox.min.css"><script type="text/javascript" src="/js/copycode.js?v=1.0.0" successtext="复制成功!"></script><link rel="stylesheet" type="text/css" href="/css/copycode.css?v=1.0.0"><script type="text/javascript" src="/js/codeblock-resizer.js?v=1.0.0"></script><script type="text/javascript" src="/js/smartresize.js?v=1.0.0"></script></div></body></html>

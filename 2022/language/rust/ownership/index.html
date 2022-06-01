@@ -1,0 +1,333 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="一物不知深以为耻"><title>Rust-Ownership | 杨宝强的技术笔记</title><link rel="stylesheet" type="text/css" href="/css/style.css?v=1.0.0"><link rel="stylesheet" type="text/css" href="//lib.baomitu.com/normalize/latest/normalize.min.css"><link rel="stylesheet" type="text/css" href="//lib.baomitu.com/pure/latest/pure-min.min.css"><link rel="stylesheet" type="text/css" href="//lib.baomitu.com/pure/latest/grids-responsive-min.min.css"><link rel="stylesheet" href="//lib.baomitu.com/font-awesome/4.7.0/css/font-awesome.min.css"><script type="text/javascript" src="//lib.baomitu.com/jquery/latest/jquery.min.js"></script><link rel="icon" mask="" sizes="any" href="/favicon.ico"><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="apple-touch-icon-precomposed" href="/apple-touch-icon.png"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><script type="text/javascript" src="//lib.baomitu.com/clipboard.js/latest/clipboard.min.js"></script><script type="text/javascript" src="//lib.baomitu.com/toastr.js/latest/toastr.min.js"></script><link rel="stylesheet" href="//lib.baomitu.com/toastr.js/latest/toastr.min.css"><div class="darkmode-toggle">🌓</div><script>var prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)');
+var toggle = document.querySelector('.darkmode-toggle');
+var html = document.querySelector('html');
+
+html.dataset.dark = localStorage.dark || prefersDarkMode.matches;
+
+toggle.addEventListener('click', () => {
+localStorage.dark = !(html.dataset.dark == 'true');
+html.dataset.dark = localStorage.dark;
+});</script><meta name="generator" content="Hexo 5.4.0"></head><body><div class="body_container"><div id="header"><div class="site-name"><h1 class="hidden">Rust-Ownership</h1><a id="logo" href="/.">杨宝强的技术笔记</a><p class="description"></p></div><div id="nav-menu"><a class="current" href="/."><i class="fa fa-home"> 首页</i></a><a href="/archives/"><i class="fa fa-archive"> 归档</i></a><a href="/about/"><i class="fa fa-user"> 关于</i></a><a href="/atom.xml"><i class="fa fa-rss"> 订阅</i></a></div></div><div class="pure-g" id="layout"><div class="pure-u-1 pure-u-md-3-4"><div class="content_container"><div class="post"><h1 class="post-title">Rust-Ownership</h1><div class="post-meta">2022-05-09</div><div class="post-content"><p>Rust 核心概念了解 —— Ownership</p>
+<span id="more"></span>
+
+<p>Ownership 就是定义了一些规则，比如在函数中传递参数的时候是怎么处理参数的，官网的解释为<strong>Rust程序如何管理内存的一系列规则</strong>。</p>
+<p><strong>内存管理的三种方式</strong></p>
+<ul>
+<li>Go 语言这类，自动垃圾回收机制</li>
+<li>C 语言，手动垃圾回收，显示分配、释放</li>
+<li>Rust 独一档，结合<strong>编译器、ownership 定义的规则</strong>，如果说没有按照 Rust Ownership 定义的规则，那么编译就不会通过。</li>
+</ul>
+<p>第一次知道，还能有这样的内存管理方式..</p>
+<h1 id="ownership-by-example"><a href="#ownership-by-example" class="headerlink" title="ownership by example"></a>ownership by example</h1><p>（通过例子学习 ownership）</p>
+<blockquote>
+<p>The Stack and the Heap</p>
+</blockquote>
+<p><code>All data stored on the stack must have a known, fixed size. Data with an unknown size at compile time or a size that might change must be stored on the heap instead.</code></p>
+<p><code>Accessing data in the heap is slower than accessing data on the stack because you have to follow a pointer to get there. </code></p>
+<h2 id="ownership-Rules"><a href="#ownership-Rules" class="headerlink" title="ownership Rules"></a>ownership Rules</h2><ul>
+<li>Rust 中每一个值都有一个被叫做 <code>owner</code> 的变量，比如 a = 1, 1 的 owner 就是 a。</li>
+<li>同一时刻有且仅有一个 owner。</li>
+<li>当 owner 超出范围时（超出作用域），value 会被丢弃。</li>
+</ul>
+<h2 id="变量作用域"><a href="#变量作用域" class="headerlink" title="变量作用域"></a>变量作用域</h2><p>作用域大家了解的已经很多了，要是直接看 C 代码其实还是有点懵逼的。。不信你试试。。</p>
+<pre class="line-numbers language-c" data-language="c"><code class="language-c"><span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">include</span> <span class="token string">&lt;stdio.h></span></span>
+
+<span class="token keyword">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token keyword">void</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">int</span> x <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#123;</span>
+        <span class="token keyword">int</span> x <span class="token operator">=</span> <span class="token number">2</span><span class="token punctuation">;</span>
+        <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"%d\n"</span><span class="token punctuation">,</span> x<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"%d\n"</span><span class="token punctuation">,</span> x<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+
+
+<blockquote>
+<p>很显然，答案不是 2 ，2； 正确答案为：2， 1；</p>
+</blockquote>
+<p>Rust 中其实也类似，如下：</p>
+<pre class="line-numbers language-rust" data-language="rust"><code class="language-rust"><span class="token keyword">fn</span> <span class="token function-definition function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token punctuation">&#123;</span>
+        <span class="token keyword">let</span> s <span class="token operator">=</span> <span class="token string">"hello"</span><span class="token punctuation">;</span>	<span class="token comment">// 这时候变量开始有效</span>
+    <span class="token punctuation">&#125;</span> 					    <span class="token comment">// 从这时起，就无效</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+
+
+<p>两个重要的点：</p>
+<ul>
+<li>变量 s 在作用域内，有效</li>
+<li>变量 s 超出作用域，无效</li>
+</ul>
+<h2 id="内存和分配"><a href="#内存和分配" class="headerlink" title="内存和分配"></a>内存和分配</h2><p>Rust 中内存释放的方式，<strong>超出了作用域自动释放</strong>。Rust 也算是帮我们做了内存管理，虽然没有 GC，但是也不用我们手动进行 free，避免出现 double free 问题，如上述分配的 s 变量，超出了作用域就被释放掉。</p>
+<h2 id="ownership-Move"><a href="#ownership-Move" class="headerlink" title="ownership Move"></a>ownership Move</h2><p>Stack </p>
+<pre class="line-numbers language-rust" data-language="rust"><code class="language-rust"><span class="token keyword">fn</span> <span class="token function-definition function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">let</span> x <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span>
+    <span class="token keyword">let</span> y <span class="token operator">=</span> x<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>Heap</p>
+<pre class="line-numbers language-rust" data-language="rust"><code class="language-rust"><span class="token keyword">fn</span> <span class="token function-definition function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">let</span> s1 <span class="token operator">=</span> <span class="token class-name">String</span><span class="token punctuation">::</span><span class="token function">from</span><span class="token punctuation">(</span><span class="token string">"hello"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">let</span> s2 <span class="token operator">=</span> s1<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+
+
+
+<p>两段代码表达的意思相近，但是，在不同的内存空间上有着很大的差别。</p>
+<ul>
+<li><p>stack 不赘述</p>
+</li>
+<li><p>heap</p>
+<p><img src="https://doc.rust-lang.org/book/img/trpl04-02.svg" alt="s1 and s2 pointing to the same value"></p>
+</li>
+</ul>
+<p>执行完赋值操作后，有两个指向同一块内存的指针，但是这也会存在一种情况，当 s1 和 s2 都用不到时候，会进行 free，就会出现 double free 的情况。</p>
+<p>所以，为了保证内存安全，在 <code>let s2 = s1;</code> 执行完成后，Rust <strong>认为 s1 不再有效</strong>。即，将 s1 ownership move to s2.</p>
+<h2 id="ownership-Clone"><a href="#ownership-Clone" class="headerlink" title="ownership Clone"></a>ownership Clone</h2><p>(deeply copy)</p>
+<pre class="line-numbers language-rust" data-language="rust"><code class="language-rust"><span class="token keyword">fn</span> <span class="token function-definition function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">let</span> s1 <span class="token operator">=</span> <span class="token class-name">String</span><span class="token punctuation">::</span><span class="token function">from</span><span class="token punctuation">(</span><span class="token string">"hello"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">let</span> s2 <span class="token operator">=</span> s1<span class="token punctuation">.</span><span class="token class-name">Copy</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    
+    <span class="token macro property">println!</span><span class="token punctuation">(</span><span class="token string">"s1 is &#123;&#125;, s2 is &#123;&#125;"</span><span class="token punctuation">,</span> s1<span class="token punctuation">,</span> s2<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+
+
+<p><img src="https://doc.rust-lang.org/book/img/trpl04-03.svg" alt="s1 and s2 to two places"></p>
+<h2 id="Stack-Only-Data-Copy"><a href="#Stack-Only-Data-Copy" class="headerlink" title="Stack-Only Data: Copy"></a>Stack-Only Data: Copy</h2><p><code>The reason is that types such as integers that have a known size at compile time are stored entirely on the stack, so copies of the actual values are quick to make. That means there’s no reason we would want to prevent </code>x<code>from being valid after we create the variable</code>y<code>. </code></p>
+<p>总而言之，栈上的数据会进行 Copy，堆上的数据会进行 move。</p>
+<h2 id="函数之间-ownership-的改变"><a href="#函数之间-ownership-的改变" class="headerlink" title="函数之间 ownership 的改变"></a>函数之间 ownership 的改变</h2><p>将变量传递给函数的时候也可能会发生 move 或 copy，和分配差不多。</p>
+<pre class="line-numbers language-rust" data-language="rust"><code class="language-rust"><span class="token keyword">fn</span> <span class="token function-definition function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">let</span> s <span class="token operator">=</span> <span class="token class-name">String</span><span class="token punctuation">::</span><span class="token function">from</span><span class="token punctuation">(</span><span class="token string">"hello"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>  <span class="token comment">// s comes into scope</span>
+
+    <span class="token function">takes_ownership</span><span class="token punctuation">(</span>s<span class="token punctuation">)</span><span class="token punctuation">;</span>             <span class="token comment">// s's value moves into the function...</span>
+    <span class="token comment">// ... and so is no longer valid here</span>
+
+    <span class="token keyword">let</span> x <span class="token operator">=</span> <span class="token number">5</span><span class="token punctuation">;</span>                      <span class="token comment">// x comes into scope</span>
+
+    <span class="token function">makes_copy</span><span class="token punctuation">(</span>x<span class="token punctuation">)</span><span class="token punctuation">;</span>                  <span class="token comment">// x would move into the function,</span>
+    <span class="token comment">// but i32 is Copy, so it's okay to still</span>
+    <span class="token comment">// use x afterward</span>
+
+<span class="token punctuation">&#125;</span> <span class="token comment">// Here, x goes out of scope, then s. But because s's value was moved, nothing</span>
+<span class="token comment">// special happens.</span>
+
+<span class="token keyword">fn</span> <span class="token function-definition function">takes_ownership</span><span class="token punctuation">(</span>some_string<span class="token punctuation">:</span> <span class="token class-name">String</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span> <span class="token comment">// some_string comes into scope</span>
+    <span class="token macro property">println!</span><span class="token punctuation">(</span><span class="token string">"&#123;&#125;"</span><span class="token punctuation">,</span> some_string<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span> <span class="token comment">// Here, some_string goes out of scope and `drop` is called. The backing</span>
+<span class="token comment">// memory is freed.</span>
+
+<span class="token keyword">fn</span> <span class="token function-definition function">makes_copy</span><span class="token punctuation">(</span>some_integer<span class="token punctuation">:</span> <span class="token keyword">i32</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span> <span class="token comment">// some_integer comes into scope</span>
+    <span class="token macro property">println!</span><span class="token punctuation">(</span><span class="token string">"&#123;&#125;"</span><span class="token punctuation">,</span> some_integer<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span> <span class="token comment">// Here, some_integer goes out of scope. Nothing special happens.</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+
+
+<h2 id="函数返回时与-ownership"><a href="#函数返回时与-ownership" class="headerlink" title="函数返回时与 ownership"></a>函数返回时与 ownership</h2><p>返回值也会转移 ownership。</p>
+<pre class="line-numbers language-rust" data-language="rust"><code class="language-rust"><span class="token keyword">fn</span> <span class="token function-definition function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">let</span> s1 <span class="token operator">=</span> <span class="token function">gives_ownership</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>         <span class="token comment">// gives_ownership moves its return</span>
+    <span class="token comment">// value into s1</span>
+
+    <span class="token keyword">let</span> s2 <span class="token operator">=</span> <span class="token class-name">String</span><span class="token punctuation">::</span><span class="token function">from</span><span class="token punctuation">(</span><span class="token string">"hello"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>     <span class="token comment">// s2 comes into scope</span>
+
+    <span class="token keyword">let</span> s3 <span class="token operator">=</span> <span class="token function">takes_and_gives_back</span><span class="token punctuation">(</span>s2<span class="token punctuation">)</span><span class="token punctuation">;</span>  <span class="token comment">// s2 is moved into</span>
+    <span class="token comment">// takes_and_gives_back, which also</span>
+    <span class="token comment">// moves its return value into s3</span>
+<span class="token punctuation">&#125;</span> <span class="token comment">// Here, s3 goes out of scope and is dropped. s2 was moved, so nothing</span>
+<span class="token comment">// happens. s1 goes out of scope and is dropped.</span>
+
+<span class="token keyword">fn</span> <span class="token function-definition function">gives_ownership</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">-></span> <span class="token class-name">String</span> <span class="token punctuation">&#123;</span>             <span class="token comment">// gives_ownership will move its</span>
+    <span class="token comment">// return value into the function</span>
+    <span class="token comment">// that calls it</span>
+
+    <span class="token keyword">let</span> some_string <span class="token operator">=</span> <span class="token class-name">String</span><span class="token punctuation">::</span><span class="token function">from</span><span class="token punctuation">(</span><span class="token string">"yours"</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// some_string comes into scope</span>
+
+    some_string                              <span class="token comment">// some_string is returned and</span>
+    <span class="token comment">// moves out to the calling</span>
+    <span class="token comment">// function</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">// This function takes a String and returns one</span>
+<span class="token keyword">fn</span> <span class="token function-definition function">takes_and_gives_back</span><span class="token punctuation">(</span>a_string<span class="token punctuation">:</span> <span class="token class-name">String</span><span class="token punctuation">)</span> <span class="token punctuation">-></span> <span class="token class-name">String</span> <span class="token punctuation">&#123;</span> <span class="token comment">// a_string comes into</span>
+    <span class="token comment">// scope</span>
+
+    a_string  <span class="token comment">// a_string is returned and moves out to the calling function</span>
+<span class="token punctuation">&#125;</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+
+
+<p>综上所述，每次进行函数传参的时候都会发生 ownership 的转移，如果说我们给 funcA 传一个 A 参数后，仍然要使用 A 参数，应该怎么办呢？</p>
+<ul>
+<li> 可以把这个参数从 funcA 中返回</li>
+</ul>
+<pre class="line-numbers language-rust" data-language="rust"><code class="language-rust"><span class="token keyword">fn</span> <span class="token function-definition function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">let</span> s1 <span class="token operator">=</span> <span class="token class-name">String</span><span class="token punctuation">::</span><span class="token function">from</span><span class="token punctuation">(</span><span class="token string">"hello"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">let</span> <span class="token punctuation">(</span>s2<span class="token punctuation">,</span> len<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token function">calculate_length</span><span class="token punctuation">(</span>s1<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token macro property">println!</span><span class="token punctuation">(</span><span class="token string">"The length of string &#123;&#125; is &#123;&#125;"</span><span class="token punctuation">,</span> s2<span class="token punctuation">,</span> len<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">fn</span> <span class="token function-definition function">calculate_length</span><span class="token punctuation">(</span>s<span class="token punctuation">:</span> string<span class="token punctuation">)</span> <span class="token punctuation">-></span> <span class="token punctuation">(</span><span class="token class-name">String</span><span class="token punctuation">,</span> <span class="token keyword">usize</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">let</span> length <span class="token operator">=</span> s<span class="token punctuation">.</span><span class="token function">len</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">(</span>s<span class="token punctuation">,</span> length<span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<ul>
+<li>牛x的 Rust 当然还提供了另一种方式，<strong>reference</strong>。</li>
+</ul>
+<h2 id="Reference-and-Borrowing"><a href="#Reference-and-Borrowing" class="headerlink" title="Reference and Borrowing"></a>Reference and Borrowing</h2><h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><p>本以为这个 reference 和 pointer 是一个东西，但是 rust 中貌似并不是这么定义的，且看且分析。</p>
+<p><code> A reference is like a pointer in that it’s an address we can follow to access data stored at that address that is owned by some other variable.</code></p>
+<p>reference 和 pointer 相同的点，存储的都是地址，可以通过这个地址访问存储在这个地址上的数据，这个数据可能是属于别的变量的。 <strong>不同的点</strong>，reference 指向的永远是<strong>有效</strong>的地址。</p>
+<p><img src="https://doc.rust-lang.org/book/img/trpl04-05.svg" alt="&amp;String s pointing at String s1"></p>
+<p>因此，上述代码就可以就改为，</p>
+<pre class="line-numbers language-rust" data-language="rust"><code class="language-rust"><span class="token keyword">fn</span> <span class="token function-definition function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">let</span> s1 <span class="token operator">=</span> <span class="token class-name">String</span><span class="token punctuation">::</span><span class="token function">from</span><span class="token punctuation">(</span><span class="token string">"hello"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">let</span> len <span class="token operator">=</span> <span class="token function">calculate_length</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>s1<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token macro property">println!</span><span class="token punctuation">(</span><span class="token string">"The length of '&#123;&#125;' is &#123;&#125;."</span><span class="token punctuation">,</span> s1<span class="token punctuation">,</span> len<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">fn</span> <span class="token function-definition function">calculate_length</span><span class="token punctuation">(</span>s<span class="token punctuation">:</span> <span class="token operator">&amp;</span><span class="token class-name">String</span><span class="token punctuation">)</span> <span class="token punctuation">-></span> <span class="token keyword">usize</span> <span class="token punctuation">&#123;</span> <span class="token comment">// s is a reference to a String</span>
+    s<span class="token punctuation">.</span><span class="token function">len</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+
+
+<p>下面这段引用，再一次解释了，传递引用给函数时发生了什么，不再赘述。</p>
+<blockquote>
+<p><code>When functions have references as parameters instead of the actual values, we won’t need to return the values in order to give back ownership, because we never had ownership.</code></p>
+</blockquote>
+<h3 id="Borrowing"><a href="#Borrowing" class="headerlink" title="Borrowing"></a>Borrowing</h3><p>（把创建 reference 的行为定义成 borrowing）。在实际生活中，就跟借东西是一个意思，假设一个人拥有一辆保时捷，你借过来开两天，然后还回去，我们从未拥有过保时捷。</p>
+<p>然后问题就来了，比如我们接过来保时捷开两天，发现他的颜色看着不顺眼，你想给他改装，这时候怎么办？如下。</p>
+<pre class="line-numbers language-rust" data-language="rust"><code class="language-rust"><span class="token keyword">fn</span> <span class="token function-definition function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">let</span> s1 <span class="token operator">=</span> <span class="token class-name">String</span><span class="token punctuation">::</span><span class="token function">from</span><span class="token punctuation">(</span><span class="token string">"hello"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token function">change</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>s1<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">fn</span> <span class="token function-definition function">change</span><span class="token punctuation">(</span>some_str<span class="token punctuation">:</span> <span class="token operator">&amp;</span><span class="token class-name">String</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>     
+    some_str<span class="token punctuation">.</span><span class="token function">push_str</span><span class="token punctuation">(</span><span class="token string">"RTFM"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>     
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<pre class="line-numbers language-none"><code class="language-none">error[E0596]: cannot borrow &#96;*some_str&#96; as mutable, as it is behind a &#96;&amp;&#96; reference
+ --&gt; src&#x2F;main.rs:8:5
+  |
+7 | fn change(some_str: &amp;String) &#123;
+  |                     ------- help: consider changing this to be a mutable reference: &#96;&amp;mut String&#96;
+8 |     some_str.push_str(&quot;RTFM&quot;);
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^ &#96;some_str&#96; is a &#96;&amp;&#96; reference, so the data it refers to cannot be borrowed as mutable
+
+For more information about this error, try &#96;rustc --explain E0596&#96;.
+error: could not compile &#96;borrowing&#96; due to previous error<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+
+
+<p>验证了一个结论，默认情况加，<strong>borrow</strong>过来的东西是不可修改的，除非加上<strong>mut</strong>(mutable)，如下：</p>
+<pre class="line-numbers language-none"><code class="language-none">fn main() &#123;
+    let mut s1 &#x3D; String::from(&quot;hello&quot;);
+
+    change(&amp;mut s1);
+&#125;
+
+fn change(some_str: &amp;mut String) &#123;     
+    some_str.push_str(&quot;RTFM&quot;);     
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>这样就可肆无忌惮的修改 reference 指向的内容了，形如这样的被称为 <code>mutable reference</code>。</p>
+<p>Mutable referenct 一个最大限制：<strong>在同一时刻只能拥有某个变量的一个 mut reference</strong>。可以试试下面这段代码：</p>
+<pre class="line-numbers language-rust" data-language="rust"><code class="language-rust"><span class="token keyword">fn</span> <span class="token function-definition function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">let</span> <span class="token keyword">mut</span> s1 <span class="token operator">=</span> <span class="token class-name">String</span><span class="token punctuation">::</span><span class="token function">from</span><span class="token punctuation">(</span><span class="token string">"RTFM"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">let</span> r1 <span class="token operator">=</span> <span class="token operator">&amp;</span><span class="token keyword">mut</span> s1<span class="token punctuation">;</span>
+    <span class="token keyword">let</span> r2 <span class="token operator">=</span> <span class="token operator">&amp;</span><span class="token keyword">mut</span> s2<span class="token punctuation">;</span>
+
+    <span class="token macro property">println!</span><span class="token punctuation">(</span><span class="token string">"&#123;&#125; &#123;&#125;"</span><span class="token punctuation">,</span> r1<span class="token punctuation">,</span> r2<span class="token punctuation">)</span><span class="token punctuation">;</span>    
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<pre class="line-numbers language-none"><code class="language-none">error[E0499]: cannot borrow &#96;s1&#96; as mutable more than once at a time
+ --&gt; src&#x2F;main.rs:5:14
+  |
+4 |     let s2 &#x3D; &amp;mut s1;
+  |              ------- first mutable borrow occurs here
+5 |     let s3 &#x3D; &amp;mut s1;
+  |              ^^^^^^^ second mutable borrow occurs here
+6 | 
+7 |     println!(&quot;&#123;&#125; &#123;&#125;&quot;, s2, s3);
+  |                       -- first borrow later used here
+
+For more information about this error, try &#96;rustc --explain E0499&#96;.
+error: could not compile &#96;borrowing&#96; due to previous error<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+
+
+<p><strong>mutable reference and immutable reference</strong></p>
+<p><strong>不能同时拥有可变的和不可变的 reference</strong>，意味着，要么只有一个 mutable，要么有多个 immutable，不能有一个 mutable 和多个 immutable 的情况。</p>
+<h2 id="Reference-scope"><a href="#Reference-scope" class="headerlink" title="Reference scope"></a>Reference scope</h2><p>reference 的生效范围，**Note that a reference’s scope starts from where it is introduced and continues through the last time that reference is used. **</p>
+<pre class="line-numbers language-rust" data-language="rust"><code class="language-rust"><span class="token keyword">fn</span> <span class="token function-definition function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">let</span> <span class="token keyword">mut</span> s <span class="token operator">=</span> <span class="token class-name">String</span><span class="token punctuation">::</span><span class="token function">from</span><span class="token punctuation">(</span><span class="token string">"hello"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">let</span> r1 <span class="token operator">=</span> <span class="token operator">&amp;</span>s<span class="token punctuation">;</span> <span class="token comment">// no problem</span>
+    <span class="token keyword">let</span> r2 <span class="token operator">=</span> <span class="token operator">&amp;</span>s<span class="token punctuation">;</span> <span class="token comment">// no problem</span>
+    <span class="token macro property">println!</span><span class="token punctuation">(</span><span class="token string">"&#123;&#125; and &#123;&#125;"</span><span class="token punctuation">,</span> r1<span class="token punctuation">,</span> r2<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token comment">// variables r1 and r2 will not be used after this point</span>
+
+    <span class="token keyword">let</span> r3 <span class="token operator">=</span> <span class="token operator">&amp;</span><span class="token keyword">mut</span> s<span class="token punctuation">;</span> <span class="token comment">// no problem</span>
+    <span class="token macro property">println!</span><span class="token punctuation">(</span><span class="token string">"&#123;&#125;"</span><span class="token punctuation">,</span> r3<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+
+
+<h2 id="Dangling-References"><a href="#Dangling-References" class="headerlink" title="Dangling References"></a>Dangling References</h2><p>悬垂引用，有点类似 dangling pointer， rust 中，编译器会检查 reference 指向的内容是否有效，不会发生这种情况。。</p>
+<pre class="line-numbers language-rust" data-language="rust"><code class="language-rust"><span class="token keyword">fn</span> <span class="token function-definition function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">let</span> reference_to_nothing <span class="token operator">=</span> <span class="token function">dangle</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">fn</span> <span class="token function-definition function">dangle</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">-></span> <span class="token operator">&amp;</span><span class="token class-name">String</span> <span class="token punctuation">&#123;</span> <span class="token comment">// dangle returns a reference to a String</span>
+
+    <span class="token keyword">let</span> s <span class="token operator">=</span> <span class="token class-name">String</span><span class="token punctuation">::</span><span class="token function">from</span><span class="token punctuation">(</span><span class="token string">"hello"</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// s is a new String</span>
+
+    <span class="token operator">&amp;</span>s <span class="token comment">// we return a reference to the String, s</span>
+<span class="token punctuation">&#125;</span> <span class="token comment">// Here, s goes out of scope, and is dropped. Its memory goes away.</span>
+<span class="token comment">// Danger!</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<pre class="line-numbers language-none"><code class="language-none">$ cargo run
+   Compiling ownership v0.1.0 (file:&#x2F;&#x2F;&#x2F;projects&#x2F;ownership)
+error[E0106]: missing lifetime specifier
+ --&gt; src&#x2F;main.rs:5:16
+  |
+5 | fn dangle() -&gt; &amp;String &#123;
+  |                ^ expected named lifetime parameter
+  |
+  &#x3D; help: this function&#39;s return type contains a borrowed value, but there is no value for it to be borrowed from
+help: consider using the &#96;&#39;static&#96; lifetime
+  |
+5 | fn dangle() -&gt; &amp;&#39;static String &#123;
+  |                ~~~~~~~~
+
+For more information about this error, try &#96;rustc --explain E0106&#96;.
+error: could not compile &#96;ownership&#96; due to previous error<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+
+
+<h2 id="Rules-of-Reference"><a href="#Rules-of-Reference" class="headerlink" title="Rules of Reference"></a>Rules of Reference</h2><ul>
+<li>任何时刻，要么只能有一个 mutable reference，要么有多个 immutable reference。</li>
+<li>Reference 指向的内容一定是有效的。</li>
+</ul>
+<h2 id="Slices"><a href="#Slices" class="headerlink" title="Slices"></a>Slices</h2><p>这个跟 Go 的切片引用类似..，直接贴张图，不再赘述。</p>
+<p><img src="https://doc.rust-lang.org/book/img/trpl04-06.svg" alt="world containing a pointer to the byte at index 6 of String s and a length 5"></p>
+<h2 id="完结撒花"><a href="#完结撒花" class="headerlink" title="完结撒花"></a>完结撒花</h2></div><div id="donate"><link rel="stylesheet" type="text/css" href="/css/donate.css?v=1.0.0"><script type="text/javascript" src="/js/donate.js?v=1.0.0" successtext="复制成功!"></script><a class="pos-f tr3" id="github" href="https://github.com/Kaiyuan/donate-page" target="_blank" title="Github"></a><div id="DonateText">Donate</div><ul class="list pos-f" id="donateBox"><li id="ps">没有开启任何Donate选项!</li></ul><div class="pos-f left-100" id="QRBox"><div id="MainBox"></div></div></div><div class="post-copyright"><script type="text/javascript" src="/js/copyright.js?v=1.0.0" successtext="复制成功!"></script><link rel="stylesheet" type="text/css" href="/css/copyright.css?v=1.0.0"><p><span>本文标题：</span>Rust-Ownership</p><p><span>文章作者：</span>bqyang</p><p><span>发布时间：</span>2022-05-09</p><p><span>最后更新：</span>2022-05-10</p><p><span>原始链接：</span><a href="/2022/language/rust/ownership/">https://bqyang.top/2022/language/rust/ownership/</a><span class="copy-path"><i class="fa fa-clipboard" data-clipboard-text="https://bqyang.top/2022/language/rust/ownership/"></i></span></p><p><span>版权声明：</span>The author owns the copyright, please indicate the source reproduced.</p></div><br><div class="tags"></div><div class="post-nav"><a class="pre" href="/2022/language/rust/structs/">Rust-Structs</a><a class="next" href="/2022/k8s/deployment/">Deployment 更新策略</a></div><div id="container"></div><link rel="stylesheet" type="text/css" href="//unpkg.com/gitalk/dist/gitalk.css"><script type="text/javascript" src="//cdn.bootcss.com/blueimp-md5/2.10.0/js/md5.js"></script><script type="text/javascript" src="//unpkg.com/gitalk/dist/gitalk.min.js"></script><script>var gitalk = new Gitalk({
+  clientID: '4bcae079402e9cc4ce7b',
+  clientSecret: 'bc6b6ecab4d016f0a056df8253ad41b76b944084',
+  repo: 'blog_comments',
+  owner: 'clamyang',
+  admin: ['clamyang'],
+  id: md5(location.pathname),
+  distractionFreeMode: false
+})
+gitalk.render('container')
+</script></div></div></div><div class="pure-u-1-4 hidden_mid_and_down"><div id="sidebar"><div class="widget"><form class="search-form" action="//www.google.com/search" method="get" accept-charset="utf-8" target="_blank"><input type="text" name="q" maxlength="20" placeholder="Search"/><input type="hidden" name="sitesearch" value="https://bqyang.top"/></form></div><div class="widget"><div class="widget-title"><i class="fa fa-folder-o"> 分类</i></div></div><div class="widget"><div class="widget-title"><i class="fa fa-star-o"> 标签</i></div><div class="tagcloud"></div></div><div class="widget"><div class="widget-title"><i class="fa fa-file-o"> 最近文章</i></div><ul class="post-list"><li class="post-list-item"><a class="post-list-link" href="/2022/leetcode/array/easy/">数组-简单题</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/language/c/recur/">再学递归（几个有意思的递归练习）</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/language/c/print/">打印字符</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/language/c/string/">C-String</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/language/rust/enum/">Rust-Enums</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/language/rust/structs/">Rust-Structs</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/language/rust/ownership/">Rust-Ownership</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/k8s/deployment/">Deployment 更新策略</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/os/os-start/">操作系统启动</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/os/concurrency-sema/">同步原语-semaphore</a></li></ul></div><div class="widget"><div class="widget-title"><i class="fa fa-external-link"> 友情链接</i></div><ul></ul><a href="http://www.xargin.com/" title="Xargin" target="_blank">Xargin</a></div></div></div><div class="pure-u-1 pure-u-md-3-4"><div id="footer">Copyright © 2022 <a href="/." rel="nofollow">杨宝强的技术笔记.</a> Powered by<a rel="nofollow" target="_blank" href="https://hexo.io"> Hexo.</a><a rel="nofollow" target="_blank" href="https://github.com/tufu9441/maupassant-hexo"> Theme</a> by<a rel="nofollow" target="_blank" href="https://github.com/pagecho"> Cho.</a></div></div></div><a class="show" id="rocket" href="#top"></a><script type="text/javascript" src="/js/totop.js?v=1.0.0" async></script><script type="text/javascript" src="//lib.baomitu.com/fancybox/latest/jquery.fancybox.min.js" async></script><script type="text/javascript" src="/js/fancybox.js?v=1.0.0" async></script><link rel="stylesheet" type="text/css" href="//lib.baomitu.com/fancybox/latest/jquery.fancybox.min.css"><script type="text/javascript" src="/js/copycode.js?v=1.0.0" successtext="复制成功!"></script><link rel="stylesheet" type="text/css" href="/css/copycode.css?v=1.0.0"><script type="text/javascript" src="/js/codeblock-resizer.js?v=1.0.0"></script><script type="text/javascript" src="/js/smartresize.js?v=1.0.0"></script></div></body></html>

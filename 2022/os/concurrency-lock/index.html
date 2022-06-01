@@ -1,0 +1,101 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="一物不知深以为耻"><title>并发控制-互斥（自旋锁、互斥锁） | 杨宝强的技术笔记</title><link rel="stylesheet" type="text/css" href="/css/style.css?v=1.0.0"><link rel="stylesheet" type="text/css" href="//lib.baomitu.com/normalize/latest/normalize.min.css"><link rel="stylesheet" type="text/css" href="//lib.baomitu.com/pure/latest/pure-min.min.css"><link rel="stylesheet" type="text/css" href="//lib.baomitu.com/pure/latest/grids-responsive-min.min.css"><link rel="stylesheet" href="//lib.baomitu.com/font-awesome/4.7.0/css/font-awesome.min.css"><script type="text/javascript" src="//lib.baomitu.com/jquery/latest/jquery.min.js"></script><link rel="icon" mask="" sizes="any" href="/favicon.ico"><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="apple-touch-icon-precomposed" href="/apple-touch-icon.png"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><script type="text/javascript" src="//lib.baomitu.com/clipboard.js/latest/clipboard.min.js"></script><script type="text/javascript" src="//lib.baomitu.com/toastr.js/latest/toastr.min.js"></script><link rel="stylesheet" href="//lib.baomitu.com/toastr.js/latest/toastr.min.css"><div class="darkmode-toggle">🌓</div><script>var prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)');
+var toggle = document.querySelector('.darkmode-toggle');
+var html = document.querySelector('html');
+
+html.dataset.dark = localStorage.dark || prefersDarkMode.matches;
+
+toggle.addEventListener('click', () => {
+localStorage.dark = !(html.dataset.dark == 'true');
+html.dataset.dark = localStorage.dark;
+});</script><meta name="generator" content="Hexo 5.4.0"></head><body><div class="body_container"><div id="header"><div class="site-name"><h1 class="hidden">并发控制-互斥（自旋锁、互斥锁）</h1><a id="logo" href="/.">杨宝强的技术笔记</a><p class="description"></p></div><div id="nav-menu"><a class="current" href="/."><i class="fa fa-home"> 首页</i></a><a href="/archives/"><i class="fa fa-archive"> 归档</i></a><a href="/about/"><i class="fa fa-user"> 关于</i></a><a href="/atom.xml"><i class="fa fa-rss"> 订阅</i></a></div></div><div class="pure-g" id="layout"><div class="pure-u-1 pure-u-md-3-4"><div class="content_container"><div class="post"><h1 class="post-title">并发控制-互斥（自旋锁、互斥锁）</h1><div class="post-meta">2022-04-20</div><div class="post-content"><p>锁.</p>
+<span id="more"></span>
+
+<p>如何定义一把锁？</p>
+<ul>
+<li>basic - 能否达到互斥</li>
+<li>fairness - 能否保证公平，极端情况下，是否会出现 thread 获取不到锁的情况</li>
+<li>performance - 性能，使用锁带来的负载。<ul>
+<li>没有竞争时</li>
+<li>单核多线程竞争</li>
+<li>多核多线程竞争</li>
+</ul>
+</li>
+</ul>
+<h2 id="原子指令-Bus-Lock"><a href="#原子指令-Bus-Lock" class="headerlink" title="原子指令 Bus Lock"></a>原子指令 Bus Lock</h2><p>正如我们最熟悉的<strong>累加</strong>运算，很多像我一样的初级程序员都会在编写并发程序的时候注意不到这个问题，运算过程中涉及到 load/store 指令，但是并不是原子操作。</p>
+<p>所以在没有并发控制的情况下，很容易就会导致 data-race 的问题。我们可以通过算法，比如之前文章提到的 <code>Peterson</code> 来实现并发控制，但是我们可以图省事，把这项工作交给硬件工程师去做呀？</p>
+<p>我们向硬件工程师提需求，让底层提供一条可以在多线程场景下使用的指令而且还得是并发安全的</p>
+<p>有了硬件提供给我们一条原子的 读+写 （load+store） 指令，那我们就放心的去并发访问了，这里就是 exchange （x86 叫这个，别的又叫 Test_And_Set） 指令。</p>
+<blockquote>
+<p>请注意！不要误以为是 CAS</p>
+</blockquote>
+<p>只要执行 exchange 每次都会进行<strong>值的交换</strong>，就看交换得到的值是什么！</p>
+<p>如何使用 exchange 实现互斥？</p>
+<p><code>lock xchg</code> 这个 lock 就会将 bus 锁住（或许这就是为啥它叫 Bus Lock），所以这时候就不是共享的内存了，是<strong>持有这个 bus lock</strong> 线程专有的内存。</p>
+<pre class="line-numbers language-c" data-language="c"><code class="language-c"><span class="token comment">// global param</span>
+<span class="token keyword">int</span> table <span class="token operator">=</span> YES<span class="token punctuation">;</span>
+
+<span class="token keyword">void</span> <span class="token function">lock</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+retry<span class="token operator">:</span>
+  <span class="token comment">// use NOPE exchange table(YES)</span>
+  <span class="token keyword">int</span> got <span class="token operator">=</span> <span class="token function">xchg</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>table<span class="token punctuation">,</span> NOPE<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token comment">// if got == NOPE mean other thread have exchanged; so should wait</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span>got <span class="token operator">==</span> NOPE<span class="token punctuation">)</span>
+    <span class="token keyword">goto</span> retry<span class="token punctuation">;</span>
+  <span class="token function">assert</span><span class="token punctuation">(</span>got <span class="token operator">==</span> YES<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">// unlock: use YES exchange NOPE</span>
+<span class="token keyword">void</span> <span class="token function">unlock</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+  <span class="token function">xchg</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>table<span class="token punctuation">,</span> YES<span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>实现互斥的协议（即上述代码的描述）：</p>
+<ul>
+<li>想上厕所的同学 (一条 xchg 指令)<ul>
+<li>天黑请闭眼（锁总线）</li>
+<li>看一眼桌子上有什么 (🔑 或 🔞)</li>
+<li>把 🔞 放到桌上 (覆盖之前有的任何东西)</li>
+<li>天亮请睁眼；看到 🔑 才可以进厕所哦</li>
+</ul>
+</li>
+<li>出厕所的同学<ul>
+<li>把 🔑 放到桌上</li>
+</ul>
+</li>
+</ul>
+<blockquote>
+<p>原子指令的模型</p>
+<ul>
+<li>保证之前的 store 都写入内存（在执行原子指令时，保证所有的 store 都执行完毕）</li>
+<li>保证 load/store 不与原子指令乱序</li>
+</ul>
+</blockquote>
+<p><strong>这里真的是解答了一个困惑我很长时间而且没有得到解决的疑问！</strong></p>
+<p>原子操作并不是无锁的！</p>
+<h3 id="TODO-Lock-指令的现代实现"><a href="#TODO-Lock-指令的现代实现" class="headerlink" title="// TODO Lock 指令的现代实现"></a>// TODO Lock 指令的现代实现</h3><h2 id="RISC-V-中原子操作的实现"><a href="#RISC-V-中原子操作的实现" class="headerlink" title="RISC-V 中原子操作的实现"></a>RISC-V 中原子操作的实现</h2><h2 id="自旋锁-spin-lock"><a href="#自旋锁-spin-lock" class="headerlink" title="自旋锁 (spin lock)"></a>自旋锁 (spin lock)</h2><p><a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Spinlock#:~:text=In%20software%20engineering%2C%20a%20spinlock,a%20kind%20of%20busy%20waiting.">wiki</a> 定义：a <strong>spinlock</strong> is a <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Lock_(computer_science)">lock</a> that causes a <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Thread_(computer_science)">thread</a> trying to acquire it to simply wait in a loop (“spin”) while repeatedly checking whether the lock is available. </p>
+<blockquote>
+<p>spin 自旋，在这里就是循环等待锁被释放；GMP 模型中有一个 spining m 用来寻找可执行的 g 同样也是自旋。</p>
+</blockquote>
+<p>从上述的代码也不难看出，就是通过不断的循环，load 锁的状态，直到锁被上一个持有者释放。</p>
+<p>自旋锁存在的问题：</p>
+<ul>
+<li>空转</li>
+<li>获得自旋锁的线程可能被切换</li>
+</ul>
+<p>自旋锁使用场景：</p>
+<p>操作系统内核的并发数据结构</p>
+<ul>
+<li>临界区几乎不拥堵，很快就能执行完</li>
+<li>持有自旋锁时禁止执行流切换</li>
+</ul>
+<h2 id="互斥锁"><a href="#互斥锁" class="headerlink" title="互斥锁"></a>互斥锁</h2></div><div id="donate"><link rel="stylesheet" type="text/css" href="/css/donate.css?v=1.0.0"><script type="text/javascript" src="/js/donate.js?v=1.0.0" successtext="复制成功!"></script><a class="pos-f tr3" id="github" href="https://github.com/Kaiyuan/donate-page" target="_blank" title="Github"></a><div id="DonateText">Donate</div><ul class="list pos-f" id="donateBox"><li id="ps">没有开启任何Donate选项!</li></ul><div class="pos-f left-100" id="QRBox"><div id="MainBox"></div></div></div><div class="post-copyright"><script type="text/javascript" src="/js/copyright.js?v=1.0.0" successtext="复制成功!"></script><link rel="stylesheet" type="text/css" href="/css/copyright.css?v=1.0.0"><p><span>本文标题：</span>并发控制-互斥（自旋锁、互斥锁）</p><p><span>文章作者：</span>bqyang</p><p><span>发布时间：</span>2022-04-20</p><p><span>最后更新：</span>2022-04-24</p><p><span>原始链接：</span><a href="/2022/os/concurrency-lock/">https://bqyang.top/2022/os/concurrency-lock/</a><span class="copy-path"><i class="fa fa-clipboard" data-clipboard-text="https://bqyang.top/2022/os/concurrency-lock/"></i></span></p><p><span>版权声明：</span>The author owns the copyright, please indicate the source reproduced.</p></div><br><div class="tags"></div><div class="post-nav"><a class="pre" href="/2022/summary/about-0423/">跟兄弟们聊聊</a><a class="next" href="/2022/warning/">图片仓库被屏蔽</a></div><div id="container"></div><link rel="stylesheet" type="text/css" href="//unpkg.com/gitalk/dist/gitalk.css"><script type="text/javascript" src="//cdn.bootcss.com/blueimp-md5/2.10.0/js/md5.js"></script><script type="text/javascript" src="//unpkg.com/gitalk/dist/gitalk.min.js"></script><script>var gitalk = new Gitalk({
+  clientID: '4bcae079402e9cc4ce7b',
+  clientSecret: 'bc6b6ecab4d016f0a056df8253ad41b76b944084',
+  repo: 'blog_comments',
+  owner: 'clamyang',
+  admin: ['clamyang'],
+  id: md5(location.pathname),
+  distractionFreeMode: false
+})
+gitalk.render('container')
+</script></div></div></div><div class="pure-u-1-4 hidden_mid_and_down"><div id="sidebar"><div class="widget"><form class="search-form" action="//www.google.com/search" method="get" accept-charset="utf-8" target="_blank"><input type="text" name="q" maxlength="20" placeholder="Search"/><input type="hidden" name="sitesearch" value="https://bqyang.top"/></form></div><div class="widget"><div class="widget-title"><i class="fa fa-folder-o"> 分类</i></div></div><div class="widget"><div class="widget-title"><i class="fa fa-star-o"> 标签</i></div><div class="tagcloud"></div></div><div class="widget"><div class="widget-title"><i class="fa fa-file-o"> 最近文章</i></div><ul class="post-list"><li class="post-list-item"><a class="post-list-link" href="/2022/leetcode/array/easy/">数组-简单题</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/language/c/recur/">再学递归（几个有意思的递归练习）</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/language/c/print/">打印字符</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/language/c/string/">C-String</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/language/rust/enum/">Rust-Enums</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/language/rust/structs/">Rust-Structs</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/language/rust/ownership/">Rust-Ownership</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/k8s/deployment/">Deployment 更新策略</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/os/os-start/">操作系统启动</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/os/concurrency-sema/">同步原语-semaphore</a></li></ul></div><div class="widget"><div class="widget-title"><i class="fa fa-external-link"> 友情链接</i></div><ul></ul><a href="http://www.xargin.com/" title="Xargin" target="_blank">Xargin</a></div></div></div><div class="pure-u-1 pure-u-md-3-4"><div id="footer">Copyright © 2022 <a href="/." rel="nofollow">杨宝强的技术笔记.</a> Powered by<a rel="nofollow" target="_blank" href="https://hexo.io"> Hexo.</a><a rel="nofollow" target="_blank" href="https://github.com/tufu9441/maupassant-hexo"> Theme</a> by<a rel="nofollow" target="_blank" href="https://github.com/pagecho"> Cho.</a></div></div></div><a class="show" id="rocket" href="#top"></a><script type="text/javascript" src="/js/totop.js?v=1.0.0" async></script><script type="text/javascript" src="//lib.baomitu.com/fancybox/latest/jquery.fancybox.min.js" async></script><script type="text/javascript" src="/js/fancybox.js?v=1.0.0" async></script><link rel="stylesheet" type="text/css" href="//lib.baomitu.com/fancybox/latest/jquery.fancybox.min.css"><script type="text/javascript" src="/js/copycode.js?v=1.0.0" successtext="复制成功!"></script><link rel="stylesheet" type="text/css" href="/css/copycode.css?v=1.0.0"><script type="text/javascript" src="/js/codeblock-resizer.js?v=1.0.0"></script><script type="text/javascript" src="/js/smartresize.js?v=1.0.0"></script></div></body></html>
