@@ -10,14 +10,30 @@ html.dataset.dark = localStorage.dark;
 });</script><meta name="generator" content="Hexo 5.4.0"></head><body><div class="body_container"><div id="header"><div class="site-name"><h1 class="hidden">策略模式</h1><a id="logo" href="/.">杨宝强的技术笔记</a><p class="description"></p></div><div id="nav-menu"><a class="current" href="/."><i class="fa fa-home"> 首页</i></a><a href="/archives/"><i class="fa fa-archive"> 归档</i></a><a href="/about/"><i class="fa fa-user"> 关于</i></a><a href="/atom.xml"><i class="fa fa-rss"> 订阅</i></a></div></div><div class="pure-g" id="layout"><div class="pure-u-1 pure-u-md-3-4"><div class="content_container"><div class="post"><h1 class="post-title">策略模式</h1><div class="post-meta">2022-06-07</div><div class="post-content"><p>由工厂模式引出策略模式，需要思考的是作者是怎么一步步引导我们的，以及工厂模式到底解决了什么问题？</p>
 <span id="more"></span>
 
-<p>二话不说先来看下策略模式的定义是什么？</p>
+<h2 id="策略模式"><a href="#策略模式" class="headerlink" title="策略模式"></a>策略模式</h2><p>二话不说先来看下策略模式的定义是什么？</p>
 <p>策略模式（Strategy）：它定义了算法家族，分别封装起来，让它们之间可以互相替换，此模式让算法的变化，不会影响到使用算法的客户。[DP]</p>
 <p>由此可以联想到购物 App，618、双十一活动时以及一些法定节假日，这些都是促销活动，每次活动都有不同的优惠力度。商家在改变优惠活动的时候并不影响我们，给我们呈现的就是在那些节日我们拼单、凑满减。可能有时候就想花那 50 块钱，为了凑满减硬生生多花了几百。</p>
 <p>言归正传，我们看下策略模式的结构图：</p>
 <p><img src="https://s2.loli.net/2022/06/07/QPrZjJdivU4EMsl.png"></p>
 <p>看到这张图第一眼其实跟工厂模式感觉不到什么差异，只不过是 Context 跟 Strategy 的关系变了。</p>
 <p>更具体的区别在于调用时一个传递的是标识（用字符串来区分是哪计算类型），另一个是传递具体的对象，然后调用特定的方法。</p>
-</div><div id="donate"><link rel="stylesheet" type="text/css" href="/css/donate.css?v=1.0.0"><script type="text/javascript" src="/js/donate.js?v=1.0.0" successtext="复制成功!"></script><a class="pos-f tr3" id="github" href="https://github.com/Kaiyuan/donate-page" target="_blank" title="Github"></a><div id="DonateText">Donate</div><ul class="list pos-f" id="donateBox"><li id="ps">没有开启任何Donate选项!</li></ul><div class="pos-f left-100" id="QRBox"><div id="MainBox"></div></div></div><div class="post-copyright"><script type="text/javascript" src="/js/copyright.js?v=1.0.0" successtext="复制成功!"></script><link rel="stylesheet" type="text/css" href="/css/copyright.css?v=1.0.0"><p><span>本文标题：</span>策略模式</p><p><span>文章作者：</span>bqyang</p><p><span>发布时间：</span>2022-06-07</p><p><span>最后更新：</span>2022-06-07</p><p><span>原始链接：</span><a href="/2022/design-pattern/strategy/">https://bqyang.top/2022/design-pattern/strategy/</a><span class="copy-path"><i class="fa fa-clipboard" data-clipboard-text="https://bqyang.top/2022/design-pattern/strategy/"></i></span></p><p><span>版权声明：</span>The author owns the copyright, please indicate the source reproduced.</p></div><br><div class="tags"></div><div class="post-nav"><a class="next" href="/2022/design-pattern/easy-factory/">简单工厂模式</a></div><div id="container"></div><link rel="stylesheet" type="text/css" href="//unpkg.com/gitalk/dist/gitalk.css"><script type="text/javascript" src="//cdn.bootcss.com/blueimp-md5/2.10.0/js/md5.js"></script><script type="text/javascript" src="//unpkg.com/gitalk/dist/gitalk.min.js"></script><script>var gitalk = new Gitalk({
+<p><img src="https://s2.loli.net/2022/06/08/IwgpQhSyAPVGdXu.png" alt="策略模式下的客户端实现"></p>
+<p>需要初始化哪个类依赖于客户端的选择，那么可以通过哪种方式将算法的选择转移到后端的具体实现中呢？</p>
+<h2 id="策略模式与工厂模式的结合"><a href="#策略模式与工厂模式的结合" class="headerlink" title="策略模式与工厂模式的结合"></a>策略模式与工厂模式的结合</h2><p><img src="https://s2.loli.net/2022/06/08/jMgGqYbRroJd2ED.png"></p>
+<p>不难发现，这里构造函数接收一个字符串，也就是客户端传过来的值，然后我们根据这个值找到具体的分支（具体的子类），然后将这个子类赋给 Context 类的成员变量，后续客户端直接调用 Context 类的方法即可。</p>
+<p>做到了，将类的初始化和客户端解耦。</p>
+<h2 id="策略模式解析"><a href="#策略模式解析" class="headerlink" title="策略模式解析"></a>策略模式解析</h2><p>策略模式是一种定义一系列算法的方法，从概念上来看，所有这些算法完成的都是相同的工作，只是实现不同，它可以以相同的方式调用所有的算法，减少了各种算法类与使用算法类之间的耦合[DPE]。</p>
+<p><strong>优点</strong>：</p>
+<ul>
+<li>策略模式的Strategy类层次为Context定义了一系列的可供重用的算法或行为。继承有助于析取出这些算法中的公共功能[DP]</li>
+<li>策略模式的优点是简化了单元测试，因为每个算法都有自己的类，可以通过自己的接口单独测试[DPE]<ul>
+<li>这个其实很好理解，大家都是独立的互不影响</li>
+</ul>
+</li>
+<li>在基本的策略模式中，选择所用具体实现的职责由客户端对象承担，并转给策略模式的Context对象[DPE]</li>
+<li>策略模式就是用来封装算法的，但在实践中，我们发现可以用它来封装几乎任何类型的规则，只要在分析过程中听到需要在不同时间应用不同的业务规则，就可以考虑使用策略模式处理这种变化的可能性[DPE]</li>
+</ul>
+</div><div id="donate"><link rel="stylesheet" type="text/css" href="/css/donate.css?v=1.0.0"><script type="text/javascript" src="/js/donate.js?v=1.0.0" successtext="复制成功!"></script><a class="pos-f tr3" id="github" href="https://github.com/Kaiyuan/donate-page" target="_blank" title="Github"></a><div id="DonateText">Donate</div><ul class="list pos-f" id="donateBox"><li id="ps">没有开启任何Donate选项!</li></ul><div class="pos-f left-100" id="QRBox"><div id="MainBox"></div></div></div><div class="post-copyright"><script type="text/javascript" src="/js/copyright.js?v=1.0.0" successtext="复制成功!"></script><link rel="stylesheet" type="text/css" href="/css/copyright.css?v=1.0.0"><p><span>本文标题：</span>策略模式</p><p><span>文章作者：</span>bqyang</p><p><span>发布时间：</span>2022-06-07</p><p><span>最后更新：</span>2022-06-08</p><p><span>原始链接：</span><a href="/2022/design-pattern/strategy/">https://bqyang.top/2022/design-pattern/strategy/</a><span class="copy-path"><i class="fa fa-clipboard" data-clipboard-text="https://bqyang.top/2022/design-pattern/strategy/"></i></span></p><p><span>版权声明：</span>The author owns the copyright, please indicate the source reproduced.</p></div><br><div class="tags"></div><div class="post-nav"><a class="next" href="/2022/design-pattern/easy-factory/">简单工厂模式</a></div><div id="container"></div><link rel="stylesheet" type="text/css" href="//unpkg.com/gitalk/dist/gitalk.css"><script type="text/javascript" src="//cdn.bootcss.com/blueimp-md5/2.10.0/js/md5.js"></script><script type="text/javascript" src="//unpkg.com/gitalk/dist/gitalk.min.js"></script><script>var gitalk = new Gitalk({
   clientID: '4bcae079402e9cc4ce7b',
   clientSecret: 'bc6b6ecab4d016f0a056df8253ad41b76b944084',
   repo: 'blog_comments',
