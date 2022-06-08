@@ -6,7 +6,7 @@
   <link href="https://bqyang.top/atom.xml" rel="self"/>
   
   <link href="https://bqyang.top/"/>
-  <updated>2022-06-08T02:04:12.548Z</updated>
+  <updated>2022-06-08T08:10:28.242Z</updated>
   <id>https://bqyang.top/</id>
   
   <author>
@@ -15,6 +15,28 @@
   </author>
   
   <generator uri="https://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>面向对象五大原则</title>
+    <link href="https://bqyang.top/2022/design-pattern/principle/"/>
+    <id>https://bqyang.top/2022/design-pattern/principle/</id>
+    <published>2022-06-08T02:21:41.988Z</published>
+    <updated>2022-06-08T08:10:28.242Z</updated>
+    
+    <content type="html"><![CDATA[<p>SOLID原则：由 5 个设计原则组成的，它们分别是：单一职责原则、开闭原则、里式替换原则、接口隔离原则和依赖反转原则，依次对应 SOLID 中的 S、O、L、I、D 这 5 个英文字母，</p><p>SRP单一职责原则 Single Responsibility Principle；</p><p>KISS保持简单 Keep It Simple and Stupid；</p><p>YAGNI不需要原则 You Ain’t Gonna Need It ； </p><p>DRY 不要重复原则 Don’t Repeat Yourself ； </p><p>LOD 迪米特法则 Law of Demeter。</p><span id="more"></span><h2 id="单一职责"><a href="#单一职责" class="headerlink" title="单一职责"></a>单一职责</h2><ol><li>如何理解单一职责原则（SRP）？- <ul><li>一个类只负责完成一个职责或者功能。不要设计大而全的类，要设计粒度小、功能单一的类。单一职责原则是为了实现代码高内聚、低耦合，提高代码的复用性、可读性、可维护性。</li></ul></li><li>如何判断类的职责是否足够单一？<ul><li>不同的应用场景、不同阶段的需求背景、不同的业务层面，对同一个类的职责是否单一，可能会有不同的判定结果。实际上，一些侧面的判断指标更具有指导意义和可执行性，比如，出现下面这些情况就有可能说明这类的设计不满足单一职责原则：类中的代码行数、函数或者属性过多；类依赖的其他类过多，或者依赖类的其他类过多；私有方法过多；比较难给类起一个合适的名字；类中大量的方法都是集中操作类中的某几个属性。</li></ul></li><li>类的职责是否设计得越单一越好？<ul><li>单一职责原则通过避免设计大而全的类，避免将不相关的功能耦合在一起，来提高类的内聚性。同时，类职责单一，类依赖的和被依赖的其他类也会变少，减少了代码的耦合性，以此来实现代码的高内聚、低耦合。但是，如果拆分得过细，实际上会适得其反，反倒会降低内聚性，也会影响代码的可维护性。</li></ul></li></ol><h2 id="开放-封闭"><a href="#开放-封闭" class="headerlink" title="开放-封闭"></a>开放-封闭</h2><p>假设一开始我们的计算器最初只提供加法运算，后续产品又想支持别的运算，这时候<strong>我们最好是通过增加代码的方式实现，而不是改动现有的代码</strong>。</p><p>尽管最初设计时没有考虑到，但是，在应对后续某一个变化时，我们应该对其进行抽象分类，<strong>我们希望的是在开发工作展开不久就知道可能发生的变化。查明可能发生的变化所等待的时间越长，要创建正确的抽象就越困难[ASD]。</strong></p><p>就比如最初的加法类，我们在很多个地方都用到了，后续添加减法类的时候，改动就不是一件小事情了，需要替换更多的内容。</p><p><img src="https://s2.loli.net/2022/06/08/5OZwjf724JpFNKy.png"></p><p><em><strong>开放-封闭原则是面向对象设计的核心所在。遵循这个原则可以带来面向对象技术所声称的巨大好处，也就是可维护、可扩展、可复用、灵活性好。开发人员应该仅对程序中呈现出频繁变化的那些部分做出抽象，然而，对于应用程序中的每个部分都刻意地进行抽象同样不是一个好主意。拒绝不成熟的抽象和抽象本身一样重要[ASD]</strong></em></p><h2 id="依赖反转"><a href="#依赖反转" class="headerlink" title="依赖反转"></a>依赖反转</h2><p>这里其实有个很形象的例子，因为自己一直在写面向过程的代码，Go 里边的 interface 用的也比较少，也正如书中讲到的例子一样，假设我们在对数据库进行操作时往往会把语句封装成具体的函数，使用上层的业务逻辑调用底层的这写函数，如 Figure 1 中展示的。<img src="https://s2.loli.net/2022/06/08/d8DR4uKUkErAhxm.png"></p><p>同时这里也会遇到一个问题，如果说在给另一个用户部署我们程序的时候，人家不想用 MySQL 但是业务逻辑是不需要动的，我们这时候也很难复用上层的业务逻辑（因为是和 MySQL 紧耦合的关系）。</p><p>那这时候应该怎么办呢？</p><p>我们可以根据不同的数据库抽象出来一层接口，只要是数据库就至少支持增、删、改、查四种操作，如下：</p><figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="keyword">type</span> database <span class="keyword">interface</span> &#123;</span><br><span class="line">    Insert() error</span><br><span class="line">    Update() error</span><br><span class="line">    Delete() error</span><br><span class="line">    Select() error</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure><p>然后底层去实现这个接口，MySQL 实现增、删、改、查，然后增加 Mongo、Redis 数据库依次实现这四个接口。</p><p>这样上层在调用的时候是通过接口来实现的，但是在 Go 里边这块还是有点模糊，我们当前的一个业务场景跟这个原则十分符合，只不过底层是各种不同的云服务，上层就是业务逻辑代码，这里代码中维护了一个全局map，把每一个底层云加入到这个 map 中，如下：</p><figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 伪代码如下</span></span><br><span class="line"><span class="keyword">var</span> drivers <span class="keyword">map</span>[<span class="keyword">string</span>]ICloudInterface</span><br></pre></td></tr></table></figure><p>然后在每一个云的 package 下执行 register，这样业务逻辑层，通过数据库中字段不同的值，在这里获取到对应的实体，调用对应的方法即可，做到了底层实现和业务逻辑的解耦，同时修改阿里云部分的内容并不会影响华为云的逻辑。</p><blockquote><p>之前看到过一句话，任何中间层的出现都是为了解耦。</p></blockquote><p><em>从业务逻辑中找到具体的底层对象，如果不通过全局变量来实现，不知道还没有别的更好的办法，</em> 等待着自己去发掘。</p><p><em><strong>2022-6-8 暂封</strong></em></p>]]></content>
+    
+    
+    <summary type="html">&lt;p&gt;SOLID原则：由 5 个设计原则组成的，它们分别是：单一职责原则、开闭原则、里式替换原则、接口隔离原则和依赖反转原则，依次对应 SOLID 中的 S、O、L、I、D 这 5 个英文字母，&lt;/p&gt;
+&lt;p&gt;SRP单一职责原则 Single Responsibility Principle；&lt;/p&gt;
+&lt;p&gt;KISS保持简单 Keep It Simple and Stupid；&lt;/p&gt;
+&lt;p&gt;YAGNI不需要原则 You Ain’t Gonna Need It ； &lt;/p&gt;
+&lt;p&gt;DRY 不要重复原则 Don’t Repeat Yourself ； &lt;/p&gt;
+&lt;p&gt;LOD 迪米特法则 Law of Demeter。&lt;/p&gt;</summary>
+    
+    
+    
+    
+  </entry>
   
   <entry>
     <title>策略模式</title>
@@ -339,23 +361,6 @@
     
     
     <summary type="html">&lt;p&gt;锁.&lt;/p&gt;</summary>
-    
-    
-    
-    
-  </entry>
-  
-  <entry>
-    <title>perterson 算法学习</title>
-    <link href="https://bqyang.top/2022/peterson/"/>
-    <id>https://bqyang.top/2022/peterson/</id>
-    <published>2022-04-18T06:31:47.361Z</published>
-    <updated>2022-04-19T12:17:15.034Z</updated>
-    
-    <content type="html"><![CDATA[<p>并发控制算法之-Peterson</p><span id="more"></span><h3 id="Peterson-算法解决了什么问题"><a href="#Peterson-算法解决了什么问题" class="headerlink" title="Peterson 算法解决了什么问题"></a>Peterson 算法解决了什么问题</h3><ul><li>peterson 算法解决的是双线程访问共享变量导致的 data-race 问题。</li></ul><blockquote><p>这里确实是双线程，但是该算法在多线程场景下也适用。</p></blockquote><h3 id="Peterson-算法描述"><a href="#Peterson-算法描述" class="headerlink" title="Peterson 算法描述"></a>Peterson 算法描述</h3><p>抽象的代码描述，内容来自 <a href="https://en.wikipedia.org/wiki/Peterson%27s_algorithm">wiki</a>：</p><figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="keyword">bool</span> flag[<span class="number">2</span>] = &#123;<span class="literal">false</span>, <span class="literal">false</span>&#125;;</span><br><span class="line"><span class="keyword">int</span> turn;</span><br><span class="line"></span><br><span class="line"><span class="comment">/*pc 1*/</span>P0:      flag[<span class="number">0</span>] = <span class="literal">true</span>;</span><br><span class="line"><span class="comment">/*pc 2*/</span>P0_gate: turn = <span class="number">1</span>;</span><br><span class="line"><span class="comment">/*pc 3*/</span>         <span class="keyword">while</span> (flag[<span class="number">1</span>] == <span class="literal">true</span> &amp;&amp; turn == <span class="number">1</span>)</span><br><span class="line">                 &#123;</span><br><span class="line">                     <span class="comment">// busy wait</span></span><br><span class="line">                 &#125;</span><br><span class="line">                 <span class="comment">// critical section</span></span><br><span class="line">                 ...</span><br><span class="line">                 <span class="comment">// end of critical section</span></span><br><span class="line"><span class="comment">/*pc 4*/</span>         flag[<span class="number">0</span>] = <span class="literal">false</span>;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">/* pc 1*/</span>P1:      flag[<span class="number">1</span>] = <span class="literal">true</span>;</span><br><span class="line"><span class="comment">/* pc 2*/</span>P1_gate: turn = <span class="number">0</span>;</span><br><span class="line"><span class="comment">/* pc 3*/</span>         <span class="keyword">while</span> (flag[<span class="number">0</span>] == <span class="literal">true</span> &amp;&amp; turn == <span class="number">0</span>)</span><br><span class="line">                 &#123;</span><br><span class="line">                     <span class="comment">// busy wait</span></span><br><span class="line">                 &#125;</span><br><span class="line">                 <span class="comment">// critical section</span></span><br><span class="line">                 ...</span><br><span class="line">                 <span class="comment">// end of critical section</span></span><br><span class="line"><span class="comment">/* pc 4*/</span>        flag[<span class="number">1</span>] = <span class="literal">false</span>;</span><br></pre></td></tr></table></figure><p>代码解释：</p><ul><li>flag 用于标识哪个线程想要进入临界区</li><li>turn 用于辅助flag表示，也是用来判断是否可以进入临界区</li></ul><p>规定如下：</p><blockquote><p>如果对方的 flag 为真且 turn 不是自己的名字，需要等待，否则（上述两条件任意一个为假）进入临界区。</p></blockquote><p>这时候我们启动 P1,P2 两个线程，模拟两个线程交替执行，然后将涉及到的状态变化画出来，正如图中所表示的一样。</p><p><img src="https://s2.loli.net/2022/04/19/l4dy1wmXIgMuUCx.png" alt="peterson"></p><p>综上所述，Peterson 算法，巧妙地运用了 flag, turn 标识达到了互斥访问的目的。</p><h3 id="表面上的谦让"><a href="#表面上的谦让" class="headerlink" title="表面上的谦让"></a>表面上的谦让</h3><p>这里我们可以看到，如果说 P1 先将 P2 的名字放到了 turn 上，假惺惺的说，你先进吧。但是 P2 执行的时候会覆盖掉 turn，让 P1 进，所以就出现了先修改 turn 变量的线程先进入，后修改的等待。</p>]]></content>
-    
-    
-    <summary type="html">&lt;p&gt;并发控制算法之-Peterson&lt;/p&gt;</summary>
     
     
     
