@@ -2,6 +2,13 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://bqyang.top/2022/language/golang/go-ast/</loc>
+    
+    <lastmod>2022-06-09</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>https://bqyang.top/2022/language/golang/go-errors/</loc>
     
     <lastmod>2022-06-08</lastmod>
@@ -40,13 +47,6 @@
     <loc>https://bqyang.top/2022/language/golang/go-generic/</loc>
     
     <lastmod>2022-06-07</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://bqyang.top/2022/language/golang/go-ast/</loc>
-    
-    <lastmod>2022-06-04</lastmod>
     
   </url>
   
@@ -333,7 +333,7 @@
 
   <url>
     <loc>https://bqyang.top/</loc>
-    <lastmod>2022-06-08</lastmod>
+    <lastmod>2022-06-09</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
