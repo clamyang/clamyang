@@ -2,14 +2,21 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
-    <loc>https://bqyang.top/about/index.html</loc>
+    <loc>https://bqyang.top/2022/design-pattern/proxyAndDecorator/</loc>
+    
+    <lastmod>2022-06-13</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://bqyang.top/2022/language/golang/go-ast/</loc>
     
     <lastmod>2022-06-09</lastmod>
     
   </url>
   
   <url>
-    <loc>https://bqyang.top/2022/language/golang/go-ast/</loc>
+    <loc>https://bqyang.top/about/index.html</loc>
     
     <lastmod>2022-06-09</lastmod>
     
@@ -333,7 +340,7 @@
 
   <url>
     <loc>https://bqyang.top/</loc>
-    <lastmod>2022-06-09</lastmod>
+    <lastmod>2022-06-13</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
