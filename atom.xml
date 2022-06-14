@@ -6,7 +6,7 @@
   <link href="https://bqyang.top/atom.xml" rel="self"/>
   
   <link href="https://bqyang.top/"/>
-  <updated>2022-06-13T13:23:45.363Z</updated>
+  <updated>2022-06-14T06:43:37.277Z</updated>
   <id>https://bqyang.top/</id>
   
   <author>
@@ -15,6 +15,23 @@
   </author>
   
   <generator uri="https://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>工厂方法模式</title>
+    <link href="https://bqyang.top/2022/design-pattern/factory-method/"/>
+    <id>https://bqyang.top/2022/design-pattern/factory-method/</id>
+    <published>2022-06-14T05:48:27.579Z</published>
+    <updated>2022-06-14T06:43:37.277Z</updated>
+    
+    <content type="html"><![CDATA[<p>今天学习的另一个创造类的设计模式，工厂方法模式。工厂方法模式是 <a href="https://bqyang.top/2022/design-pattern/easy-factory/">简单工厂方法</a> 的优化版本，之前我们提到过开闭原则，对扩展开放、对修改封闭。简单工厂方法打破了这个原则，每次增加新的类别时都需要修改工厂类。</p><span id="more"></span><h2 id="工厂方法"><a href="#工厂方法" class="headerlink" title="工厂方法"></a>工厂方法</h2><p>正如开头提到的，工厂方法模式比简单工厂模式好的点就在于没有破坏开闭原则。那么它是怎么实现的呢？</p><p>简单工厂模式下的 Factory 实现：</p><figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 公共方法抽象出来的接口</span></span><br><span class="line"><span class="keyword">type</span> Operation <span class="keyword">interface</span> &#123;</span><br><span class="line">    GetResult()</span><br><span class="line">    SetNumber1(<span class="keyword">int</span>)</span><br><span class="line">    SetNumber2(<span class="keyword">int</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 创建工厂</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">OperationFactory</span><span class="params">(oper <span class="keyword">string</span>)</span> <span class="title">Operation</span></span> &#123;</span><br><span class="line">    <span class="keyword">switch</span> oper &#123;</span><br><span class="line">    <span class="keyword">case</span> <span class="string">&quot;+&quot;</span>:</span><br><span class="line">        <span class="keyword">return</span> &amp;SADD&#123;&#125;</span><br><span class="line">    <span class="keyword">case</span> <span class="string">&quot;-&quot;</span>:</span><br><span class="line">        <span class="keyword">return</span> &amp;SSUB&#123;&#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure><p>这时要添加乘法运算，需要创建一个乘法结构体并实现<code>Operation</code>接口，然后需要在创建工厂中，添加相应的分支。为了解决这种紧耦合的方式，工厂方法模式应运而生，工厂方法克服了简单工厂违背开放-封闭原则的缺点，又保持了封装对象创建过程的优点。</p><blockquote><p>工厂方法模式（Factory Method），定义一个用于创建对象的接口，让子类决定实例化哪一个类。工厂方法使一个类的实例化延迟到其子类。[DP]</p></blockquote><p><img src="https://s2.loli.net/2022/06/14/clzZ1retGRO8IWu.png"></p><p>代码实现：</p><figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="keyword">type</span> IOperationFactoryMethod <span class="keyword">interface</span> &#123;</span><br><span class="line">    CreateOperation() Operation</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> AddFactory <span class="keyword">struct</span> &#123;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(addf AddFactory)</span> <span class="title">CreateOperation</span><span class="params">()</span> <span class="title">Operation</span></span> &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">new</span>(SADD)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> SubFactory <span class="keyword">struct</span> &#123;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(subf SubFactory)</span> <span class="title">CreateOperation</span><span class="params">()</span> <span class="title">Operation</span></span> &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">new</span>(SSUB)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure><p>这时候获取实例的方式就改变了，通过具体的工厂子类实现实例的初始化。</p><figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 工厂方法模式</span></span><br><span class="line">virtualObj := <span class="built_in">new</span>(AddFactory)</span><br><span class="line">realObj := virtualObj.CreateOperation()</span><br><span class="line">realObj.SetNumber1(<span class="number">200</span>)</span><br><span class="line">realObj.SetNumber2(<span class="number">100</span>)</span><br><span class="line">realObj.GetResult()</span><br></pre></td></tr></table></figure><p>工厂方法模式实现时，客户端需要决定实例化哪一个工厂来实现运算类（这一点很好理解，在简单工厂中，实例化是通过后端代码逻辑实现的，客户端传给我们对应的符号即可），选择判断的问题还是存在的，也就是说，工厂方法把简单工厂的内部逻辑判断移到了客户端代码来进行。</p>]]></content>
+    
+    
+    <summary type="html">&lt;p&gt;今天学习的另一个创造类的设计模式，工厂方法模式。工厂方法模式是 &lt;a href=&quot;https://bqyang.top/2022/design-pattern/easy-factory/&quot;&gt;简单工厂方法&lt;/a&gt; 的优化版本，之前我们提到过开闭原则，对扩展开放、对修改封闭。简单工厂方法打破了这个原则，每次增加新的类别时都需要修改工厂类。&lt;/p&gt;</summary>
+    
+    
+    
+    
+  </entry>
   
   <entry>
     <title>代理模式</title>
@@ -348,23 +365,6 @@
     
     
     <summary type="html">&lt;p&gt;同步原语–信号量学习&lt;/p&gt;</summary>
-    
-    
-    
-    
-  </entry>
-  
-  <entry>
-    <title>并发控制-Condition-variables</title>
-    <link href="https://bqyang.top/2022/os/concurrency-cv/"/>
-    <id>https://bqyang.top/2022/os/concurrency-cv/</id>
-    <published>2022-04-24T08:51:57.520Z</published>
-    <updated>2022-04-24T09:36:40.764Z</updated>
-    
-    <content type="html"><![CDATA[<p>检查某些<strong>特定条件</strong>是否满足，然后决定线程是否继续执行。</p><span id="more"></span><p>使用<strong>变量</strong>控制具体该哪个线程执行。</p><p>使用 CVs 实现 生产者/消费者 模型，最终实现：</p><figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="keyword">int</span> buffer[MAX];</span><br><span class="line"><span class="keyword">int</span> fill_ptr = <span class="number">0</span>;</span><br><span class="line"><span class="keyword">int</span> use_ptr = <span class="number">0</span>;</span><br><span class="line"><span class="keyword">int</span> count = <span class="number">0</span>;</span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">put</span><span class="params">(<span class="keyword">int</span> value)</span> </span>&#123;</span><br><span class="line">    buffer[fill_ptr] = value;</span><br><span class="line">    fill_ptr = (fill_ptr + <span class="number">1</span>) % MAX;</span><br><span class="line">    count++;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">get</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">int</span> tmp = buffer[use_ptr];</span><br><span class="line">    use_ptr = (use_ptr + <span class="number">1</span>) % MAX;</span><br><span class="line">    count--;</span><br><span class="line">    <span class="keyword">return</span> tmp;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">cond_t</span> empty, fill;</span><br><span class="line"><span class="keyword">mutex_t</span> mutex;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> *<span class="title">producer</span><span class="params">(<span class="keyword">void</span> *arg)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">int</span> i;</span><br><span class="line">    <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; loops; i++) &#123;</span><br><span class="line">        Pthread_mutex_lock(&amp;mutex); <span class="comment">// p1</span></span><br><span class="line">        <span class="keyword">while</span> (count == MAX) <span class="comment">// p2</span></span><br><span class="line">            Pthread_cond_wait(&amp;empty, &amp;mutex); <span class="comment">// p3</span></span><br><span class="line">        put(i); <span class="comment">// p4</span></span><br><span class="line">        Pthread_cond_signal(&amp;fill); <span class="comment">// p5</span></span><br><span class="line">        Pthread_mutex_unlock(&amp;mutex); <span class="comment">// p6</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> *<span class="title">consumer</span><span class="params">(<span class="keyword">void</span> *arg)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">int</span> i;</span><br><span class="line">    <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; loops; i++) &#123;</span><br><span class="line">        Pthread_mutex_lock(&amp;mutex); <span class="comment">// c1</span></span><br><span class="line">        <span class="keyword">while</span> (count == <span class="number">0</span>) <span class="comment">// c2</span></span><br><span class="line">            Pthread_cond_wait(&amp;fill, &amp;mutex); <span class="comment">// c3</span></span><br><span class="line">        <span class="keyword">int</span> tmp = get(); <span class="comment">// c4</span></span><br><span class="line">        Pthread_cond_signal(&amp;empty); <span class="comment">// c5</span></span><br><span class="line">        Pthread_mutex_unlock(&amp;mutex); <span class="comment">// c6</span></span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;%d\n&quot;</span>, tmp);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure><p>为什么判断 <code>count == MAX OR count == 0</code> 的时候使用 <code>while</code> 而不是 <code>if</code>？？</p><blockquote><p>结论不重要，重要的是分析的过程</p></blockquote><p>// TODO 需要画状态机执行流程分析</p><blockquote><p><code>Pthread_cond_wait</code> 主要职责：将当前线程休眠<strong>并释放锁</strong>，当被唤醒的时候会尝试<strong>重新获取锁</strong>。</p></blockquote>]]></content>
-    
-    
-    <summary type="html">&lt;p&gt;检查某些&lt;strong&gt;特定条件&lt;/strong&gt;是否满足，然后决定线程是否继续执行。&lt;/p&gt;</summary>
     
     
     
