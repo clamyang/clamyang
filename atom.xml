@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
   <title>杨宝强的技术笔记</title>
   
-  
+  <subtitle>Coder Gopher Watcher</subtitle>
   <link href="https://bqyang.top/atom.xml" rel="self"/>
   
   <link href="https://bqyang.top/"/>
