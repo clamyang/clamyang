@@ -6,7 +6,7 @@
   <link href="https://bqyang.top/atom.xml" rel="self"/>
   
   <link href="https://bqyang.top/"/>
-  <updated>2022-06-15T10:37:24.297Z</updated>
+  <updated>2022-06-17T11:10:46.815Z</updated>
   <id>https://bqyang.top/</id>
   
   <author>
@@ -15,6 +15,23 @@
   </author>
   
   <generator uri="https://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>模板方法</title>
+    <link href="https://bqyang.top/2022/design-pattern/Behavioral/templete-method/"/>
+    <id>https://bqyang.top/2022/design-pattern/Behavioral/templete-method/</id>
+    <published>2022-06-16T08:32:06.795Z</published>
+    <updated>2022-06-17T11:10:46.815Z</updated>
+    
+    <content type="html"><![CDATA[<p>今天要学习的是模板方法模式，结合实际思考一下，我们一般会在什么时候需要用到模板，偷懒的时候。比如说我们要准备一个技术分享会，问问同事有没有模板，省的从零开始。还有就是转正答辩，找小伙伴要个模板参考下。但是工作内容还是要填写我们自己干了啥。</p><span id="more"></span><h2 id="模板方法"><a href="#模板方法" class="headerlink" title="模板方法"></a>模板方法</h2><blockquote><p>模板方法模式是通过把不变行为搬移到超类，去除子类中的重复代码来体现它的优势。</p></blockquote><p>众所周知，Golang 中是没有继承的，强行套出来的代码并不优雅。但是，不妨碍我们理解它。</p><p>假设产品给我们提需求，在一天内完成一次性校验密码生成的工具，大致分成以下步骤：</p><ul><li>生成随机的密码</li><li>保存这个密码到缓存中，方便后续校验</li><li>准备发送给用户的内容<ul><li>比如：尊敬的xx，您的一次性密码为xx，有效期为xx。</li></ul></li><li>发送上述内容</li><li>显示发送是否成功</li></ul>]]></content>
+    
+    
+    <summary type="html">&lt;p&gt;今天要学习的是模板方法模式，结合实际思考一下，我们一般会在什么时候需要用到模板，偷懒的时候。比如说我们要准备一个技术分享会，问问同事有没有模板，省的从零开始。还有就是转正答辩，找小伙伴要个模板参考下。但是工作内容还是要填写我们自己干了啥。&lt;/p&gt;</summary>
+    
+    
+    
+    
+  </entry>
   
   <entry>
     <title>go-context</title>
@@ -39,7 +56,7 @@
     <link href="https://bqyang.top/2022/design-pattern/factory-method/"/>
     <id>https://bqyang.top/2022/design-pattern/factory-method/</id>
     <published>2022-06-14T05:48:27.579Z</published>
-    <updated>2022-06-14T06:43:37.277Z</updated>
+    <updated>2022-06-16T08:32:00.564Z</updated>
     
     <content type="html"><![CDATA[<p>今天学习的另一个创造类的设计模式，工厂方法模式。工厂方法模式是 <a href="https://bqyang.top/2022/design-pattern/easy-factory/">简单工厂方法</a> 的优化版本，之前我们提到过开闭原则，对扩展开放、对修改封闭。简单工厂方法打破了这个原则，每次增加新的类别时都需要修改工厂类。</p><span id="more"></span><h2 id="工厂方法"><a href="#工厂方法" class="headerlink" title="工厂方法"></a>工厂方法</h2><p>正如开头提到的，工厂方法模式比简单工厂模式好的点就在于没有破坏开闭原则。那么它是怎么实现的呢？</p><p>简单工厂模式下的 Factory 实现：</p><figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 公共方法抽象出来的接口</span></span><br><span class="line"><span class="keyword">type</span> Operation <span class="keyword">interface</span> &#123;</span><br><span class="line">    GetResult()</span><br><span class="line">    SetNumber1(<span class="keyword">int</span>)</span><br><span class="line">    SetNumber2(<span class="keyword">int</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 创建工厂</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">OperationFactory</span><span class="params">(oper <span class="keyword">string</span>)</span> <span class="title">Operation</span></span> &#123;</span><br><span class="line">    <span class="keyword">switch</span> oper &#123;</span><br><span class="line">    <span class="keyword">case</span> <span class="string">&quot;+&quot;</span>:</span><br><span class="line">        <span class="keyword">return</span> &amp;SADD&#123;&#125;</span><br><span class="line">    <span class="keyword">case</span> <span class="string">&quot;-&quot;</span>:</span><br><span class="line">        <span class="keyword">return</span> &amp;SSUB&#123;&#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure><p>这时要添加乘法运算，需要创建一个乘法结构体并实现<code>Operation</code>接口，然后需要在创建工厂中，添加相应的分支。为了解决这种紧耦合的方式，工厂方法模式应运而生，工厂方法克服了简单工厂违背开放-封闭原则的缺点，又保持了封装对象创建过程的优点。</p><blockquote><p>工厂方法模式（Factory Method），定义一个用于创建对象的接口，让子类决定实例化哪一个类。工厂方法使一个类的实例化延迟到其子类。[DP]</p></blockquote><p><img src="https://s2.loli.net/2022/06/14/clzZ1retGRO8IWu.png"></p><p>代码实现：</p><figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="keyword">type</span> IOperationFactoryMethod <span class="keyword">interface</span> &#123;</span><br><span class="line">    CreateOperation() Operation</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> AddFactory <span class="keyword">struct</span> &#123;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(addf AddFactory)</span> <span class="title">CreateOperation</span><span class="params">()</span> <span class="title">Operation</span></span> &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">new</span>(SADD)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> SubFactory <span class="keyword">struct</span> &#123;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(subf SubFactory)</span> <span class="title">CreateOperation</span><span class="params">()</span> <span class="title">Operation</span></span> &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">new</span>(SSUB)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure><p>这时候获取实例的方式就改变了，通过具体的工厂子类实现实例的初始化。</p><figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 工厂方法模式</span></span><br><span class="line">virtualObj := <span class="built_in">new</span>(AddFactory)</span><br><span class="line">realObj := virtualObj.CreateOperation()</span><br><span class="line">realObj.SetNumber1(<span class="number">200</span>)</span><br><span class="line">realObj.SetNumber2(<span class="number">100</span>)</span><br><span class="line">realObj.GetResult()</span><br></pre></td></tr></table></figure><p>工厂方法模式实现时，客户端需要决定实例化哪一个工厂来实现运算类（这一点很好理解，在简单工厂中，实例化是通过后端代码逻辑实现的，客户端传给我们对应的符号即可），选择判断的问题还是存在的，也就是说，工厂方法把简单工厂的内部逻辑判断移到了客户端代码来进行。</p>]]></content>
     
@@ -348,24 +365,6 @@
     
     
     <summary type="html">&lt;p&gt;将笔记进行拆分，都写在一个里边很拥挤，不方便翻阅查看。&lt;/p&gt;</summary>
-    
-    
-    
-    
-  </entry>
-  
-  <entry>
-    <title>操作系统启动</title>
-    <link href="https://bqyang.top/2022/os/os-start/"/>
-    <id>https://bqyang.top/2022/os/os-start/</id>
-    <published>2022-05-05T11:02:26.938Z</published>
-    <updated>2022-05-13T03:22:13.982Z</updated>
-    
-    <content type="html"><![CDATA[<hr><p>尝试揭开操作系统的神秘面纱。</p><span id="more"></span><h1 id="QEMU"><a href="#QEMU" class="headerlink" title="QEMU"></a>QEMU</h1><h2 id="安装步骤"><a href="#安装步骤" class="headerlink" title="安装步骤"></a>安装步骤</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">wget https://download.qemu.org/qemu-7.0.0.tar.xz</span><br><span class="line">tar xvJf qemu-7.0.0.tar.xz</span><br><span class="line">cd qemu-7.0.0</span><br><span class="line">./configure</span><br><span class="line">make</span><br><span class="line">// make 后记得 make install</span><br></pre></td></tr></table></figure><blockquote><p>安装个 QEMU 真的是费死劲了，能遇到的问题基本上都遇到了，而且<strong>这个容器我挂了windows</strong>的一个目录（为了保存下来），make 花了<strong>3</strong>小时。</p></blockquote><p>遇到的具体问题如下：</p><ul><li>缺少依赖，pixman-1, gthread, glib, 我是基于 alpine 镜像构建的，很多依赖找起来很费事，不过要熟练使用 search 命令。</li></ul><p>具体解决方案省略，作为一个合格的工程师，肯定会找到办法的。</p><h1 id="CPU-Reset"><a href="#CPU-Reset" class="headerlink" title="CPU Reset"></a>CPU Reset</h1><p>程序就是状态机，操作系统也是一个 C 程序。那么问题就来了，电脑在 CPU Reset 之后（获得了一个初始状态）发生了什么？</p><blockquote><p>初始状态指的是：各种寄存器的初始值是什么。</p></blockquote><p><strong>计算机中没有任何神秘的东西</strong></p><p><img src="https://s2.loli.net/2022/05/06/e6anlsRhC2BULVu.png" alt="intel-cpu-reset"></p><p>可以看到，表 9-1 列出了在通电、重置、初始化后各种寄存器的值。这些都是<strong>约定</strong>，即硬件和软件约定好，每次加电后，CPU 状态设置为这些值，CPU 就是不断地执行指令，然后一步一步的加载出操作系统代码。</p><p><img src="https://s2.loli.net/2022/05/06/9SzlH2nRchoykQL.png" alt="image-20220506202315147"></p><h1 id="Legacy-BIOS-约定"><a href="#Legacy-BIOS-约定" class="headerlink" title="Legacy BIOS 约定"></a>Legacy BIOS 约定</h1><p>（操作系统与BIOS之间的约定，BIOS 上哪加载操作系统代码）</p><p>BIOS （Basic I/O System），BIOS 就是我们 CPU Reset 后 PC 指向的位置，也就意味着加电后执行的第一个程序是 BIOS 代码。然后 BIOS  代码都做了什么呢？他要做的事情都是约定好的。</p><p>MBR（Master Boot Record）主引导扇区，BIOS 要做的事情就是加载磁盘的前<strong>512字节</strong>（主引导扇区）到 <strong>0x7c00</strong>，<strong>检查这块磁盘是否可以作为启动盘</strong>。如果是，可以从磁盘中加载更多的内容到内存中，否则检查下一块磁盘的前512字节。</p><p>检查磁盘作为启动盘的标志是什么？<strong>55aa</strong></p><blockquote><p>怎么查看呢？有没有什么命令能查？</p><p>还真就是只有想不到的，没有做不到的。</p></blockquote><p>**hexdump ** 可以 <code>hexdump --help</code> 看一下具体细节，这里就是 <code>hexdump -n 512 /dev/sda    </code></p><p>补上一张 MBR 的图片</p><p><img src="https://s2.loli.net/2022/05/13/K9cL6sJ2etyP4QR.png" alt="o_mbr_anatomy"></p><p>是哪条指令将 MBR 中的内容加载到内存中的？</p><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># 就是下面这条指令</span><br><span class="line">0xfa759:     rep insl (%dx),%es:(%di)</span><br><span class="line"># ...</span><br></pre></td></tr></table></figure><blockquote><p>如何查看上述的指令？x/i ($cs * 16 + $rip)</p></blockquote><p>cs （code segment register） 代码段寄存器</p><p>ds （data segment register） 数据段寄存器</p><p>为什么要按照这个算式进行查询呢？<code>($cs * 16 + $rip)</code> 早期的 IBM PC 机器，总线是 20 位，但是寄存器中都是 16 位的数据，所以怎么凑够这个 20 位的总线，代码段地址左移 4 位，然后加上偏移量，就是我们要执行的下一条指令地址。</p><h1 id="为什么叫做-x86-架构"><a href="#为什么叫做-x86-架构" class="headerlink" title="为什么叫做 x86 架构"></a>为什么叫做 x86 架构</h1><p>一般这种都是历史原因… 早期的 IBM PC 机器使用 Intel 8086 处理器，后来就把这个 8086 CPU 的架构叫做 x86。更详细的内容可以 Google 上看下，其实就连这个 <code>0x7c00  </code>都有一部分历史原因。</p>]]></content>
-    
-    
-    <summary type="html">&lt;hr&gt;
-&lt;p&gt;尝试揭开操作系统的神秘面纱。&lt;/p&gt;</summary>
     
     
     
