@@ -2,16 +2,16 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
-    <loc>https://bqyang.top/2022/about-rpc-1/</loc>
+    <loc>https://bqyang.top/2022/design-pattern/Behavioral/templete-method/</loc>
     
-    <lastmod>2022-06-22</lastmod>
+    <lastmod>2022-06-23</lastmod>
     
   </url>
   
   <url>
-    <loc>https://bqyang.top/2022/design-pattern/Behavioral/templete-method/</loc>
+    <loc>https://bqyang.top/2022/rpc/about-rpc-1/</loc>
     
-    <lastmod>2022-06-17</lastmod>
+    <lastmod>2022-06-23</lastmod>
     
   </url>
   
@@ -226,13 +226,6 @@
   </url>
   
   <url>
-    <loc>https://bqyang.top/2022/summary/about-0423/</loc>
-    
-    <lastmod>2022-04-23</lastmod>
-    
-  </url>
-  
-  <url>
     <loc>https://bqyang.top/2022/os/peterson/</loc>
     
     <lastmod>2022-04-19</lastmod>
@@ -310,20 +303,6 @@
   </url>
   
   <url>
-    <loc>https://bqyang.top/2021/%E8%81%8A%E8%81%8A%E5%B7%A5%E4%BD%9C%E4%B8%8A%E7%9A%84%E5%B0%8F%E4%BA%8B/</loc>
-    
-    <lastmod>2021-12-05</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://bqyang.top/2021/%E4%B8%80%E6%AC%A1%E4%B8%8A%E7%BA%BF%E6%95%85%E4%BA%8B/</loc>
-    
-    <lastmod>2021-12-05</lastmod>
-    
-  </url>
-  
-  <url>
     <loc>https://bqyang.top/2021/hello-world/</loc>
     
     <lastmod>2021-12-05</lastmod>
@@ -368,7 +347,7 @@
 
   <url>
     <loc>https://bqyang.top/</loc>
-    <lastmod>2022-06-22</lastmod>
+    <lastmod>2022-06-23</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
