@@ -7,7 +7,7 @@ html.dataset.dark = localStorage.dark || prefersDarkMode.matches;
 toggle.addEventListener('click', () => {
 localStorage.dark = !(html.dataset.dark == 'true');
 html.dataset.dark = localStorage.dark;
-});</script><meta name="generator" content="Hexo 5.4.0"></head><body><div class="body_container"><div id="header"><div class="site-name"><h1 class="hidden">DDIA 读书笔记</h1><a id="logo" href="/.">杨宝强的技术笔记</a><p class="description">Coder Gopher Watcher</p></div><div id="nav-menu"><a class="current" href="/."><i class="fa fa-home"> 首页</i></a><a href="/archives/"><i class="fa fa-archive"> 归档</i></a><a href="/about/"><i class="fa fa-user"> 关于</i></a><a href="/atom.xml"><i class="fa fa-rss"> 订阅</i></a></div></div><div class="pure-g" id="layout"><div class="pure-u-1 pure-u-md-3-4"><div class="content_container"><div class="post"><h1 class="post-title">DDIA 读书笔记</h1><div class="post-meta">2022-01-13</div><div class="post-content"><p>Designing Data-intensive Applications</p>
+});</script><meta name="generator" content="Hexo 5.4.0"></head><body><div class="body_container"><div id="header"><div class="site-name"><h1 class="hidden">DDIA 读书笔记</h1><a id="logo" href="/.">杨宝强的技术笔记</a><p class="description">Coder Gopher Watcher</p></div><div id="nav-menu"><a class="current" href="/."><i class="fa fa-home"> 首页</i></a><a href="/archives/"><i class="fa fa-archive"> 归档</i></a><a href="/about/"><i class="fa fa-user"> 关于</i></a><a href="/atom.xml"><i class="fa fa-rss"> 订阅</i></a></div></div><div class="pure-g" id="layout"><div class="pure-u-1 pure-u-md-3-4"><div class="content_container"><div class="post"><h1 class="post-title">DDIA 读书笔记</h1><div class="post-meta">2022-06-23</div><div class="post-content"><p>Designing Data-intensive Applications</p>
 <span id="more"></span>
 
 <h2 id="CH1：-Reliable-Scalable-Maintainable"><a href="#CH1：-Reliable-Scalable-Maintainable" class="headerlink" title="CH1： Reliable, Scalable, Maintainable"></a>CH1： Reliable, Scalable, Maintainable</h2><p>主要解释这三个词是什么意思，以及从哪些角度进行思考。</p>
@@ -211,18 +211,17 @@ html.dataset.dark = localStorage.dark;
 <p>索引的添加和删除并不会影响数据本身的内容，只会影响查询数据的性能。</p>
 <p><strong>Hash Indexes</strong></p>
 <p>作者最开始还是通过文件进行举例，文件还是存储在磁盘上，然后在内存中存储一个 <em>Hash Map</em> ， Map 中存储了 key value 是 真正的 val 在 磁盘中的位置。</p>
-<p><img src="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220119160522679.png" alt="image-20220119160522679"></p>
-<p>为了防止 log 文件过大的解决办法：</p>
+<p><img src="https://s2.loli.net/2022/06/23/sHOQul1pcin5vVW.png">为了防止 log 文件过大的解决办法：</p>
 <ul>
 <li>设定某一个阈值，当 log 文件达到这个值的时候，就把他拆分成几份。</li>
 <li>后续的写操作都在另一个新的文件中进行写入。</li>
 <li>压缩 log 文件，只保留对 key 的最新一次更新，如下。</li>
 </ul>
-<p><img src="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220119160204309.png" alt="image-20220119160204309"></p>
+<p><img src="https://s2.loli.net/2022/06/23/vlzUqd79fyIbaRo.png"></p>
 <ul>
 <li>通过压缩后，可能会导致某一段的文件过小，这里也可以进行段的合并操作，如下。</li>
 </ul>
-<p><img src="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220119161051840.png" alt="image-20220119161051840"></p>
+<p><img src="https://s2.loli.net/2022/06/23/Fryci6t4GCm7JIK.png"></p>
 <p>正如之前看到的，所有对 log 文件的操作都基于 append 的，为什么不能直接更新之前的操作呢？使用 append-only 的好处是：</p>
 <ul>
 <li>append 的操作是顺序写，而不是随机写，速度快</li>
@@ -236,7 +235,7 @@ html.dataset.dark = localStorage.dark;
 </ul>
 <p><strong>SSTable and LSM-Trees</strong></p>
 <p>SSTable (Sorted String Table) 按照 Key 进行排序，如下。</p>
-<p><img src="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220119165619717.png" alt="image-20220119165619717"></p>
+<p><img src="https://s2.loli.net/2022/06/23/sJRpG2EBAkNMuqC.png"></p>
 <p>看的过程中我想到一个问题，不同的 key 在不同的 log 文件中都有存在，是怎么在合并后的 log 文件中进行存储的呢？难道是每次读取到同样的 key 的时候都要再进行一次更新操作吗？</p>
 <p>紧接着，作者在下文中就提到了这个问题：</p>
 <p><code>What if the same key appears in several input segments?</code></p>
@@ -272,7 +271,7 @@ html.dataset.dark = localStorage.dark;
 <p>B 树中，每一页都是存储在磁盘上，可以通过地址进行索引，并且页与页之间可以相互引用</p>
 <p>分支因子：branch childs ，表示一个父节点拥有多少个子节点，实际使用中，分支因子的数量<em>取决于</em>存储页引用需要的空间大小和范围边界，通常来说是几百个。</p>
 <p>在添加数据到叶子结点的时候，可能会导致页的拆分</p>
-<p><img src="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220124184754571.png" alt="image-20220124184754571"></p>
+<p><img src="https://s2.loli.net/2022/06/23/nHFL8C3cNpUty5P.png"></p>
 <p>假设当前page已经不能再容纳新的key时，在添加 key 334 后，进行了 page 的拆分。</p>
 <p>平衡二叉树通过自旋算法，能想起来的有 LL，RR，LR，RL…保证了任意两个节点之间的只能有一个节点。我记得是有这么一条定义。。记不清楚了。。</p>
 <p>作者举例，当 page = 4 KB，branching factor = 500 的时候，一个四层的 B 树可以容纳 250 TB 的数据。</p>
@@ -338,7 +337,7 @@ html.dataset.dark = localStorage.dark;
 </blockquote>
 <p>OLTP (online transaction processing)</p>
 <p>OLAP (online analystic processing)</p>
-<p><img src="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220127203058810.png" alt="image-20220127203058810"></p>
+<p><img src="https://s2.loli.net/2022/06/23/HfGSdbgCRA8rwsX.png"></p>
 <p><em>数据仓库的由来</em></p>
 <p>90 年左右，一些公司开始停止在 OLTP 中进行数据分析，而是在一个单独的数据库中进行分析，这种独立的数据库被称为：data warehouse. 数据仓库。</p>
 <p><strong>数据仓库</strong></p>
@@ -354,7 +353,7 @@ html.dataset.dark = localStorage.dark;
 <p>可以理解为雪花模式是比星模式表达的更完整，拓展的更多的一种模式。</p>
 <p><strong>面向列的存储</strong></p>
 <p>row-oriented 和 column-oriented 存储方式上的区别</p>
-<p><img src="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220128100950280.png" alt="image-20220128100950280"></p>
+<p><img src="https://s2.loli.net/2022/06/23/SYNihRLcZBml1gs.png"></p>
 <p><em>采用位图压缩列</em></p>
 <p><img src="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220128102336567.png" alt="image-20220128102336567"></p>
 <p>这里感觉书中描述的不是那么清晰（也可能是我自己翻译后理解的比较烂哈哈）：</p>
@@ -363,13 +362,13 @@ html.dataset.dark = localStorage.dark;
 <li>如果 bitmap 中，对应比特位为 1 说明该行有这个值，为 0，说明无。</li>
 </ul>
 <p><em>在 bitmap 中查找数据</em></p>
-<p><img src="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220128104519124.png" alt="image-20220128104519124"></p>
+<p><img src="https://s2.loli.net/2022/06/23/BaonQTIzSVNw9WU.png"></p>
 <p>这个地方确实是非常巧妙，比如要找 product_sk 的 id 在 30，68，69 这三个数之间的，直接把这三个对应的 bitmap 找出来，进行 OR 运算，bit 位 是 1 的就代表找到了。</p>
 <p>第二个例子中展示了当进行 AND （与）运算的时候，直接将不同的 bitmap 进行 AND，可以这样做的根本原因是，虽然不同的数据在不同的 bitmap 中，但是 bitmap 中的每一位都是彼此对应的。</p>
 <p><em>内存带宽和矢量化处理</em></p>
 <p>内存带宽这里涉及到 SIMD 一个指令，包含多个数据。跟普通的三、四地址的指令好像还不太一样。。</p>
 <p><em>data cube and materialized view</em></p>
-<p><img src="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220128115616403.png" alt="image-20220128115616403"></p>
+<p><img src="https://s2.loli.net/2022/06/23/3E5U7zJTOHlusQS.png"></p>
 <p>缓存聚合数据。</p>
 <h2 id="CH4：-Encoding-and-Evolution"><a href="#CH4：-Encoding-and-Evolution" class="headerlink" title="CH4： Encoding and Evolution"></a>CH4： Encoding and Evolution</h2><p>Backward compatibility</p>
 <p>​    Newer code can read data that was written by older code.</p>
@@ -392,13 +391,13 @@ html.dataset.dark = localStorage.dark;
 <li>Protobuf 只有一种压缩方式，从书中结论来看，比 Thrift 压缩的要小一点，但是差别不大。</li>
 </ul>
 <p>Thrift 采用如下第一种的方式声明 schema</p>
-<p><img src="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220130115402674.png" alt="image-20220130115402674"></p>
+<p><img src="https://s2.loli.net/2022/06/23/5DMGen3OPgULca9.png"></p>
 <p>Thrift - BinaryProtocol</p>
-<p><img src="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220130115645112.png" alt="image-20220130115645112"></p>
+<p><img src="https://s2.loli.net/2022/06/23/Xj38cVD1rpgG67z.png"></p>
 <p>有数据类型标识，字段的 tag （表示字段名称），可以在图中看到有很多地方都是 00 ，这些未用到字节，如果可以进一步被压缩，仍然可以节省很多空间。</p>
 <p>由此可以引出 Thrift 的第二种压缩方式：CompactProtocol ，它确实也是这么做的，通过把更多的信息<strong>pack到尽可能少的字节中</strong>，这是不是和 SIMD 的基本思想是相同的？从 59 字节压缩到 34 字节，优化了将近 50 %的size。</p>
 <p>如下图，把数据类型和字段的tag, pack 到了一个字节。</p>
-<p><img src="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220130115934939.png" alt="image-20220130115934939"></p>
+<p><img src="https://s2.loli.net/2022/06/23/TZsguR4KqAoweaD.png"></p>
 <blockquote>
 <p>这章节后半部分是在手机上阅读的。。没来得及做笔记整理，等我二刷中文版的时候，着重把这块补上。</p>
 </blockquote>
@@ -409,7 +408,7 @@ html.dataset.dark = localStorage.dark;
 <li>Partitioning</li>
 </ul>
 <p>某些情况下，这两种模式会混合使用，下图中展示了，一个数据库分成了两个分片，又为两个分片搞了两个副本。</p>
-<p><img src="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220202141713490.png" alt="image-20220202141713490"></p>
+<p><img src="https://s2.loli.net/2022/06/23/AgezPrCvyl1Nd3B.png"></p>
 <p><em>为什么需要 replication</em></p>
 <ul>
 <li>在距离上离用户更近</li>
@@ -418,9 +417,9 @@ html.dataset.dark = localStorage.dark;
 </ul>
 <p><strong>Leaders And Followers</strong></p>
 <p><em>如何却确保 master 的数据到达了所有的  slave 上？</em></p>
-<p><img src="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220202144206792.png" alt="image-20220202144206792"></p>
+<p><img src="https://s2.loli.net/2022/06/23/SHL7jerUyf6pMq2.png"></p>
 <p><em>Synchronous Versus Asynchronous Replication</em></p>
-<p><img src="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220202145651487.png" alt="image-20220202145651487"></p>
+<p><img src="https://s2.loli.net/2022/06/23/CKQRLSyi1XpAtdU.png"></p>
 <p>同步的优缺点</p>
 <ul>
 <li>slaves 一定是最新的副本，与 master 中保持一致</li>
@@ -486,14 +485,14 @@ html.dataset.dark = localStorage.dark;
 <p>如何找到数据所在的正确的分片？</p>
 <p><strong>分片和副本</strong></p>
 <p>这俩通常会结合使用，如下：</p>
-<p><img src="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220214213701624.png" alt="image-20220214213701624"></p>
+<p><img src="https://s2.loli.net/2022/06/23/5RDAsTzKv1um27e.png"></p>
 <h4 id="Key-Value-类型数据的分片"><a href="#Key-Value-类型数据的分片" class="headerlink" title="Key-Value 类型数据的分片"></a>Key-Value 类型数据的分片</h4><p>学到了几个名词：</p>
 <p>skewed 倾斜，某个分区的数据要多余其他分区，把这种情况称为倾斜。</p>
 <p>hot pot 热点，某个分区的负载比其他分区都要高，把这种情况的分区叫做热点。</p>
 <p>避免热点分区最简单的方法就是，插入记录的时候随机选择分区。</p>
-<p><img src="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220215194050809.png" alt="image-20220215194050809"></p>
+<p><img src="https://s2.loli.net/2022/06/23/WtIMG4HnEqiV9O7.png"></p>
 <p>图中索引为 12 的范围，包括了 T - Z，这种简单的将一本书包括两个字母索引，会导致其他的卷包含的索引不均匀。<em>为了使数据分布的更均匀，分区的边界需要适应数据。</em></p>
-<h4 id="通过-key-的-hash-值进行分区"><a href="#通过-key-的-hash-值进行分区" class="headerlink" title="通过 key 的 hash 值进行分区"></a>通过 key 的 hash 值进行分区</h4><p><img src="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220216101704556.png" alt="image-20220216101704556"></p>
+<h4 id="通过-key-的-hash-值进行分区"><a href="#通过-key-的-hash-值进行分区" class="headerlink" title="通过 key 的 hash 值进行分区"></a>通过 key 的 hash 值进行分区</h4><p><img src="https://s2.loli.net/2022/06/23/MOtpjgGC39NvHi8.png"></p>
 <p>使用key的哈希值作为分区，给我们带来的一个损失就是：没办法执行高效的范围查询。</p>
 <p><strong>Skewed Workloads and Relieving Hot Spots</strong></p>
 <p>倾斜的工作负载指的是，某个分区的负载要明显高于其他分区。比如社交媒体中的明星有很多的粉丝，这种情况下很容易引起，瞬间大量操作同一个 key。</p>
@@ -503,11 +502,11 @@ html.dataset.dark = localStorage.dark;
 <p>但是这又带来了另一个问题，就是读取数据的时候变得更加困难，需要将这100个key 都读取出来，再做汇总。</p>
 <h4 id="Partitioning-and-Secondary-Indexes"><a href="#Partitioning-and-Secondary-Indexes" class="headerlink" title="Partitioning and Secondary Indexes"></a>Partitioning and Secondary Indexes</h4><p><strong>Partitioning Secondary Indexes by Document</strong></p>
 <p>主要讲了分区和二级索引怎么搭配使用。</p>
-<p><img src="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220216113018175.png" alt="image-20220216113018175"></p>
+<p><img src="https://s2.loli.net/2022/06/23/6ysve8u5AQb3GoZ.png"></p>
 <p>基于文档的二级索引分区，每个分区中的二级索引都是独立的，各自维护各自的索引，也被称为本地索引。</p>
 <p><strong>Partitioning Secondary Indexes by Term</strong></p>
 <p>按术语划分二级索引</p>
-<p><img src="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220216134733352.png" alt="image-20220216134733352"></p>
+<p><img src="https://s2.loli.net/2022/06/23/1K6k2lfeo5i8jbr.png"></p>
 <p>与基于文档的方式相比，很容易看出，二级索引变成了全局索引。</p>
 <p>但是也不能把索引全部放在一个分区上，会破坏分区的目的，也可能会成为性能的瓶颈。</p>
 <h4 id="Rebalancing-Partitions"><a href="#Rebalancing-Partitions" class="headerlink" title="Rebalancing Partitions"></a>Rebalancing Partitions</h4><p>为什么我们需要对分区进行重平衡？</p>
@@ -529,7 +528,7 @@ html.dataset.dark = localStorage.dark;
 <p><em>固定数量的 partitions</em></p>
 <p>这里采用了一种在 node 上创建比 node 数量更多分区的方法，比如 node 数量是 10，一个 node 上创建 100 个分区，这样总数就是 1000 个分区。</p>
 <p>按照上述的分配，如果这是新加入了一个 node ，这个新的 node 从那 10 个 node 上 steal 几个分区过来，如下图。</p>
-<p><img src="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220216170024338.png" alt="image-20220216170024338"></p>
+<p><img src="https://s2.loli.net/2022/06/23/2NsHbOV91EWfJ38.png"></p>
 <p>分区编号不会改变，分区中的 key 也不会改变。唯一改变的就是分区所在的 node，但是这个改变不是立即发生的，通过网络传输数据到另一个 node 需要花费很多时间。</p>
 <p>这时，旧的分区在这个传输的过程中仍然用于处理读写请求。</p>
 <p>这种模式在 ES 中有使用到。</p>
@@ -560,9 +559,9 @@ html.dataset.dark = localStorage.dark;
 <li>通过路由的方式，在 client 和 node 中间套一层。</li>
 <li>第三种需要客户端进行配合，客户端对哪些分区存储了哪些key是有感知的。</li>
 </ul>
-<p><img src="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220216214050273.png" alt="image-20220216214050273"></p>
+<p><img src="https://s2.loli.net/2022/06/23/FUslPBcKGLAHT2R.png"></p>
 <p>另一种方式为，分布式系统以来一个独立的服务，比如 ZooKeeper 来跟踪集群中的元数据。</p>
-<p><img src="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220216214512962.png" alt="image-20220216214512962"></p>
+<p><img src="https://s2.loli.net/2022/06/23/WwbyJRN1YHX2eSp.png"></p>
 <h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>这章讲了几种将数据库拆成分区的方法，不过针对的好像都是 key-value 类型的数据库。</p>
 <p>分区的目的：<strong>将数据和查询的负载更均匀的分配到多台机器上</strong></p>
 <p>两种分区的方法：</p>
@@ -605,18 +604,17 @@ html.dataset.dark = localStorage.dark;
 <p>说实话，这句话有点难懂。。原文是这样的 <code>The idea of ACID consistency is that you have certain statements about your data (invariants) that must always be true</code></p>
 </blockquote>
 <p>关于一致性的描述确实很模糊，看完知乎上这个回答清晰了很多。</p>
-<p><img src="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220218100501876.png" alt="image-20220218100501876"></p>
+<p><img src="E:/resource/myInfo/blogRes/images-master/blogpics/image-20220218100501876.png"></p>
 <p><strong>通常，应用程序会依赖数据库的 A 和 I 来实现 C</strong></p>
 <p><strong>Isolation</strong></p>
-<p><img src="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220217151555996.png" alt="image-20220217151555996"></p>
-<p>这个就有点和一开始说的 atomic 并发访问类似了。</p>
+<p><img src="https://s2.loli.net/2022/06/23/P5oRqwhxXcZWnuT.png">这个就有点和一开始说的 atomic 并发访问类似了。</p>
 <p><strong>Durability</strong></p>
 <p>数据库系统的目的就是提供一个安全的地方，可以用来存放数据，并且不需要担心数据的丢失。</p>
 <p>单节点中，持久性意味着数据成功的写入了。master - slave 中，意味着副本中的数据也成功写入了。</p>
 <p>完美的持久性其实并不存在，如果存储数据的磁盘和存储副本数据的磁盘都坏了，这也是一种情况。</p>
-<h4 id="单对象与多对象事务操作"><a href="#单对象与多对象事务操作" class="headerlink" title="单对象与多对象事务操作"></a>单对象与多对象事务操作</h4><p><img src="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220217173344302.png" alt="image-20220217173344302"></p>
+<h4 id="单对象与多对象事务操作"><a href="#单对象与多对象事务操作" class="headerlink" title="单对象与多对象事务操作"></a>单对象与多对象事务操作</h4><p><img src="https://s2.loli.net/2022/06/23/2yncBqfrW1Ie6EU.png"></p>
 <p>如果没有隔离性，user2 会看到一种非常诡异的现象，就是有未读邮件，但是未读邮件的数量显示为 0。</p>
-<p><img src="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220217173515223.png" alt="image-20220217173515223"></p>
+<p><img src="https://s2.loli.net/2022/06/23/BzUa3sCGQqlfXxk.png"></p>
 <p>如果没有原子性，这时候未读邮件和未读数量的显示就不一致了。这种情况下，第二个更新数量的操作失败了，那么第一个插入未读邮件的操作是需要回滚的。</p>
 <p><strong>多对象事务的需求</strong></p>
 <p>主要还是为了事务的  A 和 I</p>
@@ -638,10 +636,10 @@ html.dataset.dark = localStorage.dark;
 <p><strong>No dirty reads</strong></p>
 <p>dirty reads （脏读）如果一个事务对数据库中的内容进行了修改，但是事务还没提交，这时候另一个事务要是读到了未提交的数据，称这种情况未脏读。</p>
 <p>读提交的事务隔离级别，<strong>必须阻止脏读</strong>，意味着所有的写操作只有在 committed 后才能被看到，如下图：</p>
-<p><img src="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220218112120009.png" alt="image-20220218112120009"></p>
+<p><img src="https://s2.loli.net/2022/06/23/a6pN7lZYxej2O5c.png"></p>
 <p><strong>No dirty writes</strong></p>
 <p>dirty writes （脏写）如果一个未提交的事务修改的内容，被另一个事务覆盖了，这种情况称为脏写。</p>
-<p><img src="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220218134450702.png" alt="image-20220218134450702"></p>
+<p><img src="https://s2.loli.net/2022/06/23/8HPdxRcOYFwkts1.png"></p>
 <h4 id="实现读提交隔离级别"><a href="#实现读提交隔离级别" class="headerlink" title="实现读提交隔离级别"></a>实现读提交隔离级别</h4><p>写 ： 大多数情况，数据库实现读提交隔离级别都是通过<strong>行级别</strong>的锁来实现的，如果某个事务想修改某个值，一定要先获取锁。</p>
 <p>读 ： 要是不想脏读，也可以通过行级锁实现，但是可能会出现一个写事务，阻塞非常多的读事务。更普遍的方式是，通过上边的 7-4 图中那样的方法。</p>
 <h4 id="Snapshot-Isolation-and-Repeatable-Read"><a href="#Snapshot-Isolation-and-Repeatable-Read" class="headerlink" title="Snapshot Isolation and Repeatable Read"></a>Snapshot Isolation and Repeatable Read</h4><p>快照隔离和可重复读。</p>
@@ -654,7 +652,7 @@ html.dataset.dark = localStorage.dark;
 <p>数据库必须保存某个对象的多个不同提交版本，因为不同的进行中事务需要在不同时间看到不同的数据库状态。<em>因为在同一时刻保存了某个对象的多个版本，这个技术被称为 MVCC</em></p>
 <p><strong>快照隔离的实现</strong></p>
 <p>当事务开始的时候，会给每个事务一个唯一且自增的事务 ID。</p>
-<p><img src="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20220222100812339.png" alt="image-20220222100812339"></p>
+<p><img src="https://s2.loli.net/2022/06/23/G2OBu1VwpkaWLNI.png"></p>
 <p>如图所示，一个更新操作在内部被拆分成了删除和插入。事务13 要更新账户 1  的余额，把 created by = 3 的删除，插入了一条新的。</p>
 <p><strong>一致性快照的可见性规则</strong></p>
 <p><em>事务 ID 决定了他可以看到哪些对象，哪些看不到</em></p>
@@ -684,4 +682,4 @@ html.dataset.dark = localStorage.dark;
 <p><strong>可重复读和命名混乱</strong></p>
 <p>MySQL 中把快照隔离称为<strong>可重复读</strong></p>
 <h4 id="幻读"><a href="#幻读" class="headerlink" title="幻读"></a>幻读</h4><p>一个事务中的写操作影响了另一个事务中的查询操作。</p>
-</div><div id="donate"><link rel="stylesheet" type="text/css" href="/css/donate.css?v=1.0.0"><script type="text/javascript" src="/js/donate.js?v=1.0.0" successtext="复制成功!"></script><a class="pos-f tr3" id="github" href="https://github.com/clamyang" target="_blank" title="Github"></a><div id="DonateText">Donate</div><ul class="list pos-f" id="donateBox"><li id="AliPay" qr="/img/AliPayQR.jpg"></li><li id="WeChat" qr="/img/WeChatQR.jpg"></li></ul><div class="pos-f left-100" id="QRBox"><div id="MainBox"></div></div></div><div class="post-copyright"><script type="text/javascript" src="/js/copyright.js?v=1.0.0" successtext="复制成功!"></script><link rel="stylesheet" type="text/css" href="/css/copyright.css?v=1.0.0"><p><span>本文标题：</span>DDIA 读书笔记</p><p><span>文章作者：</span>bqyang</p><p><span>发布时间：</span>2022-01-13</p><p><span>最后更新：</span>2022-02-25</p><p><span>原始链接：</span><a href="/2022/DDIA/">https://bqyang.top/2022/DDIA/</a><span class="copy-path"><i class="fa fa-clipboard" data-clipboard-text="https://bqyang.top/2022/DDIA/"></i></span></p><p><span>版权声明：</span>The author owns the copyright, please indicate the source reproduced.</p></div><br><div class="tags"></div><div class="post-nav"><a class="pre" href="/2022/language/golang/VariableEscape/">真的遇到了变量逃逸</a><a class="next" href="/2022/summary/summary2021/">2021 年末总结</a></div><script src="https://utteranc.es/client.js" repo="clamyang/blogs" issue-term="title" theme="github-light" crossorigin="anonymous" async> </script></div></div></div><div class="pure-u-1-4 hidden_mid_and_down"><div id="sidebar"><div class="widget"><form class="search-form" action="//www.google.com/search" method="get" accept-charset="utf-8" target="_blank"><input type="text" name="q" maxlength="20" placeholder="Search"/><input type="hidden" name="sitesearch" value="https://bqyang.top"/></form></div><div class="widget"><div class="widget-title"><i class="fa fa-file-o"> 最近文章</i></div><ul class="post-list"><li class="post-list-item"><a class="post-list-link" href="/2022/rpc/about-rpc-1/">关于 rpc 的那些事（一）</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/design-pattern/Behavioral/templete-method/">模板方法</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/language/golang/go-context/">go-context</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/design-pattern/factory-method/">工厂方法模式</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/design-pattern/proxyAndDecorator/">代理模式</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/language/golang/go-errors/">go-error-handling</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/design-pattern/principle/">面向对象五大原则</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/design-pattern/strategy/">策略模式</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/design-pattern/easy-factory/">简单工厂模式</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/design-pattern/UML/first-uml/">UML 类图</a></li></ul></div><div class="widget"><div class="widget-title"><i class="fa fa-external-link"> 友情链接</i></div><ul></ul><a href="http://www.xargin.com/" title="Xargin" target="_blank">Xargin</a><ul></ul><a href="https://mytechshares.com/" title="董泽润的技术笔记" target="_blank">董泽润的技术笔记</a><ul></ul><a href="https://hujingnb.com/" title="烟草的香味" target="_blank">烟草的香味</a></div></div></div><div class="pure-u-1 pure-u-md-3-4"><div id="footer">Copyright © 2022 <a href="/." rel="nofollow">杨宝强的技术笔记.</a>Powered by<a rel="nofollow" target="_blank" href="https://hexo.io"> Hexo.</a><a rel="nofollow" target="_blank" href="https://beian.miit.gov.cn/"> 京ICP备2021035561号.</a><a rel="nofollow" target="_blank" href="https://github.com/tufu9441/maupassant-hexo"> Theme</a> by<a rel="nofollow" target="_blank" href="https://github.com/pagecho"> Cho.</a></div></div></div><a class="show" id="rocket" href="#top"></a><script type="text/javascript" src="/js/totop.js?v=1.0.0" async></script><script type="text/javascript" src="//lib.baomitu.com/fancybox/latest/jquery.fancybox.min.js" async></script><script type="text/javascript" src="/js/fancybox.js?v=1.0.0" async></script><link rel="stylesheet" type="text/css" href="//lib.baomitu.com/fancybox/latest/jquery.fancybox.min.css"><script type="text/javascript" src="/js/copycode.js?v=1.0.0" successtext="复制成功!"></script><link rel="stylesheet" type="text/css" href="/css/copycode.css?v=1.0.0"><script type="text/javascript" src="/js/codeblock-resizer.js?v=1.0.0"></script><script type="text/javascript" src="/js/smartresize.js?v=1.0.0"></script></div></body></html>
+</div><div id="donate"><link rel="stylesheet" type="text/css" href="/css/donate.css?v=1.0.0"><script type="text/javascript" src="/js/donate.js?v=1.0.0" successtext="复制成功!"></script><a class="pos-f tr3" id="github" href="https://github.com/clamyang" target="_blank" title="Github"></a><div id="DonateText">Donate</div><ul class="list pos-f" id="donateBox"><li id="AliPay" qr="/img/AliPayQR.jpg"></li><li id="WeChat" qr="/img/WeChatQR.jpg"></li></ul><div class="pos-f left-100" id="QRBox"><div id="MainBox"></div></div></div><div class="post-copyright"><script type="text/javascript" src="/js/copyright.js?v=1.0.0" successtext="复制成功!"></script><link rel="stylesheet" type="text/css" href="/css/copyright.css?v=1.0.0"><p><span>本文标题：</span>DDIA 读书笔记</p><p><span>文章作者：</span>bqyang</p><p><span>发布时间：</span>2022-06-23</p><p><span>最后更新：</span>2022-06-23</p><p><span>原始链接：</span><a href="/2022/DDIA/">https://bqyang.top/2022/DDIA/</a><span class="copy-path"><i class="fa fa-clipboard" data-clipboard-text="https://bqyang.top/2022/DDIA/"></i></span></p><p><span>版权声明：</span>The author owns the copyright, please indicate the source reproduced.</p></div><br><div class="tags"></div><div class="post-nav"><a class="pre" href="/2022/os/elf/">elf 文件格式</a><a class="next" href="/2022/contributeToYunion/">第一次 pr</a></div><script src="https://utteranc.es/client.js" repo="clamyang/blogs" issue-term="title" theme="github-light" crossorigin="anonymous" async> </script></div></div></div><div class="pure-u-1-4 hidden_mid_and_down"><div id="sidebar"><div class="widget"><form class="search-form" action="//www.google.com/search" method="get" accept-charset="utf-8" target="_blank"><input type="text" name="q" maxlength="20" placeholder="Search"/><input type="hidden" name="sitesearch" value="https://bqyang.top"/></form></div><div class="widget"><div class="widget-title"><i class="fa fa-file-o"> 最近文章</i></div><ul class="post-list"><li class="post-list-item"><a class="post-list-link" href="/2022/os/process/process/">操作系统进程</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/new-words/">new words for me</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/os/linker&loader/">linker and loader</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/summary/HappyWeekend/">Weekend</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/vcs/git/git-rebase/">git rebase</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/os/elf/">elf 文件格式</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/DDIA/">DDIA 读书笔记</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/contributeToYunion/">第一次 pr</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/summary/tips0309/">一点总结</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/rpc/about-rpc-1/">关于 rpc 的那些事（一）</a></li></ul></div><div class="widget"><div class="widget-title"><i class="fa fa-external-link"> 友情链接</i></div><ul></ul><a href="http://www.xargin.com/" title="Xargin" target="_blank">Xargin</a><ul></ul><a href="https://mytechshares.com/" title="董泽润的技术笔记" target="_blank">董泽润的技术笔记</a><ul></ul><a href="https://hujingnb.com/" title="烟草的香味" target="_blank">烟草的香味</a></div></div></div><div class="pure-u-1 pure-u-md-3-4"><div id="footer">Copyright © 2022 <a href="/." rel="nofollow">杨宝强的技术笔记.</a>Powered by<a rel="nofollow" target="_blank" href="https://hexo.io"> Hexo.</a><a rel="nofollow" target="_blank" href="https://beian.miit.gov.cn/"> 京ICP备2021035561号.</a><a rel="nofollow" target="_blank" href="https://github.com/tufu9441/maupassant-hexo"> Theme</a> by<a rel="nofollow" target="_blank" href="https://github.com/pagecho"> Cho.</a></div></div></div><a class="show" id="rocket" href="#top"></a><script type="text/javascript" src="/js/totop.js?v=1.0.0" async></script><script type="text/javascript" src="//lib.baomitu.com/fancybox/latest/jquery.fancybox.min.js" async></script><script type="text/javascript" src="/js/fancybox.js?v=1.0.0" async></script><link rel="stylesheet" type="text/css" href="//lib.baomitu.com/fancybox/latest/jquery.fancybox.min.css"><script type="text/javascript" src="/js/copycode.js?v=1.0.0" successtext="复制成功!"></script><link rel="stylesheet" type="text/css" href="/css/copycode.css?v=1.0.0"><script type="text/javascript" src="/js/codeblock-resizer.js?v=1.0.0"></script><script type="text/javascript" src="/js/smartresize.js?v=1.0.0"></script></div></body></html>

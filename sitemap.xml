@@ -2,6 +2,83 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://bqyang.top/2022/os/process/process/</loc>
+    
+    <lastmod>2022-06-24</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://bqyang.top/2022/new-words/</loc>
+    
+    <lastmod>2022-06-24</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://bqyang.top/2022/language/golang/go-errors/</loc>
+    
+    <lastmod>2022-06-24</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://bqyang.top/2022/language/golang/go-generic/</loc>
+    
+    <lastmod>2022-06-24</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://bqyang.top/2022/language/golang/go-context/</loc>
+    
+    <lastmod>2022-06-24</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://bqyang.top/2022/language/golang/go-ast/</loc>
+    
+    <lastmod>2022-06-24</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://bqyang.top/2022/summary/HappyWeekend/</loc>
+    
+    <lastmod>2022-06-23</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://bqyang.top/2022/DDIA/</loc>
+    
+    <lastmod>2022-06-23</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://bqyang.top/2022/os/linker&loader/</loc>
+    
+    <lastmod>2022-06-23</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://bqyang.top/2022/summary/tips0309/</loc>
+    
+    <lastmod>2022-06-23</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://bqyang.top/2022/contributeToYunion/</loc>
+    
+    <lastmod>2022-06-23</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>https://bqyang.top/2022/design-pattern/Behavioral/templete-method/</loc>
     
     <lastmod>2022-06-23</lastmod>
@@ -30,21 +107,7 @@
   </url>
   
   <url>
-    <loc>https://bqyang.top/2021/linker&loader/</loc>
-    
-    <lastmod>2022-06-15</lastmod>
-    
-  </url>
-  
-  <url>
     <loc>https://bqyang.top/2022/language/c/recur/</loc>
-    
-    <lastmod>2022-06-15</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://bqyang.top/2022/language/golang/go-context/</loc>
     
     <lastmod>2022-06-15</lastmod>
     
@@ -61,20 +124,6 @@
     <loc>https://bqyang.top/2022/design-pattern/proxyAndDecorator/</loc>
     
     <lastmod>2022-06-13</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://bqyang.top/2022/language/golang/go-ast/</loc>
-    
-    <lastmod>2022-06-09</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://bqyang.top/2022/language/golang/go-errors/</loc>
-    
-    <lastmod>2022-06-08</lastmod>
     
   </url>
   
@@ -100,13 +149,6 @@
   </url>
   
   <url>
-    <loc>https://bqyang.top/2022/language/golang/go-generic/</loc>
-    
-    <lastmod>2022-06-07</lastmod>
-    
-  </url>
-  
-  <url>
     <loc>https://bqyang.top/2022/language/golang/VariableEscape/</loc>
     
     <lastmod>2022-06-04</lastmod>
@@ -115,13 +157,6 @@
   
   <url>
     <loc>https://bqyang.top/2022/summary/summary2021/</loc>
-    
-    <lastmod>2022-06-04</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://bqyang.top/2021/new-words/</loc>
     
     <lastmod>2022-06-04</lastmod>
     
@@ -240,20 +275,6 @@
   </url>
   
   <url>
-    <loc>https://bqyang.top/2022/summary/tips0309/</loc>
-    
-    <lastmod>2022-04-10</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://bqyang.top/2022/DDIA/</loc>
-    
-    <lastmod>2022-02-25</lastmod>
-    
-  </url>
-  
-  <url>
     <loc>https://bqyang.top/2022/language/golang/chi/</loc>
     
     <lastmod>2022-02-24</lastmod>
@@ -282,14 +303,14 @@
   </url>
   
   <url>
-    <loc>https://bqyang.top/2021/elf/</loc>
+    <loc>https://bqyang.top/2022/os/elf/</loc>
     
     <lastmod>2021-12-09</lastmod>
     
   </url>
   
   <url>
-    <loc>https://bqyang.top/2021/git-rebase/</loc>
+    <loc>https://bqyang.top/2022/vcs/git/git-rebase/</loc>
     
     <lastmod>2021-12-09</lastmod>
     
@@ -303,13 +324,6 @@
   </url>
   
   <url>
-    <loc>https://bqyang.top/2021/hello-world/</loc>
-    
-    <lastmod>2021-12-05</lastmod>
-    
-  </url>
-  
-  <url>
     <loc>https://bqyang.top/2021/language/golang/timer%20%E6%B5%85%E6%9E%90/</loc>
     
     <lastmod>2021-12-05</lastmod>
@@ -317,23 +331,9 @@
   </url>
   
   <url>
-    <loc>https://bqyang.top/2021/HappyWeekend/</loc>
-    
-    <lastmod>2021-12-04</lastmod>
-    
-  </url>
-  
-  <url>
     <loc>https://bqyang.top/2021/language/golang/GCComments/</loc>
     
     <lastmod>2021-11-25</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://bqyang.top/2021/contributeToYunion/</loc>
-    
-    <lastmod>2021-11-23</lastmod>
     
   </url>
   
@@ -347,7 +347,7 @@
 
   <url>
     <loc>https://bqyang.top/</loc>
-    <lastmod>2022-06-23</lastmod>
+    <lastmod>2022-06-24</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
