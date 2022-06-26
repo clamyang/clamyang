@@ -2,9 +2,37 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://bqyang.top/2022/language/golang/100-go-mistaks/1-variable-shadowing/</loc>
+    
+    <lastmod>2022-06-26</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://bqyang.top/2022/rpc/about-rpc-1/</loc>
+    
+    <lastmod>2022-06-26</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>https://bqyang.top/2022/os/process/process/</loc>
     
-    <lastmod>2022-06-24</lastmod>
+    <lastmod>2022-06-26</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://bqyang.top/2022/os/os-start/</loc>
+    
+    <lastmod>2022-06-25</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://bqyang.top/2022/contributeToYunion/</loc>
+    
+    <lastmod>2022-06-25</lastmod>
     
   </url>
   
@@ -72,21 +100,7 @@
   </url>
   
   <url>
-    <loc>https://bqyang.top/2022/contributeToYunion/</loc>
-    
-    <lastmod>2022-06-23</lastmod>
-    
-  </url>
-  
-  <url>
     <loc>https://bqyang.top/2022/design-pattern/Behavioral/templete-method/</loc>
-    
-    <lastmod>2022-06-23</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://bqyang.top/2022/rpc/about-rpc-1/</loc>
     
     <lastmod>2022-06-23</lastmod>
     
@@ -187,13 +201,6 @@
     <loc>https://bqyang.top/2022/language/c/print/</loc>
     
     <lastmod>2022-05-17</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://bqyang.top/2022/os/os-start/</loc>
-    
-    <lastmod>2022-05-13</lastmod>
     
   </url>
   
@@ -347,7 +354,7 @@
 
   <url>
     <loc>https://bqyang.top/</loc>
-    <lastmod>2022-06-24</lastmod>
+    <lastmod>2022-06-26</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
