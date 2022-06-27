@@ -2,6 +2,13 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://bqyang.top/2022/language/golang/go-params-to-goroutine/</loc>
+    
+    <lastmod>2022-06-27</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>https://bqyang.top/2022/language/golang/100-go-mistaks/1-variable-shadowing/</loc>
     
     <lastmod>2022-06-26</lastmod>
@@ -354,7 +361,7 @@
 
   <url>
     <loc>https://bqyang.top/</loc>
-    <lastmod>2022-06-26</lastmod>
+    <lastmod>2022-06-27</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
