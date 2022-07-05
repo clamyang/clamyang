@@ -2,6 +2,34 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://bqyang.top/2022/design-pattern/Structural/facade/</loc>
+    
+    <lastmod>2022-07-05</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://bqyang.top/2022/k8s/k8s-storage/</loc>
+    
+    <lastmod>2022-07-05</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://bqyang.top/2022/contributeToYunion/</loc>
+    
+    <lastmod>2022-07-05</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://bqyang.top/2022/language/c/string/</loc>
+    
+    <lastmod>2022-07-05</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>https://bqyang.top/2022/os/memory-api/</loc>
     
     <lastmod>2022-07-02</lastmod>
@@ -52,13 +80,6 @@
   
   <url>
     <loc>https://bqyang.top/2022/os/os-start/</loc>
-    
-    <lastmod>2022-06-25</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://bqyang.top/2022/contributeToYunion/</loc>
     
     <lastmod>2022-06-25</lastmod>
     
@@ -226,13 +247,6 @@
   </url>
   
   <url>
-    <loc>https://bqyang.top/2022/language/c/string/</loc>
-    
-    <lastmod>2022-05-11</lastmod>
-    
-  </url>
-  
-  <url>
     <loc>https://bqyang.top/2022/language/rust/enum/</loc>
     
     <lastmod>2022-05-11</lastmod>
@@ -375,7 +389,7 @@
 
   <url>
     <loc>https://bqyang.top/</loc>
-    <lastmod>2022-07-02</lastmod>
+    <lastmod>2022-07-05</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
