@@ -1,0 +1,58 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="一物不知深以为耻"><title>elf 文件格式 | 杨宝强的技术笔记</title><link rel="stylesheet" type="text/css" href="/css/style.css?v=1.0.0"><link rel="stylesheet" type="text/css" href="//lib.baomitu.com/normalize/latest/normalize.min.css"><link rel="stylesheet" type="text/css" href="//lib.baomitu.com/pure/latest/pure-min.min.css"><link rel="stylesheet" type="text/css" href="//lib.baomitu.com/pure/latest/grids-responsive-min.min.css"><link rel="stylesheet" href="//lib.baomitu.com/font-awesome/4.7.0/css/font-awesome.min.css"><script type="text/javascript" src="//lib.baomitu.com/jquery/latest/jquery.min.js"></script><link rel="icon" mask="" sizes="any" href="/favicon.ico"><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="apple-touch-icon-precomposed" href="/apple-touch-icon.png"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><script type="text/javascript" src="//lib.baomitu.com/clipboard.js/latest/clipboard.min.js"></script><script type="text/javascript" src="//lib.baomitu.com/toastr.js/latest/toastr.min.js"></script><link rel="stylesheet" href="//lib.baomitu.com/toastr.js/latest/toastr.min.css"><div class="darkmode-toggle">🌓</div><script>var prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)');
+var toggle = document.querySelector('.darkmode-toggle');
+var html = document.querySelector('html');
+
+html.dataset.dark = localStorage.dark || prefersDarkMode.matches;
+
+toggle.addEventListener('click', () => {
+localStorage.dark = !(html.dataset.dark == 'true');
+html.dataset.dark = localStorage.dark;
+});</script><meta name="generator" content="Hexo 5.4.0"></head><body><div class="body_container"><div id="header"><div class="site-name"><h1 class="hidden">elf 文件格式</h1><a id="logo" href="/.">杨宝强的技术笔记</a><p class="description">Gopher Watcher</p></div><div id="nav-menu"><a class="current" href="/."><i class="fa fa-home"> 首页</i></a><a href="/archives/"><i class="fa fa-archive"> 归档</i></a><a href="/about/"><i class="fa fa-user"> 关于</i></a><a href="/atom.xml"><i class="fa fa-rss"> 订阅</i></a></div></div><div class="pure-g" id="layout"><div class="pure-u-1 pure-u-md-3-4"><div class="content_container"><div class="post"><h1 class="post-title">elf 文件格式</h1><div class="post-meta">2021-12-06</div><div class="post-content"><p>简单整理下 ELF (executable and linkable format) 的几个知识点，这里跟 linker&amp;&amp;loader 中有一点重复内容。</p>
+<span id="more"></span>
+
+<h3 id="ELF的三种格式"><a href="#ELF的三种格式" class="headerlink" title="ELF的三种格式"></a>ELF的三种格式</h3><ul>
+<li>可重定位文件<ul>
+<li>包含二进制代码和数据，其形式可以在编译时与其他可重定位目标文件合并起来，创建一个可执行目标文件。</li>
+</ul>
+</li>
+<li>可执行文件<ul>
+<li>包含二进制代码和数据，其形式可以被直接复制到内存并执行。</li>
+</ul>
+</li>
+<li>共享对象文件<ul>
+<li>一种特殊类型的可重定位目标文件，可以在加载或运行时被动态地加载进内存并链接。</li>
+</ul>
+</li>
+</ul>
+<h4 id="可重定位目标文件"><a href="#可重定位目标文件" class="headerlink" title="可重定位目标文件"></a>可重定位目标文件</h4><img src="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/微信截图_20211209191808.png" alt="微信截图_20211209191808" style="zoom:50%;" />
+
+<h5 id="sections"><a href="#sections" class="headerlink" title="sections"></a>sections</h5><ul>
+<li><code>.text </code> 存放编译好的二进制可执行代码</li>
+<li><code>.rodata</code> 存放只读数据，<code>const</code> 变量等</li>
+<li><code>.data</code> 存放已经初始化好的全局变量</li>
+<li><a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/.bss">.bss</a>  未初始化全局变量，运行时会置 0<ul>
+<li>比如在全局作用域下，<code>var name string</code> 这种就是分配在 <code>.bss</code> section 中</li>
+</ul>
+</li>
+</ul>
+<p>​        注意：在目标文件中这个 section 不占实际的空间，仅仅是一个占位符。目标文件对已初始化和未初始化主要是为了空间效率</p>
+<ul>
+<li><code>.symtab</code> 符号表，记录函数和变量</li>
+<li><code>.strtab</code> 字符串表就是以 null 结尾的字符串序列</li>
+</ul>
+<p>为什么未初始化的数据称为 .bss？</p>
+<p>书中提到它起始于 IBM704 汇编语言中 “块存储” 指令的首字母缩写，因为 .bss section 是不占用存储空间的，所以一种更好的记住 .data 和 .bss 中的区别就是把 bss 看做成 “更好的节省空间” (Better Save Space) 的缩写。</p>
+<h5 id="三个特殊的伪节"><a href="#三个特殊的伪节" class="headerlink" title="三个特殊的伪节"></a>三个特殊的伪节</h5><p>（只有可重定位目标文件中才有，可执行中没有）</p>
+<ul>
+<li>ABS 代表不该被重定位的符号</li>
+<li>UNDEF 代表未定义的符号，表示的是在本目标模块中引用，但是在其他地方定义的符号</li>
+<li>COMMON 表示还未被分配位置的未初始化的数据目标</li>
+</ul>
+<h5 id="COMMON-和-bss-的区别"><a href="#COMMON-和-bss-的区别" class="headerlink" title="COMMON 和 .bss 的区别"></a>COMMON 和 .bss 的区别</h5><p>//TODO </p>
+<h4 id="可执行文件"><a href="#可执行文件" class="headerlink" title="可执行文件"></a>可执行文件</h4><p>如下图所示：</p>
+<img src="https://gitee.com/yangbaoqiang/images/raw/master/blogpics/image-20211206141434504.png" alt="image-20211206141434504" style="zoom:67%;" />
+
+<p>代码段：用来存放编译好的代码</p>
+<p>数据段：包括已经初始化的全局变量，未初始化的全局变量</p>
+<p><code>.text</code> 和 <code>.rodata</code> 两个 section 组成代码段 <code>segment</code>，其他也类似。</p>
+</div><div id="donate"><link rel="stylesheet" type="text/css" href="/css/donate.css?v=1.0.0"><script type="text/javascript" src="/js/donate.js?v=1.0.0" successtext="复制成功!"></script><a class="pos-f tr3" id="github" href="https://github.com/clamyang" target="_blank" title="Github"></a><div id="DonateText">Donate</div><ul class="list pos-f" id="donateBox"><li id="AliPay" qr="/img/AliPayQR.jpg"></li><li id="WeChat" qr="/img/WeChatQR.jpg"></li></ul><div class="pos-f left-100" id="QRBox"><div id="MainBox"></div></div></div><div class="post-copyright"><script type="text/javascript" src="/js/copyright.js?v=1.0.0" successtext="复制成功!"></script><link rel="stylesheet" type="text/css" href="/css/copyright.css?v=1.0.0"><p><span>本文标题：</span>elf 文件格式</p><p><span>文章作者：</span>bqyang</p><p><span>发布时间：</span>2021-12-06</p><p><span>最后更新：</span>2021-12-09</p><p><span>原始链接：</span><a href="/2021/os/elf/">https://bqyang.top/2021/os/elf/</a><span class="copy-path"><i class="fa fa-clipboard" data-clipboard-text="https://bqyang.top/2021/os/elf/"></i></span></p><p><span>版权声明：</span>The author owns the copyright, please indicate the source reproduced.</p></div><br><div class="tags"></div><div class="post-nav"><a class="pre" href="/2022/summary/tips0309/">一点总结</a><a class="next" href="/2021/summary/HappyWeekend/">Weekend</a></div><script src="https://utteranc.es/client.js" repo="clamyang/blogs" issue-term="title" theme="github-light" crossorigin="anonymous" async> </script></div></div></div><div class="pure-u-1-4 hidden_mid_and_down"><div id="sidebar"><div class="widget"><form class="search-form" action="//www.google.com/search" method="get" accept-charset="utf-8" target="_blank"><input type="text" name="q" maxlength="20" placeholder="Search"/><input type="hidden" name="sitesearch" value="https://bqyang.top"/></form></div><div class="widget"><div class="widget-title"><i class="fa fa-file-o"> 最近文章</i></div><ul class="post-list"><li class="post-list-item"><a class="post-list-link" href="/2022/k8s/k8s-storage/">k8s 存储内容</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/design-pattern/Structural/facade/">门面模式（外观模式）</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/os/memory-api/">内存相关 API</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/language/golang/100-go-mistaks/2-misuse-init/">misuse init func</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/language/golang/go-params-to-goroutine/">参数是怎么传给 goroutine 的</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/language/golang/100-go-mistaks/1-variable-shadowing/">Variable shadowing</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/os/process/process/">操作系统进程</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/new-words/">new words for me</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/os/linker&loader/">linker and loader</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/vcs/git/git-rebase/">git rebase</a></li></ul></div><div class="widget"><div class="widget-title"><i class="fa fa-external-link"> 友情链接</i></div><ul></ul><a href="http://www.xargin.com/" title="Xargin" target="_blank">Xargin</a><ul></ul><a href="https://mytechshares.com/" title="董泽润的技术笔记" target="_blank">董泽润的技术笔记</a><ul></ul><a href="https://hujingnb.com/" title="烟草的香味" target="_blank">烟草的香味</a></div></div></div><div class="pure-u-1 pure-u-md-3-4"><div id="footer">Copyright © 2022 <a href="/." rel="nofollow">杨宝强的技术笔记.</a>Powered by<a rel="nofollow" target="_blank" href="https://hexo.io"> Hexo.</a><a rel="nofollow" target="_blank" href="https://beian.miit.gov.cn/"> 京ICP备2021035561号.</a><a rel="nofollow" target="_blank" href="https://github.com/tufu9441/maupassant-hexo"> Theme</a> by<a rel="nofollow" target="_blank" href="https://github.com/pagecho"> Cho.</a></div></div></div><a class="show" id="rocket" href="#top"></a><script type="text/javascript" src="/js/totop.js?v=1.0.0" async></script><script type="text/javascript" src="//lib.baomitu.com/fancybox/latest/jquery.fancybox.min.js" async></script><script type="text/javascript" src="/js/fancybox.js?v=1.0.0" async></script><link rel="stylesheet" type="text/css" href="//lib.baomitu.com/fancybox/latest/jquery.fancybox.min.css"><script type="text/javascript" src="/js/copycode.js?v=1.0.0" successtext="复制成功!"></script><link rel="stylesheet" type="text/css" href="/css/copycode.css?v=1.0.0"><script type="text/javascript" src="/js/codeblock-resizer.js?v=1.0.0"></script><script type="text/javascript" src="/js/smartresize.js?v=1.0.0"></script></div></body></html>
