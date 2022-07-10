@@ -2,6 +2,13 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://bqyang.top/2022/os/pstree/</loc>
+    
+    <lastmod>2022-07-10</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>https://bqyang.top/2022/language/c/string/</loc>
     
     <lastmod>2022-07-06</lastmod>
@@ -375,7 +382,7 @@
 
   <url>
     <loc>https://bqyang.top/</loc>
-    <lastmod>2022-07-08</lastmod>
+    <lastmod>2022-07-10</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
