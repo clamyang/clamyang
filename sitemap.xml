@@ -2,6 +2,20 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://bqyang.top/2021/new-words/</loc>
+    
+    <lastmod>2022-07-11</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://bqyang.top/about/index.html</loc>
+    
+    <lastmod>2022-07-11</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>https://bqyang.top/2022/os/pstree/</loc>
     
     <lastmod>2022-07-11</lastmod>
@@ -65,13 +79,6 @@
   </url>
   
   <url>
-    <loc>https://bqyang.top/about/index.html</loc>
-    
-    <lastmod>2022-06-27</lastmod>
-    
-  </url>
-  
-  <url>
     <loc>https://bqyang.top/2022/language/golang/100-go-mistaks/1-variable-shadowing/</loc>
     
     <lastmod>2022-06-26</lastmod>
@@ -101,13 +108,6 @@
   
   <url>
     <loc>https://bqyang.top/2022/os/linker&loader/</loc>
-    
-    <lastmod>2022-06-24</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://bqyang.top/2022/new-words/</loc>
     
     <lastmod>2022-06-24</lastmod>
     
