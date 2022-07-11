@@ -2,6 +2,139 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://bqyang.top/2022/language/golang/webFrame/</loc>
+    
+    <lastmod>2022-07-11</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://bqyang.top/2022/leetcode/array/easy/</loc>
+    
+    <lastmod>2022-07-11</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://bqyang.top/2022/language/golang/VariableEscape/</loc>
+    
+    <lastmod>2022-07-11</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://bqyang.top/2022/os/concurrency-lock/</loc>
+    
+    <lastmod>2022-07-11</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://bqyang.top/2022/os/concurrency-cv/</loc>
+    
+    <lastmod>2022-07-11</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://bqyang.top/2022/os/concurrency-sema/</loc>
+    
+    <lastmod>2022-07-11</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://bqyang.top/2022/language/rust/enum/</loc>
+    
+    <lastmod>2022-07-11</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://bqyang.top/2022/language/rust/structs/</loc>
+    
+    <lastmod>2022-07-11</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://bqyang.top/2022/language/rust/ownership/</loc>
+    
+    <lastmod>2022-07-11</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://bqyang.top/2021/language/golang/timer%20%E6%B5%85%E6%9E%90/</loc>
+    
+    <lastmod>2022-07-11</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://bqyang.top/2021/language/golang/timer%20%E4%BC%98%E5%8C%96/</loc>
+    
+    <lastmod>2022-07-11</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://bqyang.top/2022/design-pattern/factory-method/</loc>
+    
+    <lastmod>2022-07-11</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://bqyang.top/2022/design-pattern/easy-factory/</loc>
+    
+    <lastmod>2022-07-11</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://bqyang.top/2022/language/c/string/</loc>
+    
+    <lastmod>2022-07-11</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://bqyang.top/2022/design-pattern/Behavioral/templete-method/</loc>
+    
+    <lastmod>2022-07-11</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://bqyang.top/2022/design-pattern/strategy/</loc>
+    
+    <lastmod>2022-07-11</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://bqyang.top/2022/k8s/deployment/</loc>
+    
+    <lastmod>2022-07-11</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://bqyang.top/2022/language/c/recur/</loc>
+    
+    <lastmod>2022-07-11</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://bqyang.top/2022/language/c/print/</loc>
+    
+    <lastmod>2022-07-11</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>https://bqyang.top/2022/k8s/k8s-storage/</loc>
     
     <lastmod>2022-07-11</lastmod>
@@ -33,13 +166,6 @@
     <loc>https://bqyang.top/2022/os/pstree/</loc>
     
     <lastmod>2022-07-11</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://bqyang.top/2022/language/c/string/</loc>
-    
-    <lastmod>2022-07-06</lastmod>
     
   </url>
   
@@ -170,34 +296,6 @@
   </url>
   
   <url>
-    <loc>https://bqyang.top/2022/design-pattern/Behavioral/templete-method/</loc>
-    
-    <lastmod>2022-06-23</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://bqyang.top/2022/design-pattern/factory-method/</loc>
-    
-    <lastmod>2022-06-16</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://bqyang.top/2022/language/c/recur/</loc>
-    
-    <lastmod>2022-06-15</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://bqyang.top/2022/design-pattern/strategy/</loc>
-    
-    <lastmod>2022-06-13</lastmod>
-    
-  </url>
-  
-  <url>
     <loc>https://bqyang.top/2022/design-pattern/proxyAndDecorator/</loc>
     
     <lastmod>2022-06-13</lastmod>
@@ -212,23 +310,9 @@
   </url>
   
   <url>
-    <loc>https://bqyang.top/2022/design-pattern/easy-factory/</loc>
-    
-    <lastmod>2022-06-07</lastmod>
-    
-  </url>
-  
-  <url>
     <loc>https://bqyang.top/2022/design-pattern/UML/first-uml/</loc>
     
     <lastmod>2022-06-07</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://bqyang.top/2022/language/golang/VariableEscape/</loc>
-    
-    <lastmod>2022-06-04</lastmod>
     
   </url>
   
@@ -254,69 +338,6 @@
   </url>
   
   <url>
-    <loc>https://bqyang.top/2022/leetcode/array/easy/</loc>
-    
-    <lastmod>2022-06-01</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://bqyang.top/2022/language/c/print/</loc>
-    
-    <lastmod>2022-05-17</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://bqyang.top/2022/language/rust/enum/</loc>
-    
-    <lastmod>2022-05-11</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://bqyang.top/2022/language/rust/structs/</loc>
-    
-    <lastmod>2022-05-11</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://bqyang.top/2022/language/rust/ownership/</loc>
-    
-    <lastmod>2022-05-10</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://bqyang.top/2022/k8s/deployment/</loc>
-    
-    <lastmod>2022-05-09</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://bqyang.top/2022/os/concurrency-sema/</loc>
-    
-    <lastmod>2022-04-27</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://bqyang.top/2022/os/concurrency-cv/</loc>
-    
-    <lastmod>2022-04-24</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://bqyang.top/2022/os/concurrency-lock/</loc>
-    
-    <lastmod>2022-04-24</lastmod>
-    
-  </url>
-  
-  <url>
     <loc>https://bqyang.top/2022/os/peterson/</loc>
     
     <lastmod>2022-04-19</lastmod>
@@ -338,13 +359,6 @@
   </url>
   
   <url>
-    <loc>https://bqyang.top/2022/language/golang/webFrame/</loc>
-    
-    <lastmod>2022-02-20</lastmod>
-    
-  </url>
-  
-  <url>
     <loc>https://bqyang.top/2022/language/golang/GC/</loc>
     
     <lastmod>2022-01-12</lastmod>
@@ -362,20 +376,6 @@
     <loc>https://bqyang.top/2022/vcs/git/git-rebase/</loc>
     
     <lastmod>2021-12-09</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://bqyang.top/2022/language/golang/timer%20%E4%BC%98%E5%8C%96/</loc>
-    
-    <lastmod>2021-12-06</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://bqyang.top/2022/language/golang/timer%20%E6%B5%85%E6%9E%90/</loc>
-    
-    <lastmod>2021-12-05</lastmod>
     
   </url>
   
