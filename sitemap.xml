@@ -2,6 +2,41 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://bqyang.top/2022/design-pattern/principle/</loc>
+    
+    <lastmod>2022-07-11</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://bqyang.top/2022/design-pattern/UML/first-uml/</loc>
+    
+    <lastmod>2022-07-11</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://bqyang.top/2022/os/RMO/</loc>
+    
+    <lastmod>2022-07-11</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://bqyang.top/2021/vcs/git/git-rebase/</loc>
+    
+    <lastmod>2022-07-11</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://bqyang.top/2022/summary/summary2021/</loc>
+    
+    <lastmod>2022-07-11</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>https://bqyang.top/2022/language/golang/webFrame/</loc>
     
     <lastmod>2022-07-11</lastmod>
@@ -303,27 +338,6 @@
   </url>
   
   <url>
-    <loc>https://bqyang.top/2022/design-pattern/principle/</loc>
-    
-    <lastmod>2022-06-08</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://bqyang.top/2022/design-pattern/UML/first-uml/</loc>
-    
-    <lastmod>2022-06-07</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://bqyang.top/2022/summary/summary2021/</loc>
-    
-    <lastmod>2022-06-04</lastmod>
-    
-  </url>
-  
-  <url>
     <loc>https://bqyang.top/2022/language/golang/preemptSchedule/</loc>
     
     <lastmod>2022-06-04</lastmod>
@@ -345,13 +359,6 @@
   </url>
   
   <url>
-    <loc>https://bqyang.top/2022/os/RMO/</loc>
-    
-    <lastmod>2022-04-19</lastmod>
-    
-  </url>
-  
-  <url>
     <loc>https://bqyang.top/2022/language/golang/chi/</loc>
     
     <lastmod>2022-02-24</lastmod>
@@ -367,13 +374,6 @@
   
   <url>
     <loc>https://bqyang.top/2021/os/elf/</loc>
-    
-    <lastmod>2021-12-09</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://bqyang.top/2022/vcs/git/git-rebase/</loc>
     
     <lastmod>2021-12-09</lastmod>
     
