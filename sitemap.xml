@@ -2,6 +2,20 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://bqyang.top/2022/os/os-start/</loc>
+    
+    <lastmod>2022-07-11</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://bqyang.top/2022/os/peterson/</loc>
+    
+    <lastmod>2022-07-11</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>https://bqyang.top/2022/design-pattern/principle/</loc>
     
     <lastmod>2022-07-11</lastmod>
@@ -268,13 +282,6 @@
   </url>
   
   <url>
-    <loc>https://bqyang.top/2022/os/os-start/</loc>
-    
-    <lastmod>2022-06-25</lastmod>
-    
-  </url>
-  
-  <url>
     <loc>https://bqyang.top/2022/os/linker&loader/</loc>
     
     <lastmod>2022-06-24</lastmod>
@@ -348,13 +355,6 @@
     <loc>https://bqyang.top/2022/summary/about-0602/</loc>
     
     <lastmod>2022-06-02</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://bqyang.top/2022/os/peterson/</loc>
-    
-    <lastmod>2022-04-19</lastmod>
     
   </url>
   
