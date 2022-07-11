@@ -7,26 +7,27 @@ html.dataset.dark = localStorage.dark || prefersDarkMode.matches;
 toggle.addEventListener('click', () => {
 localStorage.dark = !(html.dataset.dark == 'true');
 html.dataset.dark = localStorage.dark;
-});</script><meta name="generator" content="Hexo 5.4.0"></head><body><div class="body_container"><div id="header"><div class="site-name"><h1 class="hidden">k8s 存储内容</h1><a id="logo" href="/.">杨宝强的技术笔记</a><p class="description">Gopher Watcher</p></div><div id="nav-menu"><a class="current" href="/."><i class="fa fa-home"> 首页</i></a><a href="/archives/"><i class="fa fa-archive"> 归档</i></a><a href="/about/"><i class="fa fa-user"> 关于</i></a><a href="/atom.xml"><i class="fa fa-rss"> 订阅</i></a></div></div><div class="pure-g" id="layout"><div class="pure-u-1 pure-u-md-3-4"><div class="content_container"><div class="post"><h1 class="post-title">k8s 存储内容</h1><div class="post-meta">2022-07-05</div><div class="post-content"><p>概述 k8s 存储相关知识点，内容来自 《kubernetes in action 2》。</p>
+});</script><meta name="generator" content="Hexo 5.4.0"></head><body><div class="body_container"><div id="header"><div class="site-name"><h1 class="hidden">k8s 存储内容</h1><a id="logo" href="/.">杨宝强的技术笔记</a><p class="description">Gopher Watcher</p></div><div id="nav-menu"><a class="current" href="/."><i class="fa fa-home"> 首页</i></a><a href="/archives/"><i class="fa fa-archive"> 归档</i></a><a href="/about/"><i class="fa fa-user"> 关于</i></a><a href="/atom.xml"><i class="fa fa-rss"> 订阅</i></a></div></div><div class="pure-g" id="layout"><div class="pure-u-1 pure-u-md-3-4"><div class="content_container"><div class="post"><h1 class="post-title">k8s 存储内容</h1><div class="post-meta">2022-07-05</div><div class="post-content"><p>概述 k8s 存储相关知识点。</p>
 <span id="more"></span>
 
-<h2 id="Volume"><a href="#Volume" class="headerlink" title="Volume"></a>Volume</h2><p>物理机上进程共用一套文件系统，但是在容器内，每个容器的镜像都提供了一套文件系统，它们之间之相互独立的。容器运行时可以对系统中的文件进行修改，但是当他们运行结束后，container 被销毁了（进程没了，进程中的内容也不会存在了），修改的内容也被销毁。</p>
+<h2 id="Volume-概念"><a href="#Volume-概念" class="headerlink" title="Volume 概念"></a>Volume 概念</h2><p>物理机上大家共用同一套文件系统，但是在容器内，每个容器的镜像都提供了一套文件系统，它们之间之相互独立的。容器运行时可以对系统中的文件进行修改，但是当他们运行结束后，container 被销毁了（进程没了，进程中的内容也不会存在了），他修改的东西也就都没了</p>
+<p>想让数据持久存储的方法就是给 POD 挂载卷，绑定到 POD 内的容器中。所以不要再傻傻的以为卷是挂给 POD 的，严格的说是挂载给运行中的容器。</p>
 <img src="https://s2.loli.net/2022/07/04/ybZlBV1AJSiQv7R.png" style="zoom:80%;" />
 
-<p>如上图所示，Pod 挂载一个 Volume 可以解决容器重启后数据丢失的问题，可是 Pod 重启后，数据存在吗？</p>
-<p>答案是 <strong>不能的</strong> ，在上图中，Volume 和 Pod 是共享生命周期的，我们需要一种能够独立于 Pod  生命周期的存储类别。</p>
-<h2 id="External-Storage-Volume"><a href="#External-Storage-Volume" class="headerlink" title="External Storage Volume"></a>External Storage Volume</h2><p>外部存储，独立于 Pod 的生命周期，即使 Pod 被调度到了其他的工作节点，依然可以连接到我们的外部存储卷，相比之下 hostpath 就显得有点尴尬。</p>
+<p>目前为止我们提到的都是容器重启，现有的方案可以解决容器重启后数据丢失的问题，那么如上图中的结构，Pod 进行重启后，数据还可以进行持久化存储吗？</p>
+<p><strong>不能的</strong> ，在上图中，Volume 和 Pod 是共享生命周期的，我们需要一种能够独立于 Pod  生命周期的存储类别。</p>
+<h2 id="External-Storage-Volume"><a href="#External-Storage-Volume" class="headerlink" title="External Storage Volume"></a>External Storage Volume</h2><p>外部存储，独立于 Pod 的生命周期。即使 Pod 被调度到了其他的工作节点，依然可以连接到我们的外部存储卷，相比于 hostpath 的好处。</p>
 <p><img src="https://s2.loli.net/2022/07/04/2a1bxNSVTweWKns.png"></p>
 <p>常见的卷类型：</p>
 <ul>
 <li>hostPath 独立于 Pod 生命周期</li>
 <li>emptyDir 与 Pod 生命周期相同</li>
 <li>gcePersistentDisk Google 的持久卷</li>
-<li>cephfs ceph 文件存储</li>
-<li>rbd 我们要对接的就是 ceph-rbd</li>
+<li>cephfs </li>
 <li>configMap 一般用于挂载文件的，通常是配置文件</li>
 <li>secret 一般用于存储重要信息</li>
 </ul>
+<p>问题： <strong>当以 read/write 模式挂载卷的时候</strong>，这时需要扩展到多个 Pod，新的 Pod 创建不出来的。read/write 模式下的卷只能给一个 Pod 挂载， read-only 可以同事挂载给多个 Pod。</p>
 <h2 id="PV"><a href="#PV" class="headerlink" title="PV"></a>PV</h2><p>顾名思义，PersistentVolume 对象代表一个用于持久化应用程序数据的存储卷。没有讲 PV 对象前，我们挂载外部存储的的时候，需要指定具体的存储类别，比如使用 Google 的存储卷，当我们需要将 Pod 部署到 AWS 中的集群时，就需要重新修改这个 YAML 文件。</p>
 <p><img src="https://s2.loli.net/2022/07/04/DhfS5CRILcmW9se.png"></p>
 <p>PV 是 K8s 提供给我们的抽象，在 Pod 和底层存储技术之间解耦。</p>
@@ -68,9 +69,9 @@ html.dataset.dark = localStorage.dark;
 </tr>
 </tbody></table>
 <blockquote>
-<p>其实卷不是挂给 POD，而是挂载到 Node 上。</p>
+<p>这里指的是 Node</p>
 </blockquote>
-<p>PV 的回收策略</p>
+<p>PV 的回收策略：</p>
 <table>
 <thead>
 <tr>
@@ -98,7 +99,7 @@ html.dataset.dark = localStorage.dark;
 <p>如果是 Released 状态的 PV，我们修改其回收策略为 delete 时，保存退出后，PV 对象和底层的卷都会被删除。</p>
 </blockquote>
 <p><img src="https://s2.loli.net/2022/07/05/TPmMsjYJBEdbHqw.png"></p>
-<p>上图中我将 PVC 删掉了，现在策略是 Retain， 这时候 <code>kubectl edit </code> 修改为 Delete：</p>
+<p>上图中我将 PVC 删掉了，现在策略是 Retain 这时候 <code>kubectl edit </code> 一下修改为 Delete。</p>
 <figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">persistentVolumeReclaimPolicy: Retain --&gt; persistentVolumeReclaimPolicy: Delete</span><br></pre></td></tr></table></figure>
 
 
@@ -107,7 +108,7 @@ html.dataset.dark = localStorage.dark;
 <p>除了上述情况，假如我们想在 PV 是 Bound 状态下删除，PV 可以被删掉吗？</p>
 <figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">[root@k8s]#</span><span class="bash"> kubectl delete pv hostvol</span></span><br><span class="line">persistentvolume &quot;hostvol&quot; deleted</span><br></pre></td></tr></table></figure>
 
-<p>会一直卡在这里，再次获取 PV 发现已经是 <code>Terminating</code> 状态了。尽管Ctrl-C 取消 delete 命令的执行，但是这个 delete 的任务并不会撤回（被释放后仍然会被删除）。</p>
+<p>会一直卡在这里，Ctrl-C 取消这次操作，再次获取 PV 发现已经是 <code>Terminating</code> 状态了。尽管刚刚取消delete命令的执行，但是这个 delete 的操作会被记录在 K8S 中（被释放后仍然会被删除）。</p>
 <p>同样的，我们看看删除某个被 POD 引用的 PVC 是什么情况。</p>
 <figure class="highlight sh"><table><tr><td class="code"><pre><span class="line">[root@k8s]<span class="comment"># kubectl delete pvc hostpvc</span></span><br><span class="line">persistentvolumeclaim <span class="string">&quot;hostpvc&quot;</span> deleted</span><br></pre></td></tr></table></figure>
 
@@ -116,8 +117,46 @@ html.dataset.dark = localStorage.dark;
 <p><strong>答案是支持的</strong> ，但是有前提，  <strong>扩展出来的POD都必须在同一个 NODE 上</strong> ，Once 指的是挂载到的 Node，只能给 Node 挂载一次，如果扩展的 POD 调度到其他 NODE，POD 是起不来的，会报如下错误：</p>
 <figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> kubectl describe po data-writer-97t9j</span></span><br><span class="line">...</span><br><span class="line">  Warning  FailedAttachVolume   ...   attachdetach-controller  AttachVolume.Attach failed </span><br><span class="line">for volume &quot;other-data&quot; : googleapi: Error 400: RESOURCE_IN_USE_BY_ANOTHER_RESOURCE -</span><br><span class="line">The disk resource &#x27;projects/.../disks/other-data&#x27; is already being used by</span><br><span class="line">&#x27;projects/.../instances/gkdp-r6j4&#x27;</span><br></pre></td></tr></table></figure>
 
-<p>（由于我这里机器就俩节点，复现不出来，直接把书中内容粘贴出来了。）</p>
-<h2 id="动态配置持久卷"><a href="#动态配置持久卷" class="headerlink" title="动态配置持久卷"></a>动态配置持久卷</h2><p>先创建 PV ，再创建 PVC 的方式有些繁琐，我遇到过一个问题，在对接 ceph 的过程中，我想创建一个 PV 对象指向这个底层的卷，当时需要填一个 <code>volumeHandle</code> 对应的值，是 ceph 卷的 ID。对于并不知道怎么操作 ceph 的我来说是比较困难的，需要先创建好底层卷，然后在 PV 中指定才可以。</p>
-<p>但是，通过动态配置的方式就可以解决这个问题，我们不再需要手动准备好存储卷以及 PV 对象，只需写一个“需求文档”。</p>
+<p>由于我这里机器就俩节点，复现不出来，直接把书中内容粘贴出来了。</p>
+<h2 id="动态配置持久卷"><a href="#动态配置持久卷" class="headerlink" title="动态配置持久卷"></a>动态配置持久卷</h2><p>先创建 PV ，再创建 PVC 的方式有些繁琐，我这里遇到过一个问题，在对接 ceph 的过程中，我想创建一个 PV 对象指向这个底层的卷，当时需要填一个 <code>volumeHandle</code> 对应的值，是 ceph 卷的 ID。对于并不知道怎么操作 ceph 的我来说是比较困难的，需要先创建好底层卷，然后在PV中指定才可以。</p>
+<p>但是，通过动态配置的方式就可以解决这个问题，我们不再需要手动准备好存储卷以及PV对象，只需写一个“需求文档”。</p>
 <h3 id="动态配置流程"><a href="#动态配置流程" class="headerlink" title="动态配置流程"></a>动态配置流程</h3><p><img src="https://s2.loli.net/2022/07/05/rkYKoNBRMi3nUjV.png"></p>
-</div><div id="donate"><link rel="stylesheet" type="text/css" href="/css/donate.css?v=1.0.0"><script type="text/javascript" src="/js/donate.js?v=1.0.0" successtext="复制成功!"></script><a class="pos-f tr3" id="github" href="https://github.com/clamyang" target="_blank" title="Github"></a><div id="DonateText">Donate</div><ul class="list pos-f" id="donateBox"><li id="AliPay" qr="/img/AliPayQR.jpg"></li><li id="WeChat" qr="/img/WeChatQR.jpg"></li></ul><div class="pos-f left-100" id="QRBox"><div id="MainBox"></div></div></div><div class="post-copyright"><script type="text/javascript" src="/js/copyright.js?v=1.0.0" successtext="复制成功!"></script><link rel="stylesheet" type="text/css" href="/css/copyright.css?v=1.0.0"><p><span>本文标题：</span>k8s 存储内容</p><p><span>文章作者：</span>bqyang</p><p><span>发布时间：</span>2022-07-05</p><p><span>最后更新：</span>2022-07-05</p><p><span>原始链接：</span><a href="/2022/k8s/k8s-storage/">https://bqyang.top/2022/k8s/k8s-storage/</a><span class="copy-path"><i class="fa fa-clipboard" data-clipboard-text="https://bqyang.top/2022/k8s/k8s-storage/"></i></span></p><p><span>版权声明：</span>The author owns the copyright, please indicate the source reproduced.</p></div><br><div class="tags"></div><div class="post-nav"><a class="pre" href="/2022/os/pstree/">简易版 pstree</a><a class="next" href="/2022/design-pattern/Structural/facade/">门面模式（外观模式）</a></div><script src="https://utteranc.es/client.js" repo="clamyang/blogs" issue-term="title" theme="github-light" crossorigin="anonymous" async> </script></div></div></div><div class="pure-u-1-4 hidden_mid_and_down"><div id="sidebar"><div class="widget"><form class="search-form" action="//www.google.com/search" method="get" accept-charset="utf-8" target="_blank"><input type="text" name="q" maxlength="20" placeholder="Search"/><input type="hidden" name="sitesearch" value="https://bqyang.top"/></form></div><div class="widget"><div class="widget-title"><i class="fa fa-file-o"> 最近文章</i></div><ul class="post-list"><li class="post-list-item"><a class="post-list-link" href="/2022/os/pstree/">简易版 pstree</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/k8s/k8s-storage/">k8s 存储内容</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/design-pattern/Structural/facade/">门面模式（外观模式）</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/os/memory-api/">内存相关 API</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/language/golang/100-go-mistaks/2-misuse-init/">misuse init func</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/language/golang/go-params-to-goroutine/">参数是怎么传给 goroutine 的</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/language/golang/100-go-mistaks/1-variable-shadowing/">Variable shadowing</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/os/process/process/">操作系统进程</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/os/linker&loader/">linker and loader</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/vcs/git/git-rebase/">git rebase</a></li></ul></div><div class="widget"><div class="widget-title"><i class="fa fa-external-link"> 友情链接</i></div><ul></ul><a href="http://www.xargin.com/" title="Xargin" target="_blank">Xargin</a><ul></ul><a href="https://mytechshares.com/" title="董泽润的技术笔记" target="_blank">董泽润的技术笔记</a><ul></ul><a href="https://hujingnb.com/" title="烟草的香味" target="_blank">烟草的香味</a></div></div></div><div class="pure-u-1 pure-u-md-3-4"><div id="footer">Copyright © 2022 <a href="/." rel="nofollow">杨宝强的技术笔记.</a>Powered by<a rel="nofollow" target="_blank" href="https://hexo.io"> Hexo.</a><a rel="nofollow" target="_blank" href="https://beian.miit.gov.cn/"> 京ICP备2021035561号.</a><a rel="nofollow" target="_blank" href="https://github.com/tufu9441/maupassant-hexo"> Theme</a> by<a rel="nofollow" target="_blank" href="https://github.com/pagecho"> Cho.</a></div></div></div><a class="show" id="rocket" href="#top"></a><script type="text/javascript" src="/js/totop.js?v=1.0.0" async></script><script type="text/javascript" src="//lib.baomitu.com/fancybox/latest/jquery.fancybox.min.js" async></script><script type="text/javascript" src="/js/fancybox.js?v=1.0.0" async></script><link rel="stylesheet" type="text/css" href="//lib.baomitu.com/fancybox/latest/jquery.fancybox.min.css"><script type="text/javascript" src="/js/copycode.js?v=1.0.0" successtext="复制成功!"></script><link rel="stylesheet" type="text/css" href="/css/copycode.css?v=1.0.0"><script type="text/javascript" src="/js/codeblock-resizer.js?v=1.0.0"></script><script type="text/javascript" src="/js/smartresize.js?v=1.0.0"></script></div></body></html>
+<h3 id="StorageClass-与-PVC-的关系"><a href="#StorageClass-与-PVC-的关系" class="headerlink" title="StorageClass 与 PVC 的关系"></a>StorageClass 与 PVC 的关系</h3><p><img src="https://s2.loli.net/2022/07/11/dQRJFDbnCAuyk5x.png"></p>
+<p>通常来讲，不同卷类型对应的不同的底层存储技术。</p>
+<h3 id="卷绑定模式"><a href="#卷绑定模式" class="headerlink" title="卷绑定模式"></a>卷绑定模式</h3><p>讲的就是我们创建 PVC 对象后，PV  何时被创建。</p>
+<table>
+<thead>
+<tr>
+<th>Volume binding mode</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Immediate </code></td>
+<td>The provision and binding of the persistent volume takes place immediately after the claim is created. Because the consumer of the claim is unknown at this point, this mode is only applicable to volumes that are can be accessed from any cluster node.</td>
+</tr>
+<tr>
+<td><code>WaitForFirstConsumer </code></td>
+<td>The volume is provisioned and bound to the claim when the first pod that uses this claim is created. This mode is used for topology-constrained volume types.</td>
+</tr>
+</tbody></table>
+<p>需要 <code>WaitForFirstConsumer </code> 的原因是，使用 Local 这种卷类型的时候，不知道 POD 被调度到哪里，所以需要确定好 POD 位置后再创建 PV。</p>
+<h3 id="动态绑定的声明周期"><a href="#动态绑定的声明周期" class="headerlink" title="动态绑定的声明周期"></a>动态绑定的声明周期</h3><p><img src="https://s2.loli.net/2022/07/06/5ABInxbTrwCLl7v.png"></p>
+<h3 id="卷扩容"><a href="#卷扩容" class="headerlink" title="卷扩容"></a>卷扩容</h3><p>需要 POD 配合（重启）来完成。</p>
+<h3 id="Retain-状态的-PV-怎么恢复为-Available"><a href="#Retain-状态的-PV-怎么恢复为-Available" class="headerlink" title="Retain 状态的 PV 怎么恢复为 Available"></a>Retain 状态的 PV 怎么恢复为 Available</h3><p>本来以为 k8s 对接持久化存储已经结束了，突然发现 Rancher 上并不支持，修改 PV 的属性。想要从 Retain 状态修改为 Available 有两种方式：</p>
+<ul>
+<li>重新创建这个 PV 对象</li>
+<li>edit 这个 PV 对象删除 claimref 部分</li>
+</ul>
+<p><img src="https://s2.loli.net/2022/07/11/4JN2AMPanYqQ3bV.png"></p>
+<p> 将 PVC 对象释放后，获取到的 PV 列表，既然 Rancher 不支持，只能另寻他路了。</p>
+<blockquote>
+<p><strong>delete and recreate pv object 会导致底层卷被删除吗？</strong></p>
+<p>先创建 PV 再创建 PVC 的方式并不会删除，底层存储。</p>
+<p>动态创建的情况下，需要根据不同的回收策略区分：</p>
+<ul>
+<li>delete，pvc 被删除后 pv 和底层存储卷都被删除</li>
+<li>retain，pvc 被删除后，pv 是 released 状态 （TODO 需要调研一下）</li>
+</ul>
+</blockquote>
+</div><div id="donate"><link rel="stylesheet" type="text/css" href="/css/donate.css?v=1.0.0"><script type="text/javascript" src="/js/donate.js?v=1.0.0" successtext="复制成功!"></script><a class="pos-f tr3" id="github" href="https://github.com/clamyang" target="_blank" title="Github"></a><div id="DonateText">Donate</div><ul class="list pos-f" id="donateBox"><li id="AliPay" qr="/img/AliPayQR.jpg"></li><li id="WeChat" qr="/img/WeChatQR.jpg"></li></ul><div class="pos-f left-100" id="QRBox"><div id="MainBox"></div></div></div><div class="post-copyright"><script type="text/javascript" src="/js/copyright.js?v=1.0.0" successtext="复制成功!"></script><link rel="stylesheet" type="text/css" href="/css/copyright.css?v=1.0.0"><p><span>本文标题：</span>k8s 存储内容</p><p><span>文章作者：</span>bqyang</p><p><span>发布时间：</span>2022-07-05</p><p><span>最后更新：</span>2022-07-11</p><p><span>原始链接：</span><a href="/2022/k8s/k8s-storage/">https://bqyang.top/2022/k8s/k8s-storage/</a><span class="copy-path"><i class="fa fa-clipboard" data-clipboard-text="https://bqyang.top/2022/k8s/k8s-storage/"></i></span></p><p><span>版权声明：</span>The author owns the copyright, please indicate the source reproduced.</p></div><br><div class="tags"></div><div class="post-nav"><a class="pre" href="/2022/os/pstree/">简易版 pstree</a><a class="next" href="/2022/design-pattern/Structural/facade/">门面模式（外观模式）</a></div><script src="https://utteranc.es/client.js" repo="clamyang/blogs" issue-term="title" theme="github-light" crossorigin="anonymous" async> </script></div></div></div><div class="pure-u-1-4 hidden_mid_and_down"><div id="sidebar"><div class="widget"><form class="search-form" action="//www.google.com/search" method="get" accept-charset="utf-8" target="_blank"><input type="text" name="q" maxlength="20" placeholder="Search"/><input type="hidden" name="sitesearch" value="https://bqyang.top"/></form></div><div class="widget"><div class="widget-title"><i class="fa fa-file-o"> 最近文章</i></div><ul class="post-list"><li class="post-list-item"><a class="post-list-link" href="/2022/design-pattern/Structural/composite/">组合模式</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/os/pstree/">简易版 pstree</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/k8s/k8s-storage/">k8s 存储内容</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/design-pattern/Structural/facade/">门面模式（外观模式）</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/os/memory-api/">内存相关 API</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/language/golang/100-go-mistaks/2-misuse-init/">misuse init func</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/language/golang/go-params-to-goroutine/">参数是怎么传给 goroutine 的</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/language/golang/100-go-mistaks/1-variable-shadowing/">Variable shadowing</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/os/process/process/">操作系统进程</a></li><li class="post-list-item"><a class="post-list-link" href="/2022/os/linker&loader/">linker and loader</a></li></ul></div><div class="widget"><div class="widget-title"><i class="fa fa-external-link"> 友情链接</i></div><ul></ul><a href="http://www.xargin.com/" title="Xargin" target="_blank">Xargin</a><ul></ul><a href="https://mytechshares.com/" title="董泽润的技术笔记" target="_blank">董泽润的技术笔记</a><ul></ul><a href="https://hujingnb.com/" title="烟草的香味" target="_blank">烟草的香味</a></div></div></div><div class="pure-u-1 pure-u-md-3-4"><div id="footer">Copyright © 2022 <a href="/." rel="nofollow">杨宝强的技术笔记.</a>Powered by<a rel="nofollow" target="_blank" href="https://hexo.io"> Hexo.</a><a rel="nofollow" target="_blank" href="https://beian.miit.gov.cn/"> 京ICP备2021035561号.</a><a rel="nofollow" target="_blank" href="https://github.com/tufu9441/maupassant-hexo"> Theme</a> by<a rel="nofollow" target="_blank" href="https://github.com/pagecho"> Cho.</a></div></div></div><a class="show" id="rocket" href="#top"></a><script type="text/javascript" src="/js/totop.js?v=1.0.0" async></script><script type="text/javascript" src="//lib.baomitu.com/fancybox/latest/jquery.fancybox.min.js" async></script><script type="text/javascript" src="/js/fancybox.js?v=1.0.0" async></script><link rel="stylesheet" type="text/css" href="//lib.baomitu.com/fancybox/latest/jquery.fancybox.min.css"><script type="text/javascript" src="/js/copycode.js?v=1.0.0" successtext="复制成功!"></script><link rel="stylesheet" type="text/css" href="/css/copycode.css?v=1.0.0"><script type="text/javascript" src="/js/codeblock-resizer.js?v=1.0.0"></script><script type="text/javascript" src="/js/smartresize.js?v=1.0.0"></script></div></body></html>
