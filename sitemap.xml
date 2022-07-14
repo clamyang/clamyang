@@ -2,6 +2,13 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://bqyang.top/2022/k8s/k8s-storage-source-code/</loc>
+    
+    <lastmod>2022-07-14</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>https://bqyang.top/2022/language/golang/100-go-mistaks/1-variable-shadowing/</loc>
     
     <lastmod>2022-07-11</lastmod>
@@ -389,7 +396,7 @@
 
   <url>
     <loc>https://bqyang.top/</loc>
-    <lastmod>2022-07-11</lastmod>
+    <lastmod>2022-07-14</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
