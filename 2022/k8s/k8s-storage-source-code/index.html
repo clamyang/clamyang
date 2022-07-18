@@ -9,12 +9,11 @@ localStorage.dark = !(html.dataset.dark == 'true');
 html.dataset.dark = localStorage.dark;
 });</script><meta name="generator" content="Hexo 5.4.0"></head><body><div class="body_container"><div id="header"><div class="site-name"><h1 class="hidden">k8s pv pvc 源码</h1><a id="logo" href="/.">杨宝强的技术笔记</a><p class="description">Gopher Watcher</p></div><div id="nav-menu"><a class="current" href="/."><i class="fa fa-home"> 首页</i></a><a href="/archives/"><i class="fa fa-archive"> 归档</i></a><a href="/about/"><i class="fa fa-user"> 关于</i></a><a href="/atom.xml"><i class="fa fa-rss"> 订阅</i></a></div></div><div class="pure-g" id="layout"><div class="pure-u-1 pure-u-md-3-4"><div class="content_container"><div class="post"><h1 class="post-title">k8s pv pvc 源码</h1><div class="post-meta">2022-07-14</div><div class="post-content"><p>最近在做集群对接存储的工作，期间经历了很多挫折，遇到了很多问题，从一知半解到了解，从纸上谈兵到实战演练，环环相扣。在开始前我先抛出两个问题，带着问题去思考收获会更多。</p>
 <ol>
-<li>CSI 插件为什么要在所有 Node 都部署？</li>
-<li>Kubernetes 是怎么知道外部插件信息的？</li>
-<li>Kubernetes </li>
+<li><p>CSI 插件为什么要在所有 Node 都部署？</p>
+</li>
+<li><p>Kubernetes 是怎么知道外部插件信息的？</p>
+<span id="more"></span></li>
 </ol>
-<span id="more"></span>
-
 <p>从 <em>Dynamic Provisioning Storage</em> 搞起，基本概念前面文章都有提到过 <a href="./k8s-storage.md">k8s-storage</a> 所以在次就不再赘述。</p>
 <p>负责 <code>PVC PV</code> 的控制器是 PersistentVolumeController，不过我们不着急直接看这个控制器，先简单了解下它的“父控制器”，kube controller manager。</p>
 <figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment">https://kubernetes.io/docs/concepts/architecture/controller/</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment">The Kubernetes controller manager is a daemon that embeds the core </span></span><br><span class="line"><span class="comment">control loops shipped with Kubernetes. In applications of robotics and</span></span><br><span class="line"><span class="comment">automation, a control loop is a non-terminating loop that regulates the</span></span><br><span class="line"><span class="comment">state of the system. In Kubernetes, a controller is a control loop that</span></span><br><span class="line"><span class="comment">watches the shared state of the cluster through the apiserver and makes</span></span><br><span class="line"><span class="comment">changes attempting to move the current state towards the desired state.</span></span><br><span class="line"><span class="comment">Examples of controllers that ship with Kubernetes today are the replication</span></span><br><span class="line"><span class="comment">controller, endpoints controller, namespace controller, and serviceaccounts</span></span><br><span class="line"><span class="comment">controller.</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment">简言之，就是一个“死”循环用来管理集群中需要共享资源的状态</span></span><br><span class="line"><span class="comment">*/</span></span><br></pre></td></tr></table></figure>
