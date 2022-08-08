@@ -2,6 +2,13 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://bqyang.top/2022/k8s/k8s/</loc>
+    
+    <lastmod>2022-08-08</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>https://bqyang.top/2022/language/golang/large-alloc/</loc>
     
     <lastmod>2022-08-08</lastmod>
