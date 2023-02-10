@@ -18,14 +18,11 @@ jobs:
       - name: install hexo
         run: npm i -g hexo-cli
         
-      - name: install hexo dependencies
-        run: npm i
+#       - name: install hexo dependencies
+#         run: npm i
         
       - name: hexo init cmd
-        run: hexo init blogs
-        
-      - name: cd to blog dir
-        run: cd blogs
+        run: hexo init blogs && cd blogs && ls -la
       
       - name: cp files
         run: |
@@ -39,5 +36,3 @@ jobs:
         run: cp -r ../2022 ./source/_posts/
       - name: generate
         run: hexo g && ls -la
-
-
