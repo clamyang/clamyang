@@ -1,48 +1,24 @@
-name: Hexo deploy
+name: publish
+
 on:
   push:
     branches:
       - gh-pages
+
 jobs:
-  build:
+  publish-blog:
     runs-on: ubuntu-latest
-    name: A job to deploy blog.
     steps:
-    - name: Checkout
-      uses: actions/checkout@v1
-      with:
-        submodules: true
-        
-    - name: Cache node modules
-      uses: actions/cache@v1
-      id: cache
-      with:
-        path: node_modules
-        key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-        restore-keys: |
-          ${{ runner.os }}-node-
-    - name: Install Dependencies
-      if: steps.cache.outputs.cache-hit != 'true'
-      run: npm ci
-        
-    # Deploy hexo blog website.
-    - name: Deploy
-      id: deploy
-      uses: sma11black/hexo-action@v1.0.3
-      with:
-        deploy_key: ${{ secrets.HEXO_DEPLOY_KEY }}
-        user_name: clamyang
-        user_email: ybq2888@163.com
-        commit_msg: ${{ github.event.head_commit.message }}ion)
-    - name: Get the output
-      run: |
-        echo "${{ steps.deploy.outputs.notify }}"
-    - name: Sync to Gitee
-      uses: wearerequired/git-mirror-action@master
-      env:
-        SSH_PRIVATE_KEY: ${{ secrets.HEXO_DEPLOY_KEY }}
-      with:
-        # 源仓库
-        source-repo: git@github.com:clamyang/myblogs.git
-        # 目标仓库
-        destination-repo: ${{ secrets.SERVER }}
+      - uses: actions/checkout@v3
+      - run: ls - la
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 14.2.0
+          registry-url: https://registry.npmjs.org/
+      - run: npm ci
+      - run: npm test
+
+      - name: install hexo-cli
+        run: npm i -g hexo-cli
+      - run: hexo generate
+      - run: echo "******** hello world ********"
