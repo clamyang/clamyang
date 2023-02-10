@@ -37,6 +37,9 @@ jobs:
           npm install hexo-renderer-sass --save
           
       - name: cp theme config
+        run: cp /home/runner/work/myblogs/myblogs/_config.yml /home/runner/work/myblogs/myblogs/blogs/themes/_config.yml
+        
+      - name: cp blog post
         run: cp -r /home/runner/work/myblogs/myblogs/2022 /home/runner/work/myblogs/myblogs/blogs/
       
       - name: ok
