@@ -10,7 +10,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - run: ls -la
       - uses: actions/setup-node@v3
         with:
           node-version: 14.2.0
@@ -18,17 +17,13 @@ jobs:
 
       - name: install hexo
         run: npm i -g hexo-cli
+        
       - name: install hexo dependencies
-        run: npm i          
+        run: npm i
+        
       - name: execute hexo init
-        run: hexo init blogs && cd blogs && ls -la
-      - name: print current path
-        run: pwd
-      - run: |
-          cp ../_config.yml ./_config.yml
-          cp ../package.json ./package.json
-          cp ../package-lock.json ./package-lock.json
-          npm install
-          cp -r ../2022 ./source/_posts/
-          hexo generate
-          ls -la
+      - run: pwd && ls -la
+      - run: hexo init blogs
+      - run: cd blogs && ls -la
+        
+
