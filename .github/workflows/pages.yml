@@ -18,8 +18,8 @@ jobs:
       - name: install hexo
         run: npm i -g hexo-cli
         
-#       - name: install hexo dependencies
-#         run: npm i
+      - name: install hexo dependencies
+        run: npm i
         
       - name: hexo init cmd
         run: hexo init blogs && cd blogs && ls -la
