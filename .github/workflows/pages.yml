@@ -26,6 +26,6 @@ jobs:
       - name: hexo init cmd
         run: hexo init blogs
       - name: after init
-        run: cd blogs && ls -la
+        run: cd blogs && pwd && ls -la
         
 
