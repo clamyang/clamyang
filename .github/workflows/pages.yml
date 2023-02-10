@@ -22,22 +22,20 @@ jobs:
         run: npm i
         
       - name: hexo init cmd
-        run: hexo init blogs && cd blogs && ls -la && pwd
-      - name: copy config
-        run: cp /home/runner/work/myblogs/myblogs/_config.yml /home/runner/work/myblogs/myblogs/blogs/_config.yml
+        run: hexo init blogs
 
       - name: install theme
         run: git clone https://github.com/tufu9441/maupassant-hexo.git themes/maupassant
       
-      - name: check theme
-        run: ls -la && ls themes
       - name: install render for theme
         run: |
           npm install hexo-renderer-pug --save
           npm install hexo-renderer-sass --save
           
       - name: cp theme config
-        run: cp /home/runner/work/myblogs/myblogs/_config.yml /home/runner/work/myblogs/myblogs/blogs/themes/_config.yml
+        run: |
+          cp /home/runner/work/myblogs/myblogs/_config.yml /home/runner/work/myblogs/myblogs/blogs/_config.yml
+          cp /home/runner/work/myblogs/myblogs/theme_config.yml /home/runner/work/myblogs/myblogs/blogs/themes/_config.yml
         
       - name: cp blog post
         run: cp -r /home/runner/work/myblogs/myblogs/2022 /home/runner/work/myblogs/myblogs/blogs/
