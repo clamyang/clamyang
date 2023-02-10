@@ -22,10 +22,10 @@ jobs:
         run: npm i
         
       - name: print local path
-      - run: pwd && ls -la
+        run: pwd && ls -la
       - name: hexo init cmd
-      - run: hexo init blogs
+        run: hexo init blogs
       - name: after init
-      - run: cd blogs && ls -la
+        run: cd blogs && ls -la
         
 
