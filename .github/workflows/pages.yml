@@ -23,4 +23,18 @@ jobs:
         
       - name: hexo init cmd
         run: hexo init blogs && cd blogs && ls -la && pwd
+      - name: copy config
+        run: cp /home/runner/work/myblogs/myblogs/_config.yml /home/runner/work/myblogs/myblogs/blogs/_config.yml
+
+      - name: install theme
+        run: git clone https://github.com/tufu9441/maupassant-hexo.git themes/maupassant
+      - name: install render for theme
+        run: |
+          npm install hexo-renderer-pug --save
+          npm install hexo-renderer-sass --save
+      - name: cp theme config
+        run: cp /home/runner/work/myblogs/myblogs/theme_config.yml /home/runner/work/myblogs/myblogs/blogs/themes/maupassant/_config.yml
       
+      - name: ok
+        run: echo "happy end"
+
