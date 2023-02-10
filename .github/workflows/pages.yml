@@ -21,11 +21,23 @@ jobs:
       - name: install hexo dependencies
         run: npm i
         
-      - name: print local path
-        run: pwd && ls -la
       - name: hexo init cmd
         run: hexo init blogs
-      - name: after init
-        run: cd blogs && pwd && ls -la
         
+      - name: cd to blog dir
+        run: cd blogs
+      
+      - name: cp files
+        run: |
+          cp ../_config.yml ./_config.yml
+          cp ../package.json ./package.json
+          cp ../package-lock.json ./package-lock.json
+      - name: install dependencies
+        run: npm install
+        
+      - name: copy posts
+        run: cp -r ../2022 ./source/_posts/
+      - name: generate
+        run: hexo g && ls -la
+
 
