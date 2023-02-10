@@ -21,7 +21,9 @@ jobs:
       - name: install hexo dependencies
         run: npm i          
       - name: execute hexo init
-        run: hexo init blogs && cd blogs
+        run: hexo init blogs && cd blogs && ls -la
+      - name: print current path
+        run: pwd
       - run: |
           cp ../_config.yml ./_config.yml
           cp ../package.json ./package.json
