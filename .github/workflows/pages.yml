@@ -10,15 +10,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - run: ls -la
+      - run: ls - la
       - uses: actions/setup-node@v3
         with:
           node-version: 14.2.0
           registry-url: https://registry.npmjs.org/
-      - run: npm ci
-      - run: npm test
 
-      - name: install hexo-cli
-        run: npm i -g hexo-cli
-      - run: hexo generate
-      - run: echo "******** hello world ********"
+      - name: custom operation
+        run: |
+          npm i -g hexo-cli
+          hexo init blogs && cd blogs
+          cp ../_config.yml ./_config.yml
+          cp ../package.json ./package.json
+          cp ../package-lock.json ./package-lock.json
+          npm install
+          cp -r ../2022 ./source/_posts/
+          hexo generate
+          ls -la
