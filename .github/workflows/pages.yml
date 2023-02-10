@@ -28,12 +28,16 @@ jobs:
 
       - name: install theme
         run: git clone https://github.com/tufu9441/maupassant-hexo.git themes/maupassant
+      
+      - name: check theme
+        run: ls -la && ls themes
       - name: install render for theme
         run: |
           npm install hexo-renderer-pug --save
           npm install hexo-renderer-sass --save
+          
       - name: cp theme config
-        run: cp /home/runner/work/myblogs/myblogs/theme_config.yml /home/runner/work/myblogs/myblogs/blogs/themes/maupassant/_config.yml
+        run: cp -r /home/runner/work/myblogs/myblogs/2022 /home/runner/work/myblogs/myblogs/blogs/
       
       - name: ok
         run: echo "happy end"
