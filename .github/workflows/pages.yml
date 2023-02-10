@@ -16,10 +16,13 @@ jobs:
           node-version: 14.2.0
           registry-url: https://registry.npmjs.org/
 
-      - name: custom operation
-        run: |
-          npm i -g hexo-cli
-          hexo init blogs && cd blogs
+      - name: install hexo
+        run: npm i -g hexo-cli
+      - name: install hexo dependencies
+        run: npm i          
+      - name: execute hexo init
+        run: hexo init blogs && cd blogs
+      - run: |
           cp ../_config.yml ./_config.yml
           cp ../package.json ./package.json
           cp ../package-lock.json ./package-lock.json
