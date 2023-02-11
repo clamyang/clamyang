@@ -36,6 +36,8 @@ jobs:
 
       - name: install theme
         run: git submodule add https://github.com/tufu9441/maupassant-hexo.git themes/maupassant
+      - name: ls -la
+        run: ls -la
       
       - name: install render for theme
         run: |
@@ -52,9 +54,8 @@ jobs:
       
       - name: generate
         run: hexo g
-      
-      - name: list dir
-        run: tree -L 3
+      - name: ls
+        run: ls -la
         
       - name: init git repo
         run: |
