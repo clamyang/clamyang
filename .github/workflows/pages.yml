@@ -32,8 +32,11 @@ jobs:
         run: tree -L 3
         
       - name: hexo init cmd
-        run: hexo init blogs && cd blogs
-
+        run: hexo init blogs
+      - name: change dir
+        run: cd blogs
+      - name: pwd
+        run: pwd
       - name: install theme
         run: git submodule add https://github.com/tufu9441/maupassant-hexo.git themes/maupassant
       - name: ls -la
