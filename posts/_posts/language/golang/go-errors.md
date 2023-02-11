@@ -1,6 +1,6 @@
 ---
 title: go error handling
-date: 2022-03-15
+date: 2022-06-08
 comments: true
 ---
 
@@ -195,8 +195,7 @@ func main() {
 
 
 
-答案就是：**[An interface value is equal to `nil` only if both its value and dynamic type are `nil`.](https://yourbasic.org/golang/gotcha-why-nil-error-not-equal-nil/) **接口类型的值只有在 type 和 value 都是空的时候才是 nil，这里我们调用 Call2() 函数后，nil 有了具体的类型，这才导致了后续判断的时候出现奇怪的现象。
-
-
-
-不错，又是收获满满的一天，2022-06-08 22:42
+答案就是：[An interface value is equal to `nil` only if both its value and dynamic type are `nil`.](https://yourbasic.org/golang/gotcha-why-nil-error-not-equal-nil/) **接口类型的值只有在 type 和 value 都是空的时候才是 nil，这里我们调用 Call2() 函数后，nil 有了具体的类型，这才导致了后续判断的时候出现奇怪的现象。
+<!--stackedit_data:
+eyJoaXN0b3J5IjpbMjEwMzQ0ODY2NiwtNTk1MTY3NTE2XX0=
+-->
