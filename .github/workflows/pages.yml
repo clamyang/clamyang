@@ -10,15 +10,59 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - run: ls -la
       - uses: actions/setup-node@v3
         with:
           node-version: 14.2.0
           registry-url: https://registry.npmjs.org/
-      - run: npm ci
-      - run: npm test
-
-      - name: install hexo-cli
+          
+      - name: config ssh to alicloud
+        run: |
+          mkdir -p ~/.ssh/
+          echo '${{secrets.HEXO_DEPLOY_KEY}}' > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -t rsa ${{secrets.CLOUDIP}} >> ~/.ssh/known_hosts
+          
+      - name: install hexo
         run: npm i -g hexo-cli
-      - run: hexo generate
-      - run: echo "******** hello world ********"
+        
+      - name: install hexo dependencies
+        run: npm i
+        
+      - name: hexo init cmd
+        run: hexo init blogs
+
+      - name: install theme
+        run: git submodule add https://github.com/tufu9441/maupassant-hexo.git themes/maupassant
+        working-directory: blogs
+      
+      - name: install render for theme
+        run: |
+          npm install hexo-renderer-pug --save
+          npm install hexo-renderer-sass --save
+          
+      - name: cp theme config
+        run: |
+          cp /home/runner/work/myblogs/myblogs/_config.yml /home/runner/work/myblogs/myblogs/blogs/_config.yml
+          cp /home/runner/work/myblogs/myblogs/theme_config.yml /home/runner/work/myblogs/myblogs/blogs/themes/_config.yml
+        
+      - name: cp blog post
+        run: cp -r /home/runner/work/myblogs/myblogs/2022 /home/runner/work/myblogs/myblogs/blogs/source/_post/
+      
+      - name: generate
+        run: hexo g
+        working-directory: blogs
+      - name: ls
+        run: ls -la
+        working-directory: blogs/public
+        
+      - name: init git repo
+        run: |
+          git config --global user.name clamyang
+          git config --global user.email ybq2888@163.com
+          git config --global init.defaultBranch master
+          git init
+          git add .
+          git commit -m "deploy!"
+          git remote add origin git@${{secrets.CLOUDIP}}:/home/git/test.git
+          git push --force origin master
+        working-directory: blogs/public
