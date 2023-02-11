@@ -40,6 +40,13 @@ jobs:
       - name: cp blog post
         run: cp -r /home/runner/work/myblogs/myblogs/2022 /home/runner/work/myblogs/myblogs/blogs/
       
-      - name: ok
-        run: echo "happy end"
-
+      - name: generate
+        run: hexo g
+        
+      - name: config ssh to alicloud
+        run: |
+          mkdir -p ~/.ssh/
+          echo '${{secrets.HEXO_DEPLOY_KEY}}' > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -t rsa ${{secrets.CLOUDIP}} >> ~/.ssh/known_hosts
+          ls -l -a ~/.ssh/
