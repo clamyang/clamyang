@@ -29,7 +29,7 @@ jobs:
         run: npm i
       
       - name: list dir
-        run: tree -L N
+        run: tree -L 3
         
       - name: hexo init cmd
         run: hexo init blogs && cd blogs
@@ -54,7 +54,7 @@ jobs:
         run: hexo g
       
       - name: list dir
-        run: tree -L N
+        run: tree -L 3
         
       - name: init git repo
         run: |
