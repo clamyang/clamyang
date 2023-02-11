@@ -14,7 +14,14 @@ jobs:
         with:
           node-version: 14.2.0
           registry-url: https://registry.npmjs.org/
-
+          
+      - name: config ssh to alicloud
+        run: |
+          mkdir -p ~/.ssh/
+          echo '${{secrets.HEXO_DEPLOY_KEY}}' > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -t rsa ${{secrets.CLOUDIP}} >> ~/.ssh/known_hosts
+          
       - name: install hexo
         run: npm i -g hexo-cli
         
@@ -22,7 +29,7 @@ jobs:
         run: npm i
         
       - name: hexo init cmd
-        run: hexo init blogs
+        run: hexo init blogs && cd blogs
 
       - name: install theme
         run: git submodule add https://github.com/tufu9441/maupassant-hexo.git themes/maupassant
@@ -38,23 +45,17 @@ jobs:
           cp /home/runner/work/myblogs/myblogs/theme_config.yml /home/runner/work/myblogs/myblogs/blogs/themes/_config.yml
         
       - name: cp blog post
-        run: cp -r /home/runner/work/myblogs/myblogs/2022 /home/runner/work/myblogs/myblogs/blogs/
+        run: cp -r /home/runner/work/myblogs/myblogs/2022 /home/runner/work/myblogs/myblogs/blogs/source/_post/
       
       - name: generate
         run: hexo g
         
-      - name: config ssh to alicloud
-        run: |
-          mkdir -p ~/.ssh/
-          echo '${{secrets.HEXO_DEPLOY_KEY}}' > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -t rsa ${{secrets.CLOUDIP}} >> ~/.ssh/known_hosts
       - name: init git repo
         run: |
           git config --global user.name clamyang
           git config --global user.email ybq2888@163.com
           git config --global init.defaultBranch master
-
+          cd blogs
           git init
           git add .
           git commit -m "deploy!"
