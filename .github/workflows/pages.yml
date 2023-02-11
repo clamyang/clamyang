@@ -48,7 +48,7 @@ jobs:
       - name: cp blog post
         run: cp -r /home/runner/work/myblogs/myblogs/posts/* /home/runner/work/myblogs/myblogs/blogs/source/
       - name: ls files
-        run: ls /home/runner/work/myblogs/myblogs/blogs/source/
+        run: ls /home/runner/work/myblogs/myblogs/blogs/source/_posts
         working-directory: blogs
         
       - name: cp theme images
