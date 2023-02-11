@@ -27,6 +27,9 @@ jobs:
         
       - name: install hexo dependencies
         run: npm i
+      
+      - name: list dir
+        run: tree -L N
         
       - name: hexo init cmd
         run: hexo init blogs && cd blogs
@@ -49,6 +52,9 @@ jobs:
       
       - name: generate
         run: hexo g
+      
+      - name: list dir
+        run: tree -L N
         
       - name: init git repo
         run: |
