@@ -51,6 +51,10 @@ jobs:
           ssh-keyscan -t rsa ${{secrets.CLOUDIP}} >> ~/.ssh/known_hosts
       - name: init git repo
         run: |
+          git config --global user.name clamyang
+          git config --global user.email ybq2888@163.com
+          git config --global init.defaultBranch master
+
           git init
           git add .
           git commit -m "deploy!"
