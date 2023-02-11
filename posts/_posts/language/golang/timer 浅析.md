@@ -1,10 +1,10 @@
 ---
 title: timer 源码分析
-date: 2021-12-05
+date: 2021-11-05
 comments: true
 ---
 
-golang timer 的优化过程以及底层实现。
+golang timer 底层实现
 
 <!--more-->
 
