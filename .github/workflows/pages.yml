@@ -46,7 +46,9 @@ jobs:
           cp /home/runner/work/myblogs/myblogs/theme_config.yml /home/runner/work/myblogs/myblogs/blogs/themes/_config.yml
         
       - name: cp blog post
-        run: cp -r /home/runner/work/myblogs/myblogs/2022 /home/runner/work/myblogs/myblogs/blogs/source/_post/
+        run: cp -r /home/runner/work/myblogs/myblogs/posts /home/runner/work/myblogs/myblogs/blogs/source/
+      - name: cp theme images
+        run: cp -r /home/runner/work/myblogs/myblogs/theme_img/ /home/runner/work/myblogs/myblogs/blogs/themes/maupassant/source/
       
       - name: generate
         run: hexo g
