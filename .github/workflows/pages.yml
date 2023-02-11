@@ -53,10 +53,10 @@ jobs:
         working-directory: blogs
       - name: ls
         run: ls -la
+        working-directory: blogs/public
         
       - name: init git repo
         run: |
-          cd public
           git config --global user.name clamyang
           git config --global user.email ybq2888@163.com
           git config --global init.defaultBranch master
