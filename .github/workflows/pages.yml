@@ -52,6 +52,7 @@ jobs:
         
       - name: init git repo
         run: |
+          cd public
           git config --global user.name clamyang
           git config --global user.email ybq2888@163.com
           git config --global init.defaultBranch master
