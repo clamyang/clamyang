@@ -47,9 +47,10 @@ jobs:
         
       - name: cp blog post
         run: cp -r /home/runner/work/myblogs/myblogs/posts/* /home/runner/work/myblogs/myblogs/blogs/source/
-      - name: ls files
-        run: ls /home/runner/work/myblogs/myblogs/blogs/source/_posts
-        working-directory: blogs
+                
+      - name: remove hello word file
+        run: rm /home/runner/work/myblogs/myblogs/blogs/source/_posts/hello-world.md
+        working-directory: blogs/source/_posts
         
       - name: cp theme images
         run: cp -r /home/runner/work/myblogs/myblogs/theme_img/* /home/runner/work/myblogs/myblogs/blogs/themes/maupassant/source/
@@ -57,9 +58,6 @@ jobs:
       - name: generate
         run: hexo g
         working-directory: blogs
-      - name: ls
-        run: ls -la
-        working-directory: blogs/public
         
       - name: init git repo
         run: |
