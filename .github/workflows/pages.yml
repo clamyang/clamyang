@@ -43,7 +43,7 @@ jobs:
       - name: cp theme config
         run: |
           cp /home/runner/work/myblogs/myblogs/_config.yml /home/runner/work/myblogs/myblogs/blogs/_config.yml
-          cp /home/runner/work/myblogs/myblogs/theme_config.yml /home/runner/work/myblogs/myblogs/blogs/themes/_config.yml
+          cp /home/runner/work/myblogs/myblogs/theme_config.yml /home/runner/work/myblogs/myblogs/blogs/themes/maupassant/_config.yml
         
       - name: cp blog post
         run: cp -r /home/runner/work/myblogs/myblogs/posts/* /home/runner/work/myblogs/myblogs/blogs/source/
