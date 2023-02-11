@@ -1,7 +1,7 @@
 ---
 title: Variable shadowing
+date: 2022-08-15
 comments: true
-
 ---
 
 本文中的内容来自《100 Go Mistakes and How to Avoid Them》，作者总结了常见、易犯的错误，比较适合刚学习 Go 的同学。

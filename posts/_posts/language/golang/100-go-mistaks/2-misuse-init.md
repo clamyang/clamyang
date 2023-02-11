@@ -1,5 +1,6 @@
 ---
 title: misuse init func
+date: 2022-09-18
 comments: true
 ---
 

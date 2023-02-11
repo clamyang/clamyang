@@ -1,5 +1,6 @@
 ---
 title: 参数是怎么传给 goroutine 的
+date: 2022-05-01
 comments: true
 ---
 

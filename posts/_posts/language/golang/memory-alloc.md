@@ -1,5 +1,6 @@
 ---
 title: Go 内存分配器
+date: 2022-06-18
 comments: true
 ---
 

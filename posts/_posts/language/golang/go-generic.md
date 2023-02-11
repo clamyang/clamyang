@@ -1,5 +1,6 @@
 ---
 title: go generic
+date: 2022-04-02
 comments: true
 
 ---

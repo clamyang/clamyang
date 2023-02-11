@@ -1,5 +1,6 @@
 ---
 title: go error handling
+date: 2022-03-15
 comments: true
 ---
 
