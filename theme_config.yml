@@ -45,7 +45,7 @@ waline: ## See: https://waline.js.org/
   pageSize: ## The desired number of comments shown in each page.
 utterances: ## See: https://utteranc.es
   enable: true ## If you want to use Utterances comment system, please set the value to true.
-  repo: clamyang/blogs ## The repository utterances will connect to, e.g. tufu9441/comments
+  repo: clamyang/myblogs ## The repository utterances will connect to, e.g. tufu9441/comments
   identifier: title ## The mapping between blog posts and GitHub issues.
   theme: github-light ## Choose an Utterances theme which matches your blog.
 twikoo: ## See: https://twikoo.js.org
