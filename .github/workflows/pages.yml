@@ -23,7 +23,9 @@ jobs:
           ssh-keyscan -t rsa ${{secrets.CLOUDIP}} >> ~/.ssh/known_hosts
           
       - name: install hexo
-        run: npm i -g hexo
+        run: |
+          npm i -g hexo
+          rm -rf node_modules && npm install --force
         
       - name: hexo init cmd
         run: hexo init blogs
