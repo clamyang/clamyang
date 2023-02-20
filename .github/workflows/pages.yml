@@ -25,6 +25,11 @@ jobs:
       - name: install hexo
         run: npm i -g hexo-cli
         
+      - name: install render for theme
+        run: |
+          npm install hexo-renderer-pug --save
+          npm install hexo-renderer-sass --save
+        
       - name: install hexo dependencies
         run: npm i
                 
@@ -34,11 +39,6 @@ jobs:
       - name: install theme
         run: git submodule add https://github.com/tufu9441/maupassant-hexo.git themes/maupassant
         working-directory: blogs
-      
-      - name: install render for theme
-        run: |
-          npm install hexo-renderer-pug --save
-          npm install hexo-renderer-sass --save
           
       - name: cp theme config
         run: |
