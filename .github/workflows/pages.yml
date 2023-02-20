@@ -12,7 +12,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: 12
+          node-version: 14.2.0
           registry-url: https://registry.npmjs.org/
           
       - name: config ssh to alicloud
@@ -21,12 +21,9 @@ jobs:
           echo '${{secrets.HEXO_DEPLOY_KEY}}' > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -t rsa ${{secrets.CLOUDIP}} >> ~/.ssh/known_hosts
-          
-      - name: install hexo
-        run: npm install -g hexo-cli
-        
+                  
       - name: install hexo dependencies
-        run: npm install
+        run: npm i
         
       - name: hexo init cmd
         run: hexo init blogs
