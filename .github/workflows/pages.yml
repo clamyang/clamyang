@@ -23,9 +23,10 @@ jobs:
           ssh-keyscan -t rsa ${{secrets.CLOUDIP}} >> ~/.ssh/known_hosts
           
       - name: install hexo
-        run: |
-          npm i -g hexo
-          rm -rf node_modules && npm install --force
+        run: npm i -g hexo-cli
+        
+      - name: install hexo dependencies
+        run: npm i
         
       - name: hexo init cmd
         run: hexo init blogs
@@ -53,7 +54,7 @@ jobs:
         working-directory: blogs/source/_posts
         
       - name: cp theme images
-        run: cp -r /home/runner/work/myblogs/myblogs/theme_img/* /home/runner/work/myblogs/myblogs/blogs/themes/maupassant/source/img/
+        run: cp -r /home/runner/work/myblogs/myblogs/theme_img/* /home/runner/work/myblogs/myblogs/blogs/themes/maupassant/source/
       
       - name: generate
         run: hexo g
